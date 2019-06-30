@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -43,7 +44,7 @@ namespace EloquentObjects.Channels.Implementation
             _bufferedStream.Dispose();
             _stream.Dispose();
             _client.Close();
-            _client.Dispose();
+            ((IDisposable)_client).Dispose();
             _resetEvent.Dispose();
 
             _logger.Info(() => $"Disposed (ipAddress = {_ipAddress}, port = {_port})");
