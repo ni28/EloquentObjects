@@ -36,10 +36,6 @@
       <HintPath>..\packages\Castle.Core.4.3.1\lib\net45\Castle.Core.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="JetBrains.Annotations, Version=11.1.0.0, Culture=neutral, PublicKeyToken=1010a0d8d6380325">
-      <HintPath>..\packages\JetBrains.Annotations.11.1.0\lib\net20\JetBrains.Annotations.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
@@ -74,6 +70,7 @@
     <Compile Include="Logging\Logger.cs" />
     <Compile Include="Logging\SilentLogger.cs" />
     <Compile Include="Logging\SilentLoggerFactory.cs" />
+    <Compile Include="Properties\Annotations.cs" />
     <Compile Include="RPC\Client\ICallback.cs" />
     <Compile Include="RPC\Client\IConnectionAgent.cs" />
     <Compile Include="RPC\Client\Implementation\ClientInterceptor.cs" />
@@ -129,6 +126,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="EloquentObjects.nuspec" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

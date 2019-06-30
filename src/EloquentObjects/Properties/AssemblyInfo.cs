@@ -4,11 +4,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Connectivity.RemoteObjects")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("EloquentObjects")]
+[assembly: AssemblyDescription(".NET Object-oriented RPC-framework that allows clients to work with hosted objects remotelly (call methods, get or set properties, subscribe to events, etc.).")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Connectivity.RemoteObjects")]
+[assembly: AssemblyCompany("ni28")]
+[assembly: AssemblyProduct("EloquentObjects")]
 [assembly: AssemblyCopyright("Copyright ©  2019")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
