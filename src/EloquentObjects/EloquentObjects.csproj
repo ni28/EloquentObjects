@@ -1,0 +1,141 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{353BCD6A-83BF-4CAF-AE03-4FE766D2BA42}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>EloquentObjects</RootNamespace>
+    <AssemblyName>EloquentObjects</AssemblyName>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Castle.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc">
+      <HintPath>..\packages\Castle.Core.4.3.1\lib\net45\Castle.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="JetBrains.Annotations, Version=11.1.0.0, Culture=neutral, PublicKeyToken=1010a0d8d6380325">
+      <HintPath>..\packages\JetBrains.Annotations.11.1.0\lib\net20\JetBrains.Annotations.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Channels\IBinding.cs" />
+    <Compile Include="Channels\IHostAddress.cs" />
+    <Compile Include="Channels\Implementation\ITcpHostAddress.cs" />
+    <Compile Include="Channels\Implementation\OutputChannelContext.cs" />
+    <Compile Include="Channels\Implementation\TcpBinding.cs" />
+    <Compile Include="Channels\Implementation\TcpHostAddress.cs" />
+    <Compile Include="Channels\IOutputChannelContext.cs" />
+    <Compile Include="Connection.cs" />
+    <Compile Include="Contracts\IEventDescription.cs" />
+    <Compile Include="Contracts\Implementation\ContractDescription.cs" />
+    <Compile Include="Contracts\Implementation\CachedContractDescriptionFactory.cs" />
+    <Compile Include="Contracts\Implementation\ContractDescriptionFactory.cs" />
+    <Compile Include="Contracts\Implementation\EventDescription.cs" />
+    <Compile Include="Contracts\Implementation\MethodDescription.cs" />
+    <Compile Include="EloquentEventAttribute.cs" />
+    <Compile Include="FaultException.cs" />
+    <Compile Include="IEloquentClient.cs" />
+    <Compile Include="IEloquentServer.cs" />
+    <Compile Include="Logging\ConsoleLogger.cs" />
+    <Compile Include="Logging\ConsoleLoggerFactory.cs" />
+    <Compile Include="Logging\ILogger.cs" />
+    <Compile Include="Logging\ILoggerFactory.cs" />
+    <Compile Include="Logging\Logger.cs" />
+    <Compile Include="Logging\SilentLogger.cs" />
+    <Compile Include="Logging\SilentLoggerFactory.cs" />
+    <Compile Include="RPC\Client\ICallback.cs" />
+    <Compile Include="RPC\Client\IConnectionAgent.cs" />
+    <Compile Include="RPC\Client\Implementation\ClientInterceptor.cs" />
+    <Compile Include="RPC\Client\Implementation\ConnectionAgent.cs" />
+    <Compile Include="RPC\Client\Implementation\RemoteEventSubscription.cs" />
+    <Compile Include="RPC\Client\Implementation\SessionAgent.cs" />
+    <Compile Include="RPC\Client\ISessionAgent.cs" />
+    <Compile Include="RPC\Messages\EndpointMessageType.cs" />
+    <Compile Include="RPC\Messages\Endpoint\EventEndpointMessage.cs" />
+    <Compile Include="RPC\Messages\Endpoint\RequestEndpointMessage.cs" />
+    <Compile Include="RPC\Messages\Endpoint\ResponseEndpointMessage.cs" />
+    <Compile Include="RPC\Messages\EndpointMessage.cs" />
+    <Compile Include="RPC\Messages\SessionMessage.cs" />
+    <Compile Include="RPC\Messages\SessionMessageType.cs" />
+    <Compile Include="RPC\Messages\Session\DisconnectSessionMessage.cs" />
+    <Compile Include="RPC\Messages\Session\EndpointResponseStartSessionMessage.cs" />
+    <Compile Include="RPC\Messages\Session\ExceptionSessionMessage.cs" />
+    <Compile Include="RPC\Messages\Session\EndpointRequestStartSessionMessage.cs" />
+    <Compile Include="RPC\Messages\Session\HeartbeatSessionMessage.cs" />
+    <Compile Include="RPC\Messages\Session\HelloAckSessionMessage.cs" />
+    <Compile Include="RPC\Messages\Session\HelloSessionMessage.cs" />
+    <Compile Include="RPC\Messages\Session\TerminateSessionSessionMessage.cs" />
+    <Compile Include="RPC\Server\IConnection.cs" />
+    <Compile Include="RPC\Server\IEndpoint.cs" />
+    <Compile Include="RPC\Server\IEndpointHub.cs" />
+    <Compile Include="RPC\Server\Implementation\Connection.cs" />
+    <Compile Include="RPC\Server\Implementation\Disposable.cs" />
+    <Compile Include="RPC\Server\Implementation\EndpointHub.cs" />
+    <Compile Include="RPC\Server\Implementation\HostedEvent.cs" />
+    <Compile Include="RPC\Server\Implementation\Server.cs" />
+    <Compile Include="RPC\Server\Implementation\ServiceEndpoint.cs" />
+    <Compile Include="RPC\Server\Implementation\Session.cs" />
+    <Compile Include="RPC\Server\IServer.cs" />
+    <Compile Include="RPC\Server\ISession.cs" />
+    <Compile Include="Serialization\Call.cs" />
+    <Compile Include="Serialization\Implementation\DefaultSerializer.cs" />
+    <Compile Include="Serialization\Implementation\DefaultSerializerFactory.cs" />
+    <Compile Include="Serialization\Implementation\CallEnvelope.cs" />
+    <Compile Include="Serialization\ISerializer.cs" />
+    <Compile Include="Serialization\ISerializerFactory.cs" />
+    <Compile Include="Channels\Implementation\InputChannel.cs" />
+    <Compile Include="Channels\Implementation\OutputChannel.cs" />
+    <Compile Include="Channels\IInputChannel.cs" />
+    <Compile Include="Channels\IOutputChannel.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Contracts\IContractDescription.cs" />
+    <Compile Include="Contracts\IContractDescriptionFactory.cs" />
+    <Compile Include="Contracts\IMethodDescription.cs" />
+    <Compile Include="StreamExtensions.cs" />
+    <Compile Include="EloquentClient.cs" />
+    <Compile Include="EloquentServer.cs" />
+    <Compile Include="EloquentSettings.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+         Other similar extension points exist, see Microsoft.Common.targets.
+    <Target Name="BeforeBuild">
+    </Target>
+    <Target Name="AfterBuild">
+    </Target>
+    -->
+</Project>
