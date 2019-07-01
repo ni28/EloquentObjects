@@ -1,5 +1,6 @@
 using System.IO;
 using EloquentObjects.Channels;
+using EloquentObjects.Channels.Implementation;
 using EloquentObjects.RPC.Messages.Session;
 
 namespace EloquentObjects.RPC.Messages
@@ -24,10 +25,10 @@ namespace EloquentObjects.RPC.Messages
         
         protected abstract void WriteInternal(Stream stream);
 
-        public static SessionMessage Read(IBinding binding, Stream stream)
+        public static SessionMessage Read(Stream stream)
         {
             var messageType = (SessionMessageType)stream.ReadByte();
-            var clientHostAddress = binding.ReadHostAddress(stream);
+            var clientHostAddress = HostAddress.Read(stream);
 
             switch (messageType)
             {

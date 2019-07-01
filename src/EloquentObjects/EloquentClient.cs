@@ -1,3 +1,4 @@
+using System;
 using Castle.DynamicProxy;
 using EloquentObjects.Channels;
 using EloquentObjects.Channels.Implementation;
@@ -18,16 +19,29 @@ namespace EloquentObjects
         private readonly ProxyGenerator _proxyGenerator;
         private readonly SessionAgent _sessionAgent;
 
-        public EloquentClient(string serverIpPort, string clientIpPort) : this(serverIpPort, clientIpPort, new EloquentSettings())
+        public EloquentClient(string serverAddress, string clientAddress) : this(serverAddress, clientAddress, new EloquentSettings())
         {
         }
         
-        public EloquentClient(string serverIpPort, string clientIpPort, EloquentSettings settings, [CanBeNull] ISerializerFactory serializerFactory=null)
+        public EloquentClient(string serverAddress, string clientAddress, EloquentSettings settings, [CanBeNull] ISerializerFactory serializerFactory=null)
         {
             _serializerFactory = serializerFactory ?? new DefaultSerializerFactory();
-            var binding = new TcpBinding(settings.HeartBeatMs, 0, settings.SendTimeout, settings.ReceiveTimeout);
-            var serverHostAddress = binding.Parse(serverIpPort);
-            var clientHostAddress = binding.Parse(clientIpPort);
+            
+            var serverUri = new Uri(serverAddress);
+            var clientUri = new Uri(clientAddress);
+            
+            var serverScheme = serverUri.GetComponents(UriComponents.Scheme, UriFormat.Unescaped);
+            var clientScheme = clientUri.GetComponents(UriComponents.Scheme, UriFormat.Unescaped);
+
+            if (serverScheme != clientScheme)
+            {
+                throw new ArgumentException("Client Uri scheme should match server Uri scheme");
+            }
+            
+            var binding = new BindingFactory().Create(serverScheme, settings);
+
+            var serverHostAddress = HostAddress.CreateFromUri(serverUri);
+            var clientHostAddress = HostAddress.CreateFromUri(clientUri);
 
             _contractDescriptionFactory = new CachedContractDescriptionFactory(new ContractDescriptionFactory());
 

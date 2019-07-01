@@ -45,12 +45,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BindingFactory.cs" />
     <Compile Include="Channels\IBinding.cs" />
     <Compile Include="Channels\IHostAddress.cs" />
-    <Compile Include="Channels\Implementation\ITcpHostAddress.cs" />
     <Compile Include="Channels\Implementation\OutputChannelContext.cs" />
     <Compile Include="Channels\Implementation\TcpBinding.cs" />
-    <Compile Include="Channels\Implementation\TcpHostAddress.cs" />
+    <Compile Include="Channels\Implementation\HostAddress.cs" />
     <Compile Include="Channels\IOutputChannelContext.cs" />
     <Compile Include="Connection.cs" />
     <Compile Include="Contracts\IEventDescription.cs" />

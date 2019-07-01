@@ -1,17 +1,19 @@
+using System;
+
 namespace EloquentObjects.Proto
 {
     public sealed class ProtoEloquentClient : IEloquentClient
     {
         private readonly EloquentClient _eloquentClient;
 
-        public ProtoEloquentClient(string serverIpPort, string clientIpPort)
+        public ProtoEloquentClient(string serverAddress, string clientAddress)
         {
-            _eloquentClient = new EloquentClient(serverIpPort, clientIpPort);
+            _eloquentClient = new EloquentClient(serverAddress, clientAddress);
         }
         
-        public ProtoEloquentClient(string serverIpPort, string clientIpPort, EloquentSettings settings)
+        public ProtoEloquentClient(string serverAddress, string clientAddress, EloquentSettings settings)
         {
-            _eloquentClient = new EloquentClient(serverIpPort, clientIpPort, settings);
+            _eloquentClient = new EloquentClient(serverAddress, clientAddress, settings);
         }
         
         #region Implementation of IEloquentClient

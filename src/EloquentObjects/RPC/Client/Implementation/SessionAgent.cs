@@ -51,7 +51,7 @@ namespace EloquentObjects.RPC.Client.Implementation
             using (var context = _outputChannel.BeginWriteRead())
             {
                 helloMessage.Write(context.Stream);
-                response = SessionMessage.Read(_binding, context.Stream);
+                response = SessionMessage.Read(context.Stream);
             }
 
             switch (response)
@@ -132,7 +132,7 @@ namespace EloquentObjects.RPC.Client.Implementation
             if (_disposed)
                 return;
 
-            var message = SessionMessage.Read(_binding, stream);
+            var message = SessionMessage.Read(stream);
 
             switch (message)
             {

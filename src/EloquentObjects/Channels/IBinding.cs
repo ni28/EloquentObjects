@@ -19,13 +19,6 @@ namespace EloquentObjects.Channels
         int MaxHeartBeatLost { get; }
 
         /// <summary>
-        ///     Reads host address from the stream.
-        /// </summary>
-        /// <param name="stream">Stream that will return the serialized host address.</param>
-        /// <returns>Host address object</returns>
-        IHostAddress ReadHostAddress(Stream stream);
-
-        /// <summary>
         ///     Creates an input channel that is used to receive messages and send responses.
         /// </summary>
         /// <param name="address">Base address (e.g. tcp://127.0.0.1) of the input channel</param>

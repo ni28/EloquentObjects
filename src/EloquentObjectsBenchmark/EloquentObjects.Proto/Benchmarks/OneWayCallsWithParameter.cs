@@ -15,8 +15,8 @@ namespace EloquentObjectsBenchmark.EloquentObjects.Proto.Benchmarks
 
         public MeasurementResult Measure()
         {
-            using (var remoteObjectServer = new EloquentServer("127.0.0.1:50000"))
-            using (var remoteObjectClient = new EloquentClient("127.0.0.1:50000", "127.0.0.1:50001"))
+            using (var remoteObjectServer = new EloquentServer("tcp://127.0.0.1:50000"))
+            using (var remoteObjectClient = new EloquentClient("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001"))
             {
                 remoteObjectServer.Add<IBenchmarkObject>("endpoint1", new BenchmarkObject());
 

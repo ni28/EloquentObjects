@@ -57,7 +57,7 @@ namespace EloquentObjects.RPC.Server.Implementation
 
             try
             {
-                var sessionMessage = SessionMessage.Read(_binding, stream);
+                var sessionMessage = SessionMessage.Read(stream);
         
                 switch (sessionMessage)
                 {

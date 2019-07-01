@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 
 namespace EloquentObjects.Proto
@@ -6,14 +7,14 @@ namespace EloquentObjects.Proto
     {
         private readonly EloquentServer _eloquentServer;
 
-        public ProtoEloquentServer(string serverIpPort)
+        public ProtoEloquentServer(string address)
         {
-            _eloquentServer = new EloquentServer(serverIpPort);
+            _eloquentServer = new EloquentServer(address);
         }
         
-        public ProtoEloquentServer(string serverIpPort, EloquentSettings settings)
+        public ProtoEloquentServer(string address, EloquentSettings settings)
         {
-            _eloquentServer = new EloquentServer(serverIpPort, settings);
+            _eloquentServer = new EloquentServer(address, settings);
         }
         
         #region Implementation of IEloquentServer

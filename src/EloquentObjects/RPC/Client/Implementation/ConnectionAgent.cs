@@ -78,7 +78,7 @@ namespace EloquentObjects.RPC.Client.Implementation
                 endpointMessageStart.Write(context.Stream);
                 requestMessage.Write(context.Stream, _serializer);
 
-                var responseSessionMessage = SessionMessage.Read(_binding, context.Stream);
+                var responseSessionMessage = SessionMessage.Read(context.Stream);
                 switch (responseSessionMessage)
                 {
                     case ExceptionSessionMessage exceptionSessionMessage:

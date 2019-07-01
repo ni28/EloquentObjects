@@ -7,7 +7,7 @@ namespace ConsoleApplication1
     {
         private static void Main(string[] args)
         {
-            using (var remoteObjectServer = new EloquentServer("127.0.0.1:50000"))
+            using (var remoteObjectServer = new EloquentServer("tcp://127.0.0.1:50000"))
             {
                 remoteObjectServer.Add<ICalculatorService>("endpoint1", new CalculatorService
                 {

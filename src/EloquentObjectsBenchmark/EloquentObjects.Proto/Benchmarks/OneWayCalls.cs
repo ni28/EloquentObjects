@@ -1,4 +1,3 @@
-using EloquentObjects;
 using EloquentObjects.Proto;
 
 namespace EloquentObjectsBenchmark.EloquentObjects.Proto.Benchmarks
@@ -16,8 +15,8 @@ namespace EloquentObjectsBenchmark.EloquentObjects.Proto.Benchmarks
 
         public MeasurementResult Measure()
         {
-            using (var remoteObjectServer = new ProtoEloquentServer("127.0.0.1:50000"))
-            using (var remoteObjectClient = new ProtoEloquentClient("127.0.0.1:50000", "127.0.0.1:50001"))
+            using (var remoteObjectServer = new ProtoEloquentServer("tcp://127.0.0.1:50000"))
+            using (var remoteObjectClient = new ProtoEloquentClient("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001"))
             {
                 remoteObjectServer.Add<EloquentObjects.IBenchmarkObject>("endpoint1", new EloquentObjects.BenchmarkObject());
 

@@ -1,12 +1,11 @@
 using System;
 using System.IO;
-using System.Net;
 
 namespace EloquentObjects.Channels.Implementation
 {
-    internal sealed class TcpHostAddress : ITcpHostAddress, IEquatable<ITcpHostAddress>
+    internal sealed class HostAddress : IHostAddress, IEquatable<IHostAddress>
     {
-        private TcpHostAddress(IPAddress ipAddress, int port)
+        private HostAddress(string ipAddress, int port)
         {
             IpAddress = ipAddress;
             Port = port;
@@ -25,20 +24,20 @@ namespace EloquentObjects.Channels.Implementation
 
         public void Write(Stream stream)
         {
-            stream.WriteString(IpAddress.ToString());
+            stream.WriteString(IpAddress);
             stream.WriteInt(Port);
         }
 
         #endregion
 
-        public static TcpHostAddress Read(Stream stream)
+        public static HostAddress Read(Stream stream)
         {
             var ipAddress = stream.TakeString();
             var port = stream.TakeInt();
-            return new TcpHostAddress(IPAddress.Parse(ipAddress), port);
+            return new HostAddress(ipAddress, port);
         }
         
-        public static TcpHostAddress Parse(string hostAddress)
+        public static HostAddress Parse(string hostAddress)
         {
             var index = hostAddress.LastIndexOf(':');
             if (index < 0)
@@ -51,11 +50,11 @@ namespace EloquentObjects.Channels.Implementation
             if (!int.TryParse(strPort, out var port))
                 throw new FormatException($"The port of the host address is not an integer: {hostAddress}");
 
-            return new TcpHostAddress(IPAddress.Parse(ipAddress), port);        }
+            return new HostAddress(ipAddress, port);        }
         
         #region Implementation of ITcpHostAddress
 
-        public IPAddress IpAddress { get; }
+        public string IpAddress { get; }
 
         public int Port { get; }
 
@@ -63,12 +62,12 @@ namespace EloquentObjects.Channels.Implementation
 
         #region Equality members
 
-        private bool Equals(TcpHostAddress other)
+        private bool Equals(HostAddress other)
         {
             return Equals(IpAddress, other.IpAddress) && Port == other.Port;
         }
 
-        public bool Equals(ITcpHostAddress other)
+        public bool Equals(IHostAddress other)
         {
             return Equals(IpAddress, other?.IpAddress) && Port == other?.Port;
         }
@@ -77,7 +76,7 @@ namespace EloquentObjects.Channels.Implementation
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
-            return obj is TcpHostAddress other && Equals(other);
+            return obj is HostAddress other && Equals(other);
         }
 
         public override int GetHashCode()
@@ -89,5 +88,23 @@ namespace EloquentObjects.Channels.Implementation
         }
 
         #endregion
+
+        public static IHostAddress CreateFromUri(Uri baseAddress)
+        {
+            var path = baseAddress.GetComponents(UriComponents.Path, UriFormat.Unescaped);
+            if (!string.IsNullOrEmpty(path))
+            {
+                throw new ArgumentOutOfRangeException(nameof(baseAddress), "Uri should not have a path");
+            }
+            
+            if (!int.TryParse(baseAddress.GetComponents(UriComponents.Port, UriFormat.Unescaped), out var port))
+            {
+                throw new ArgumentOutOfRangeException(nameof(baseAddress), "Port has invalid format (integer was expected)");
+            }
+            
+            var host = baseAddress.GetComponents(UriComponents.Host, UriFormat.Unescaped);
+
+            return new HostAddress(host, port);
+        }
     }
 }

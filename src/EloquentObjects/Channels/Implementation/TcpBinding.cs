@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Net;
 
 namespace EloquentObjects.Channels.Implementation
 {
@@ -20,31 +21,15 @@ namespace EloquentObjects.Channels.Implementation
 
         public int HeartBeatMs { get; }
         public int MaxHeartBeatLost { get; }
-
-        public IHostAddress ReadHostAddress(Stream stream)
-        {
-            return TcpHostAddress.Read(stream);
-        }
-
-        public IHostAddress Parse(string hostAddress)
-        {
-            return TcpHostAddress.Parse(hostAddress);
-        }
         
         public IInputChannel CreateInputChannel(IHostAddress address)
         {
-            if (address is ITcpHostAddress tcpAddress)
-                return new InputChannel(tcpAddress.IpAddress, tcpAddress.Port, _sendTimeout);
-
-            throw new ArgumentException("Incompatible host address type");
+            return new InputChannel(IPAddress.Parse(address.IpAddress), address.Port, _sendTimeout);
         }
 
         public IOutputChannel CreateOutputChannel(IHostAddress address)
         {
-            if (address is ITcpHostAddress tcpAddress)
-                return new OutputChannel(tcpAddress.IpAddress, tcpAddress.Port, _sendTimeout, _receiveTimeout);
-
-            throw new ArgumentException("Incompatible host address type");
+            return new OutputChannel(IPAddress.Parse(address.IpAddress), address.Port, _sendTimeout, _receiveTimeout);
         }
 
         #endregion

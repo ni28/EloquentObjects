@@ -11,8 +11,8 @@ namespace Client
     {
         public static void Main(string[] args)
         {
-            using (var client = new EloquentClient("127.0.0.1:50000", "127.0.0.1:50001"))
-            using (var client2 = new EloquentClient("127.0.0.1:50000", "127.0.0.1:50002"))
+            using (var client = new EloquentClient("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001"))
+            using (var client2 = new EloquentClient("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50002"))
             {
                 using (var calcObjConnection = client.Connect<ICalculatorService>("endpoint1"))
                 {

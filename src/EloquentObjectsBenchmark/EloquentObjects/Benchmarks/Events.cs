@@ -18,7 +18,7 @@ namespace EloquentObjectsBenchmark.EloquentObjects.Benchmarks
 
         public MeasurementResult Measure()
         {
-            using (var remoteObjectServer = new EloquentServer("127.0.0.1:50000", new EloquentSettings
+            using (var remoteObjectServer = new EloquentServer("tcp://127.0.0.1:50000", new EloquentSettings
             {
                 HeartBeatMs = 1000,
                 MaxHeartBeatLost = 5,
@@ -35,7 +35,7 @@ namespace EloquentObjectsBenchmark.EloquentObjects.Benchmarks
                 var autoResetEvent = new AutoResetEvent(false);
                 for (var i = 0; i < _numberOfEventClients; i++)
                 {
-                    clients[i] = new EloquentClient("127.0.0.1:50000", $"127.0.0.1:6000{i}", new EloquentSettings
+                    clients[i] = new EloquentClient("tcp://127.0.0.1:50000", $"tcp://127.0.0.1:6000{i}", new EloquentSettings
                     {
                         HeartBeatMs = 1000,
                         SendTimeout = 1000,
