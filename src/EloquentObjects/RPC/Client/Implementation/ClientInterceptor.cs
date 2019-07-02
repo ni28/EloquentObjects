@@ -4,7 +4,6 @@ using System.Linq;
 using Castle.DynamicProxy;
 using EloquentObjects.Contracts;
 using EloquentObjects.Logging;
-using EloquentObjects.RPC.Messages;
 using EloquentObjects.Serialization;
 
 namespace EloquentObjects.RPC.Client.Implementation

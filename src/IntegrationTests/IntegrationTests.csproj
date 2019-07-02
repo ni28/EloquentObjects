@@ -47,6 +47,7 @@
         <Reference Include="System.Xml" />
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="EventTests.cs" />
         <Compile Include="OneWayMethodTests.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="TwoWayMethodTests.cs" />
