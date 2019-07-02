@@ -45,13 +45,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CalculatorService.cs" />
-    <Compile Include="ICalculatorService.cs" />
-    <Compile Include="OperationResult.cs" />
+    <Compile Include="EloquentCalculator.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\CalculatorContract\CalculatorContract.csproj">
+      <Project>{4f43e575-37a4-49b1-9d59-7d0593954291}</Project>
+      <Name>CalculatorContract</Name>
+    </ProjectReference>
     <ProjectReference Include="..\EloquentObjects\EloquentObjects.csproj">
       <Project>{353bcd6a-83bf-4caf-ae03-4fe766d2ba42}</Project>
       <Name>EloquentObjects</Name>

@@ -1,11 +1,10 @@
 using System;
-using System.ServiceModel;
 using EloquentObjects;
 
 namespace ConsoleApplication1
 {
     [EloquentInterface]
-    public interface ICalculatorService
+    public interface IEloquentCalculator
     {
         [EloquentProperty]
         string Name { get; set; }

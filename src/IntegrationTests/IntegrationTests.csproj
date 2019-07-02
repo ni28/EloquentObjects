@@ -1,14 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <Import Project="..\packages\NUnit.3.10.1\build\NUnit.props" Condition="Exists('..\packages\NUnit.3.10.1\build\NUnit.props')" />
     <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
     <PropertyGroup>
         <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
         <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-        <ProjectGuid>{6D679552-F4B6-406F-9E79-D172560627D9}</ProjectGuid>
-        <OutputType>Exe</OutputType>
+        <ProjectGuid>{916B052A-F9D3-43DB-874C-5A59A69B16A4}</ProjectGuid>
+        <ProjectTypeGuids>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+        <OutputType>Library</OutputType>
         <AppDesignerFolder>Properties</AppDesignerFolder>
-        <RootNamespace>Client</RootNamespace>
-        <AssemblyName>CalculatorClient</AssemblyName>
+        <RootNamespace>IntegrationTests</RootNamespace>
+        <AssemblyName>IntegrationTests</AssemblyName>
         <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
         <FileAlignment>512</FileAlignment>
     </PropertyGroup>
@@ -32,38 +34,39 @@
         <WarningLevel>4</WarningLevel>
     </PropertyGroup>
     <ItemGroup>
-        <Reference Include="Castle.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc">
-          <HintPath>..\packages\Castle.Core.4.3.1\lib\net45\Castle.Core.dll</HintPath>
+        <Reference Include="nunit.framework, Version=3.10.1.0, Culture=neutral, PublicKeyToken=2638cd05610744eb">
+          <HintPath>..\packages\NUnit.3.10.1\lib\net45\nunit.framework.dll</HintPath>
           <Private>True</Private>
         </Reference>
         <Reference Include="System" />
-        <Reference Include="System.Configuration" />
         <Reference Include="System.Core" />
         <Reference Include="System.Data" />
+        <Reference Include="System.Runtime.Serialization, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <HintPath>C:\WINDOWS\Microsoft.Net\assembly\GAC_MSIL\System.Runtime.Serialization\v4.0_4.0.0.0__b77a5c561934e089\System.Runtime.Serialization.dll</HintPath>
+        </Reference>
         <Reference Include="System.Xml" />
     </ItemGroup>
     <ItemGroup>
-        <Compile Include="Program.cs" />
+        <Compile Include="OneWayMethodTests.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
+        <Compile Include="TwoWayMethodTests.cs" />
     </ItemGroup>
     <ItemGroup>
-      <ProjectReference Include="..\CalculatorContract\CalculatorContract.csproj">
-        <Project>{4f43e575-37a4-49b1-9d59-7d0593954291}</Project>
-        <Name>CalculatorContract</Name>
-      </ProjectReference>
-      <ProjectReference Include="..\CalculatorServer\CalculatorServer.csproj">
-        <Project>{f6b54cc7-20b9-4b5b-a335-de2ece66ac80}</Project>
-        <Name>CalculatorServer</Name>
-      </ProjectReference>
+      <None Include="packages.config" />
+    </ItemGroup>
+    <ItemGroup>
       <ProjectReference Include="..\EloquentObjects\EloquentObjects.csproj">
         <Project>{353bcd6a-83bf-4caf-ae03-4fe766d2ba42}</Project>
         <Name>EloquentObjects</Name>
       </ProjectReference>
     </ItemGroup>
-    <ItemGroup>
-      <None Include="packages.config" />
-    </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+    <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+      <PropertyGroup>
+        <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105.The missing file is {0}.</ErrorText>
+      </PropertyGroup>
+      <Error Condition="!Exists('..\packages\NUnit.3.10.1\build\NUnit.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\NUnit.3.10.1\build\NUnit.props'))" />
+    </Target>
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
          Other similar extension points exist, see Microsoft.Common.targets.
     <Target Name="BeforeBuild">

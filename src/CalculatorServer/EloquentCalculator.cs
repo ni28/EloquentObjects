@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace ConsoleApplication1
 {
-    internal sealed class CalculatorService: ICalculatorService
+    internal sealed class EloquentCalculator: IEloquentCalculator
     {
         #region Implementation of ICalculatorService
 

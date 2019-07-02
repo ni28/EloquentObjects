@@ -14,7 +14,7 @@ namespace Client
             using (var client = new EloquentClient("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001"))
             using (var client2 = new EloquentClient("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50002"))
             {
-                using (var calcObjConnection = client.Connect<ICalculatorService>("endpoint1"))
+                using (var calcObjConnection = client.Connect<IEloquentCalculator>("endpoint1"))
                 {
                     calcObjConnection.Object.ResultReady += ObjectOnResultReady;
                     foreach (var i in Enumerable.Range(0, 2))
@@ -25,7 +25,7 @@ namespace Client
                     Console.WriteLine(calcObjConnection.Object.Name);
                     
                     
-                    using (var objConnection = client2.Connect<ICalculatorService>("endpoint1"))
+                    using (var objConnection = client2.Connect<IEloquentCalculator>("endpoint1"))
                     {
                         objConnection.Object.ResultReady += ObjectOnResultReady;
                         foreach (var i in Enumerable.Range(0, 2))

@@ -9,7 +9,7 @@ namespace ConsoleApplication1
         {
             using (var remoteObjectServer = new EloquentServer("tcp://127.0.0.1:50000"))
             {
-                remoteObjectServer.Add<ICalculatorService>("endpoint1", new CalculatorService
+                remoteObjectServer.Add<IEloquentCalculator>("endpoint1", new EloquentCalculator
                 {
                     Name = "qwetrt"
                 });

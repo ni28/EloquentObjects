@@ -182,7 +182,14 @@ namespace EloquentObjects.RPC.Server.Implementation
 
             if (_synchronizationContext != null) return CallInSyncContext(operationDescription, parameters);
 
-            return operationDescription.Method.Invoke(_serviceInstance, parameters.ToArray());
+            try
+            {
+                return operationDescription.Method.Invoke(_serviceInstance, parameters.ToArray());
+            }
+            catch (Exception e)
+            {
+                throw e.InnerException ?? e;
+            }
         }
 
 

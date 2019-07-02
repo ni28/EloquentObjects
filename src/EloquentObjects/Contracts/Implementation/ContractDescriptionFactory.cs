@@ -19,7 +19,7 @@ namespace EloquentObjects.Contracts.Implementation
 
             if (attribute == null)
                 throw new InvalidOperationException(
-                    $"The provided type does not contain a ServiceContractAttribute: {contractType}");
+                    $"The provided type does not contain a {nameof(EloquentInterfaceAttribute)} attribute: {contractType}");
 
             var contract = new ContractDescription(contractType);
 
