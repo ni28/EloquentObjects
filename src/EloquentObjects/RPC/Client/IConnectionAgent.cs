@@ -29,9 +29,7 @@ namespace EloquentObjects.RPC.Client
         /// Occurs when event is received from the server
         /// </summary>
         event EventHandler<NotifyEventArgs> EventReceived;
-        
-        event EventHandler Disconnected;
-        
+
         void ReceiveAndHandleEndpointMessage(Stream stream);
     }
 }

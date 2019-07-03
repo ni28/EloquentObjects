@@ -42,8 +42,6 @@ namespace EloquentObjects.RPC.Client.Implementation
                 disconnectMessage.Write(context.Stream);
             }
 
-            Disconnected?.Invoke(this, EventArgs.Empty);
-
             _logger.Info(() => $"Disposed (connectionId = {ConnectionId}, endpointId = {_endpointId}, clientHostAddress = {_clientHostAddress})");
         }
 
@@ -91,7 +89,6 @@ namespace EloquentObjects.RPC.Client.Implementation
 
         public event EventHandler<NotifyEventArgs> EventReceived;
 
-        public event EventHandler Disconnected;
         public void ReceiveAndHandleEndpointMessage(Stream stream)
         {
             var endpointMessage = EndpointMessage.Read(stream, _serializer);
