@@ -63,7 +63,7 @@ namespace EloquentObjects
 
         #endregion
 
-        public Connection<T> Connect<T>(string objectId) where T : class
+        public IConnection<T> Connect<T>(string objectId) where T : class
         {
             var contractDescription = _contractDescriptionFactory.Create(typeof(T));
 

@@ -9,6 +9,7 @@ using EloquentObjects.Serialization;
 
 namespace EloquentObjects.RPC.Client.Implementation
 {
+    //TODO: Better name is needed to avoid confusion with Connection
     internal sealed class ConnectionAgent : IConnectionAgent
     {
         private readonly IHostAddress _clientHostAddress;

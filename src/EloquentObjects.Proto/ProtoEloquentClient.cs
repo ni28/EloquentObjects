@@ -18,7 +18,7 @@ namespace EloquentObjects.Proto
         
         #region Implementation of IEloquentClient
 
-        public Connection<T> Connect<T>(string objectId) where T : class
+        public IConnection<T> Connect<T>(string objectId) where T : class
         {
             return _eloquentClient.Connect<T>(objectId);
         }

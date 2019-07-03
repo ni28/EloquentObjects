@@ -1,16 +1,15 @@
 using System;
 using EloquentObjects.Logging;
-using EloquentObjects.RPC.Client;
-using EloquentObjects.RPC.Client.Implementation;
 using EloquentObjects.Serialization;
 
-namespace EloquentObjects
+namespace EloquentObjects.RPC.Client.Implementation
 {
-    public sealed class Connection<T> : IDisposable
+    internal sealed class Connection<T> : IConnection<T>
     {
         private readonly string _objectId;
         private readonly IProxy _innerProxy;
         private readonly EventHandlersRepository _eventHandlersRepository;
+        private readonly ISessionAgent _sessionAgent;
         private readonly T _outerProxy;
         private bool _disposed;
         private readonly IConnectionAgent _connectionAgent;
@@ -26,9 +25,12 @@ namespace EloquentObjects
             _objectId = objectId;
             _innerProxy = innerProxy;
             _eventHandlersRepository = eventHandlersRepository;
+            _sessionAgent = sessionAgent;
             _outerProxy = outerProxy;
 
             _connectionAgent = sessionAgent.Connect(objectId, serializer);
+
+            _sessionAgent.EndpointMessageReady += SessionAgentOnEndpointMessageReady;
 
             _innerProxy.Notified += InnerProxyOnNotified;
             _innerProxy.Called += InnerProxyOnCalled;
@@ -36,9 +38,17 @@ namespace EloquentObjects
             _innerProxy.EventUnsubscribed += InnerProxyOnEventUnsubscribed;
             
             _connectionAgent.EventReceived += ConnectionAgentOnEventReceived;
-
+            
             _logger = Logger.Factory.Create(GetType());
             _logger.Info(() => $"Created (objectId = {_objectId})");
+        }
+
+        private void SessionAgentOnEndpointMessageReady(object sender, EndpointMessageReadyEventArgs e)
+        {
+            if (e.ConnectionId != _connectionAgent.ConnectionId)
+                return;
+            
+            _connectionAgent.ReceiveAndHandleEndpointMessage(e.Stream);
         }
 
         private void InnerProxyOnNotified(object sender, NotifyEventArgs e)
@@ -82,6 +92,8 @@ namespace EloquentObjects
         {
             _disposed = true;
             
+            _sessionAgent.EndpointMessageReady -= SessionAgentOnEndpointMessageReady;
+
             _innerProxy.Notified -= InnerProxyOnNotified;
             _innerProxy.Called -= InnerProxyOnCalled;
             _innerProxy.EventSubscribed -= InnerProxyOnEventSubscribed;

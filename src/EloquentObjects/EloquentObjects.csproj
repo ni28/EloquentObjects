@@ -52,7 +52,6 @@
     <Compile Include="Channels\Implementation\TcpBinding.cs" />
     <Compile Include="Channels\Implementation\HostAddress.cs" />
     <Compile Include="Channels\IOutputChannelContext.cs" />
-    <Compile Include="Connection.cs" />
     <Compile Include="Contracts\IEventDescription.cs" />
     <Compile Include="Contracts\Implementation\ContractDescription.cs" />
     <Compile Include="Contracts\Implementation\CachedContractDescriptionFactory.cs" />
@@ -61,6 +60,7 @@
     <Compile Include="Contracts\Implementation\MethodDescription.cs" />
     <Compile Include="EloquentEventAttribute.cs" />
     <Compile Include="FaultException.cs" />
+    <Compile Include="IConnection.cs" />
     <Compile Include="IEloquentClient.cs" />
     <Compile Include="IEloquentServer.cs" />
     <Compile Include="Logging\ConsoleLogger.cs" />
@@ -72,8 +72,10 @@
     <Compile Include="Logging\SilentLoggerFactory.cs" />
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="RPC\Client\CallEventArgs.cs" />
+    <Compile Include="RPC\Client\EndpointMessageReadyEventArgs.cs" />
     <Compile Include="RPC\Client\IEventHandlersRepository.cs" />
     <Compile Include="RPC\Client\IConnectionAgent.cs" />
+    <Compile Include="RPC\Client\Implementation\Connection.cs" />
     <Compile Include="RPC\Client\Implementation\EventHandlersRepository.cs" />
     <Compile Include="RPC\Client\Implementation\ClientInterceptor.cs" />
     <Compile Include="RPC\Client\Implementation\ConnectionAgent.cs" />

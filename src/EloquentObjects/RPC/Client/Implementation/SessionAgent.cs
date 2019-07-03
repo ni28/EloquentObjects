@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.IO;
 using System.Threading;
 using EloquentObjects.Channels;
@@ -15,8 +14,6 @@ namespace EloquentObjects.RPC.Client.Implementation
         private readonly IBinding _binding;
         private readonly IHostAddress _clientHostAddress;
 
-        //Key is a connection ID
-        private readonly ConcurrentDictionary<int, IConnectionAgent> _connections = new ConcurrentDictionary<int, IConnectionAgent>();
         private readonly object _heartbeatTimerLock = new object();
         private readonly IInputChannel _inputChannel;
         private readonly IOutputChannel _outputChannel;
@@ -65,38 +62,20 @@ namespace EloquentObjects.RPC.Client.Implementation
             }
         }
 
+        public event EventHandler<EndpointMessageReadyEventArgs> EndpointMessageReady;
+
         private IConnectionAgent CreateConnectionAgent(int connectionId, string endpointId, ISerializer serializer)
         {
-            var connectionAgent = _connections.AddOrUpdate(connectionId,
-                id =>
-                {
-                    
-                    var c = new ConnectionAgent(connectionId, endpointId, _outputChannel, _clientHostAddress, serializer);
-                    
-                    c.Disconnected += ConnectionAgentOnDisconnected;
-                    
-                    return c;
-                },
-                (id, c) => throw new InvalidOperationException($"Connection with ID {id} already exists"));
-
             //Start sending heartbeats if not started yet
-            //When HeartBeatMs is 0 then no heart beats are listened.
+            //When HeartBeatMs is 0 then no heart beats are sent.
             lock (_heartbeatTimerLock)
             {
                 if (_heartbeatTimer == null && _binding.HeartBeatMs != 0)
                     _heartbeatTimer = new Timer(Heartbeat, null, 0, _binding.HeartBeatMs);
             }
 
-            return connectionAgent;            
+            return new ConnectionAgent(connectionId, endpointId, _outputChannel, _clientHostAddress, serializer);
         }
-
-        private void ConnectionAgentOnDisconnected(object sender, EventArgs e)
-        {
-            var connectionAgent = (IConnectionAgent) sender;
-            connectionAgent.Disconnected -= ConnectionAgentOnDisconnected;
-            _connections.TryRemove(connectionAgent.ConnectionId, out connectionAgent);
-        }
-
 
         #region IDisposable
 
@@ -113,12 +92,6 @@ namespace EloquentObjects.RPC.Client.Implementation
             _disposed = true;
             _inputChannel.MessageReady -= InputChannelOnMessageReady;
 
-            foreach (var connectionAgent in _connections.Values)
-            {
-                connectionAgent.Disconnected -= ConnectionAgentOnDisconnected;
-            }
-            _connections.Clear();
-
             _logger.Info(() => $"Disposed (clientHostAddress = {_clientHostAddress})");
         }
 
@@ -134,22 +107,11 @@ namespace EloquentObjects.RPC.Client.Implementation
             switch (message)
             {
                 case EndpointRequestStartSessionMessage endpointStartMessage:
-                    HandleEndpointStartMessage(endpointStartMessage, stream);
+                    EndpointMessageReady?.Invoke(this, new EndpointMessageReadyEventArgs(endpointStartMessage.ConnectionId, stream));
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-        }
-
-        private void HandleEndpointStartMessage(EndpointRequestStartSessionMessage endpointRequestStartSessionStartMessage, Stream stream)
-        {
-            if (!_connections.TryGetValue(endpointRequestStartSessionStartMessage.ConnectionId, out var connection))
-            {
-                //No profit to raise exception as this is running in input channel thread
-                return;
-            }
-            
-            connection.ReceiveAndHandleEndpointMessage(stream);
         }
 
         private void Heartbeat(object state)

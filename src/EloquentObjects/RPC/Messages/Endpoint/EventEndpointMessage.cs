@@ -12,7 +12,8 @@ namespace EloquentObjects.RPC.Messages.Endpoint
             EventName = eventName;
             Arguments = arguments;
         }
-
+        
+        //TODO: Rename to objectId?
         public string EndpointId { get; }
         public int ConnectionId { get; }
         public string EventName { get; }

@@ -1,9 +1,10 @@
 using System;
+using EloquentObjects.RPC.Client.Implementation;
 
 namespace EloquentObjects
 {
     public interface IEloquentClient: IDisposable
     {
-        Connection<T> Connect<T>(string objectId) where T : class;
+        IConnection<T> Connect<T>(string objectId) where T : class;
     }
 }

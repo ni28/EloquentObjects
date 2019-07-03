@@ -30,7 +30,7 @@ namespace EloquentObjectsBenchmark.EloquentObjects.Benchmarks
 
                 //Create Clients
                 var clients = new EloquentClient[_numberOfEventClients];
-                var connections = new Connection<IBenchmarkObject>[_numberOfEventClients];
+                var connections = new IConnection<IBenchmarkObject>[_numberOfEventClients];
 
                 var autoResetEvent = new AutoResetEvent(false);
                 for (var i = 0; i < _numberOfEventClients; i++)
