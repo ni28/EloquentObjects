@@ -18,5 +18,10 @@ namespace EloquentObjects.Contracts
         ///     Gets the event info.
         /// </summary>
         EventInfo Event { get; }
+        
+        /// <summary>
+        /// Returns true if this event implements EventHandler or EventHandler{T} type.
+        /// </summary>
+        bool IsStandardEvent { get; }
     }
 }

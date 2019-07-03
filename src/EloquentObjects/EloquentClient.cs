@@ -70,10 +70,12 @@ namespace EloquentObjects
             var knownTypes = contractDescription.GetTypes();
             var serializer = _serializerFactory.Create(typeof(object), knownTypes);
 
-            var interceptor = new ClientInterceptor(objectId, _sessionAgent, contractDescription, serializer);
-            var proxy = _proxyGenerator.CreateInterfaceProxyWithoutTarget<T>(interceptor);
+            var innerProxy = new ClientInterceptor(contractDescription);
+            var outerProxy = _proxyGenerator.CreateInterfaceProxyWithoutTarget<T>(innerProxy);
 
-            return new Connection<T>(interceptor, proxy);
+            var eventHandlersRepository = new EventHandlersRepository(contractDescription, outerProxy);
+            
+            return new Connection<T>(objectId, innerProxy, outerProxy, eventHandlersRepository, _sessionAgent, serializer);
         }
     }
 }

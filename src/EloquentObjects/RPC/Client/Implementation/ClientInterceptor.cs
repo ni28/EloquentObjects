@@ -1,50 +1,24 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using Castle.DynamicProxy;
 using EloquentObjects.Contracts;
 using EloquentObjects.Logging;
-using EloquentObjects.Serialization;
 
 namespace EloquentObjects.RPC.Client.Implementation
 {
-    internal sealed class ClientInterceptor : IInterceptor, ICallback, IDisposable
+    internal sealed class ClientInterceptor : IInterceptor, IProxy
     {
-        private readonly IConnectionAgent _connectionAgent;
-        private readonly string _endpointId;
         private readonly IContractDescription _contractDescription;
-
-        private readonly List<RemoteEventSubscription> _subscriptions = new List<RemoteEventSubscription>();
-
+        
         private bool _disposed;
         private readonly ILogger _logger;
 
-        public ClientInterceptor(string endpointId, ISessionAgent sessionAgent,
-            IContractDescription contractDescription, ISerializer serializer)
+        public ClientInterceptor(IContractDescription contractDescription)
         {
-            _endpointId = endpointId;
             _contractDescription = contractDescription;
 
-            _connectionAgent = sessionAgent.Connect(endpointId, this, serializer);
-            
             _logger = Logger.Factory.Create(GetType());
-            _logger.Info(() => $"Created (endpointId = {_endpointId}, contract = {_contractDescription})");
+            _logger.Info(() => $"Created (contract = {_contractDescription})");
         }
-
-        #region Implementation of ICallback
-
-        public void HandleEvent(string eventName, object[] arguments)
-        {
-            IEnumerable<RemoteEventSubscription> subscriptions;
-            lock (_subscriptions)
-            {
-                subscriptions = _subscriptions.Where(s => s.EventName == eventName).ToArray();
-            }
-
-            foreach (var subscription in subscriptions) subscription.Handler.DynamicInvoke(arguments);
-        }
-
-        #endregion
 
         #region IDisposable
 
@@ -54,10 +28,7 @@ namespace EloquentObjects.RPC.Client.Implementation
                 throw new ObjectDisposedException(GetType().Name);
             _disposed = true;
 
-            _subscriptions.Clear();
-            _connectionAgent.Dispose();
-
-            _logger.Info(() => $"Disposed (endpointId = {_endpointId}, contract = {_contractDescription})");
+            _logger.Info(() => $"Disposed (contract = {_contractDescription})");
         }
 
         #endregion
@@ -122,10 +93,7 @@ namespace EloquentObjects.RPC.Client.Implementation
             if (invocation.Method.Name.StartsWith("add_"))
             {
                 var eventName = invocation.Method.Name.Substring(4);
-                lock (_subscriptions)
-                {
-                    _subscriptions.Add(new RemoteEventSubscription(eventName, (Delegate) invocation.Arguments[0]));
-                }
+                EventSubscribed?.Invoke(this, new SubscriptionEventArgs(eventName, (Delegate) invocation.Arguments[0]));
                 return;
             }
 
@@ -133,10 +101,7 @@ namespace EloquentObjects.RPC.Client.Implementation
             if (invocation.Method.Name.StartsWith("remove_"))
             {
                 var eventName = invocation.Method.Name.Substring(7);
-                lock (_subscriptions)
-                {
-                    _subscriptions.Remove(new RemoteEventSubscription(eventName, (Delegate) invocation.Arguments[0]));
-                }
+                EventUnsubscribed?.Invoke(this, new SubscriptionEventArgs(eventName, (Delegate) invocation.Arguments[0]));
                 return;
             }
             
@@ -147,12 +112,23 @@ namespace EloquentObjects.RPC.Client.Implementation
         
         private void Notify(string name, object[] parameters)
         {
-            _connectionAgent.Notify(name, parameters);
+            Notified?.Invoke(this, new NotifyEventArgs(name, parameters));
         }
 
         private object Call(string name, object[] parameters)
         {
-            return _connectionAgent.Call(name, parameters);
+            var args = new CallEventArgs(name, parameters);
+            Called?.Invoke(this, args);
+            return args.ReturnValue;
         }
+
+        #region Implementation of IProxy
+
+        public event EventHandler<NotifyEventArgs> Notified;
+        public event EventHandler<CallEventArgs> Called;
+        public event EventHandler<SubscriptionEventArgs> EventSubscribed;
+        public event EventHandler<SubscriptionEventArgs> EventUnsubscribed;
+
+        #endregion
     }
 }

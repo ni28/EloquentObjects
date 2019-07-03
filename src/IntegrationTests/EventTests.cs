@@ -6,12 +6,18 @@ using NUnit.Framework;
 
 namespace IntegrationTests
 {
+    //TODO: test unsubscribe
+    //TODO: test EventHadnler
+    
     [TestFixture]
     public sealed class EventTests
     {
         [EloquentInterface]
         public interface IContract
         {
+            [EloquentEvent]
+            event EventHandler<ComplexParameter> RegularEvent;
+
             [EloquentEvent]
             event Action NoParameterEvent;
 
@@ -37,6 +43,11 @@ namespace IntegrationTests
         
         private sealed class HostedObject : IContract
         {
+            public void SendRegularEvent(ComplexParameter complexParameter)
+            {
+                RegularEvent?.Invoke(this, complexParameter);
+            }
+            
             public void SendNoParametersEvent()
             {
                 NoParameterEvent?.Invoke();
@@ -49,11 +60,83 @@ namespace IntegrationTests
             
             #region Implementation of IContract
 
+            public event EventHandler<ComplexParameter> RegularEvent;
             public event Action NoParameterEvent;
             
             public event Action<int, bool, string, double, ComplexParameter, int[], bool[], string[], double[], ComplexParameter[]> EventWithParameters;
 
             #endregion
+        }
+        
+        [Test]
+        [TestCase("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001", "tcp://127.0.0.1:50002")]
+        public void ShallRaiseRegularEventWithClientAsSender(string serverAddress, string client1Address, string client2Address)
+        {
+            //Arrange
+            var objectId = "obj";
+
+            var hostedObject = new HostedObject();
+            
+            using (var server = new EloquentServer(serverAddress))
+            using (var client1 = new EloquentClient(serverAddress, client1Address))
+            using (var client2 = new EloquentClient(serverAddress, client2Address))
+            {
+                server.Add<IContract>(objectId, hostedObject);
+
+                using (var connection1 = client1.Connect<IContract>(objectId))
+                using (var connection2 = client2.Connect<IContract>(objectId))
+                {
+                    var remoteObject1 = connection1.Object;
+                    var remoteObject2 = connection2.Object;
+                    Assert.AreNotSame(remoteObject1, remoteObject2);
+
+                    object sender1 = null;
+                    object sender2 = null;
+                    ComplexParameter args1 = null;
+                    ComplexParameter args2 = null;
+
+                    var autoResetEvent1 = new AutoResetEvent(false);
+                    var autoResetEvent2 = new AutoResetEvent(false);
+                    
+                    remoteObject1.RegularEvent += (s, args) =>
+                    {
+                        sender1 = s;
+                        args1 = args;
+                        autoResetEvent1.Set();
+                    };
+                    remoteObject2.RegularEvent += (s, args) =>
+                    {
+                        sender2 = s;
+                        args2 = args;
+                        autoResetEvent2.Set();
+                    };
+                    
+                    var complexParameter1 = new ComplexParameter
+                    {
+                        A = 5,
+                        B = true,
+                        D = 543.543,
+                        S = "asd"
+                    };
+
+                    Assert.IsNull(sender1);
+                    Assert.IsNull(sender2);
+                    Assert.IsNull(args1);
+                    Assert.IsNull(args2);
+                    
+                    //Act
+                    hostedObject.SendRegularEvent(complexParameter1);
+
+                    autoResetEvent1.WaitOne(2000);
+                    autoResetEvent2.WaitOne(2000);
+                    
+                    //Assert
+                    Assert.AreSame(remoteObject1, sender1);
+                    Assert.AreSame(remoteObject2, sender2);
+                    AssertComplexParameter(complexParameter1, args1);
+                    AssertComplexParameter(complexParameter1, args2);
+                }
+            }
         }
         
         [Test]

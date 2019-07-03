@@ -36,7 +36,7 @@ namespace EloquentObjects.RPC.Server.Implementation
 
             foreach (var eventDescription in _contractDescription.Events)
             {
-                var handler = CreateHandler(eventDescription.Event, args => SendEventToAllClients(eventDescription.Name, args));
+                var handler = CreateHandler(eventDescription.Event, args => SendEventToAllClients(eventDescription.Name, eventDescription.IsStandardEvent, args));
                 eventDescription.Event.AddEventHandler(serviceInstance, handler);
                 _hostedEvents.Add(new HostedEvent(eventDescription.Event, handler));
             }
@@ -54,7 +54,7 @@ namespace EloquentObjects.RPC.Server.Implementation
             var actionInvokeMethod = d.GetType().GetMethod("Invoke");
             if (actionInvokeMethod == null)
             {
-                throw new InvalidOperationException($"Failed getting Invoke method for given action");
+                throw new InvalidOperationException("Failed getting Invoke method for given action");
             }
             
             //lambda: (T1 p1, T2 p2, ...) => d(new object[]{ (object)p1, (object)p2, ... })
@@ -73,7 +73,7 @@ namespace EloquentObjects.RPC.Server.Implementation
             return del;
         }
         
-        private void SendEventToAllClients(string eventName, params object[] parameters)
+        private void SendEventToAllClients(string eventName, bool isStandardEvent, params object[] parameters)
         {
             if (_disposed) throw new ObjectDisposedException(nameof(ServiceEndpoint));
             var connections = new List<IConnection>();
@@ -81,6 +81,12 @@ namespace EloquentObjects.RPC.Server.Implementation
             lock (_connections)
             {
                 connections.AddRange(_connections);
+            }
+
+            if (isStandardEvent)
+            {
+                //Do not need to serialize the sender for standard events (that have EventHandler and EventHandler<T> types);
+                parameters[0] = null;
             }
 
             foreach (var callbackAgent in connections)

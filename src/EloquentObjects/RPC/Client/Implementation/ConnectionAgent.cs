@@ -11,24 +11,20 @@ namespace EloquentObjects.RPC.Client.Implementation
 {
     internal sealed class ConnectionAgent : IConnectionAgent
     {
-        private readonly ICallback _callback;
         private readonly IHostAddress _clientHostAddress;
         private readonly ISerializer _serializer;
-        private readonly IBinding _binding;
         private readonly string _endpointId;
         private readonly IOutputChannel _outputChannel;
         private readonly ILogger _logger;
 
-        public ConnectionAgent(int connectionId, ICallback callback, string endpointId,
-            IOutputChannel outputChannel, IHostAddress clientHostAddress, ISerializer serializer, IBinding binding)
+        public ConnectionAgent(int connectionId, string endpointId,
+            IOutputChannel outputChannel, IHostAddress clientHostAddress, ISerializer serializer)
         {
             ConnectionId = connectionId;
-            _callback = callback;
             _endpointId = endpointId;
             _outputChannel = outputChannel;
             _clientHostAddress = clientHostAddress;
             _serializer = serializer;
-            _binding = binding;
 
             _logger = Logger.Factory.Create(GetType());
             _logger.Info(() => $"Created (connectionId = {ConnectionId}, endpointId = {_endpointId}, clientHostAddress = {_clientHostAddress})");
@@ -92,6 +88,8 @@ namespace EloquentObjects.RPC.Client.Implementation
             }
         }
 
+        public event EventHandler<NotifyEventArgs> EventReceived;
+
         public event EventHandler Disconnected;
         public void ReceiveAndHandleEndpointMessage(Stream stream)
         {
@@ -99,7 +97,7 @@ namespace EloquentObjects.RPC.Client.Implementation
             switch (endpointMessage)
             {
                 case EventEndpointMessage eventMessage:
-                    _callback.HandleEvent(eventMessage.EventName, eventMessage.Arguments);
+                    EventReceived?.Invoke(this, new NotifyEventArgs(eventMessage.EventName, eventMessage.Arguments));
                     break;
                 default:
                     //No profit to raise exception as this is running in input channel thread

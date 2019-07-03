@@ -40,7 +40,7 @@ namespace EloquentObjects.RPC.Client.Implementation
             _logger.Info(() => $"Created (clientHostAddress = {_clientHostAddress})");
         }
 
-        public IConnectionAgent Connect(string endpointId, ICallback callback, ISerializer serializer)
+        public IConnectionAgent Connect(string endpointId, ISerializer serializer)
         {
             var connectionId = Interlocked.Increment(ref _lastConnectionId);
 
@@ -59,22 +59,19 @@ namespace EloquentObjects.RPC.Client.Implementation
                 case ExceptionSessionMessage exceptionMessage:
                     throw exceptionMessage.Exception;
                 case HelloAckSessionMessage _:
-                    return CreateConnectionAgent(connectionId, endpointId, callback, serializer);
+                    return CreateConnectionAgent(connectionId, endpointId, serializer);
                 default:
                     throw new IOException("Unexpected failure. Connection is not acknowledged by the server.");
             }
-
         }
 
-        private IConnectionAgent CreateConnectionAgent(int connectionId, string endpointId, ICallback callback,
-            ISerializer serializer)
+        private IConnectionAgent CreateConnectionAgent(int connectionId, string endpointId, ISerializer serializer)
         {
             var connectionAgent = _connections.AddOrUpdate(connectionId,
                 id =>
                 {
                     
-                    var c = new ConnectionAgent(connectionId, callback, endpointId, _outputChannel,
-                        _clientHostAddress, serializer, _binding);
+                    var c = new ConnectionAgent(connectionId, endpointId, _outputChannel, _clientHostAddress, serializer);
                     
                     c.Disconnected += ConnectionAgentOnDisconnected;
                     

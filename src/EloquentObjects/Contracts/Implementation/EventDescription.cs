@@ -1,3 +1,4 @@
+using System;
 using System.Reflection;
 
 namespace EloquentObjects.Contracts.Implementation
@@ -8,12 +9,15 @@ namespace EloquentObjects.Contracts.Implementation
         {
             Name = name;
             Event = @event;
+            IsStandardEvent = Event.EventHandlerType == typeof(EventHandler) ||
+                              Event.EventHandlerType.IsGenericType && Event.EventHandlerType.GetGenericTypeDefinition() == typeof(EventHandler<>);
         }
 
         #region Implementation of IEventDescription
 
         public string Name { get; }
         public EventInfo Event { get; }
+        public bool IsStandardEvent { get; }
 
         #endregion
     }
