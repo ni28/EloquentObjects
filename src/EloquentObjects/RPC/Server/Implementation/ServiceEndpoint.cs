@@ -144,12 +144,7 @@ namespace EloquentObjects.RPC.Server.Implementation
                 case RequestEndpointMessage requestEndpointMessage:
                     try
                     {
-                        var response = HandleRequest(requestEndpointMessage.MethodName, requestEndpointMessage.Parameters);
-
-                        var startEndpointMessage = new EndpointResponseStartSessionMessage(clientHostAddress);
-                        startEndpointMessage.Write(stream);
-                        var responseMessage = new ResponseEndpointMessage(response);
-                        responseMessage.Write(stream, _serializer);
+                        HandleRequest(clientHostAddress, stream, requestEndpointMessage.MethodName, requestEndpointMessage.Parameters);
                     }
                     catch (Exception e)
                     {
@@ -177,25 +172,41 @@ namespace EloquentObjects.RPC.Server.Implementation
                 return;
             }
 
-            operationDescription.Method.Invoke(_serviceInstance, arguments);
+            try
+            {
+                operationDescription.Method.Invoke(_serviceInstance, arguments);
+            }
+            catch (Exception)
+            {
+                //Hide exception for one-way calls as client does not expect an answer
+            }
         }
 
-        private object HandleRequest(string methodName, object[] parameters)
+        private void HandleRequest(IHostAddress clientHostAddress, Stream stream, string methodName,
+            object[] parameters)
         {
             if (_disposed) throw new ObjectDisposedException(nameof(ServiceEndpoint));
 
             var operationDescription = _contractDescription.GetOperationDescription(methodName, parameters);
 
-            if (_synchronizationContext != null) return CallInSyncContext(operationDescription, parameters);
-
+            object result;
             try
             {
-                return operationDescription.Method.Invoke(_serviceInstance, parameters.ToArray());
+                result = _synchronizationContext != null
+                    ? CallInSyncContext(operationDescription, parameters)
+                    : operationDescription.Method.Invoke(_serviceInstance, parameters.ToArray());
             }
             catch (Exception e)
             {
-                throw e.InnerException ?? e;
+                //Send exception back to client
+                WriteException(stream, e.InnerException ?? e, clientHostAddress);
+                return;
             }
+            
+            var startEndpointMessage = new EndpointResponseStartSessionMessage(clientHostAddress);
+            startEndpointMessage.Write(stream);
+            var responseMessage = new ResponseEndpointMessage(result);
+            responseMessage.Write(stream, _serializer);
         }
 
 

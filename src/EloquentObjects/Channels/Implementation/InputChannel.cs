@@ -28,11 +28,15 @@ namespace EloquentObjects.Channels.Implementation
 
         public async void Start()
         {
+            if (_disposed)
+                throw new ObjectDisposedException(GetType().Name);
+
             if (_listener != null) throw new InvalidOperationException("Input channel was already started");
             _listener = new TcpListener(_ipAddress, _port);
             _listener.Start();
 
             while (!_disposed)
+            {
                 try
                 {
                     var tcpClient = await _listener.AcceptTcpClientAsync();
@@ -44,6 +48,7 @@ namespace EloquentObjects.Channels.Implementation
                 {
                     // Hide all exceptions for unexpected connection lost with the client
                 }
+            }
         }
 
         public event EventHandler<Stream> MessageReady;
@@ -52,6 +57,9 @@ namespace EloquentObjects.Channels.Implementation
 
         public void Dispose()
         {
+            if (_disposed)
+                throw new ObjectDisposedException(GetType().Name);
+
             _disposed = true;
             _listener?.Stop();
 

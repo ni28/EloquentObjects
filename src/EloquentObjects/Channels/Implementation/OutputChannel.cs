@@ -16,6 +16,7 @@ namespace EloquentObjects.Channels.Implementation
         private readonly AutoResetEvent _resetEvent = new AutoResetEvent(true);
         private readonly ILogger _logger;
         private readonly BufferedStream _bufferedStream;
+        private bool _disposed;
 
         public OutputChannel(IPAddress ipAddress, int port, int sendTimeout, int receiveTimeout)
         {
@@ -41,6 +42,10 @@ namespace EloquentObjects.Channels.Implementation
 
         public void Dispose()
         {
+            if (_disposed)
+                throw new ObjectDisposedException(GetType().Name);
+
+            _disposed = true;
             _bufferedStream.Dispose();
             _stream.Dispose();
             _client.Close();
@@ -57,6 +62,9 @@ namespace EloquentObjects.Channels.Implementation
 
         public IOutputChannelContext BeginWriteRead()
         {
+            if (_disposed)
+                throw new ObjectDisposedException(GetType().Name);
+
             _resetEvent.WaitOne();
             return new OutputChannelContext(_bufferedStream, _resetEvent);
         }

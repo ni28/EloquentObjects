@@ -37,21 +37,6 @@ namespace EloquentObjects.Channels.Implementation
             return new HostAddress(ipAddress, port);
         }
         
-        public static HostAddress Parse(string hostAddress)
-        {
-            var index = hostAddress.LastIndexOf(':');
-            if (index < 0)
-                throw new FormatException(
-                    $"The host address string does not match expected format: {hostAddress} (format <IP address>:<port> was expected)");
-
-            var ipAddress = hostAddress.Substring(0, index);
-            var strPort = hostAddress.Substring(index + 1);
-
-            if (!int.TryParse(strPort, out var port))
-                throw new FormatException($"The port of the host address is not an integer: {hostAddress}");
-
-            return new HostAddress(ipAddress, port);        }
-        
         #region Implementation of ITcpHostAddress
 
         public string IpAddress { get; }
@@ -96,8 +81,17 @@ namespace EloquentObjects.Channels.Implementation
             {
                 throw new ArgumentOutOfRangeException(nameof(baseAddress), "Uri should not have a path");
             }
+
+
+            var portComponent = baseAddress.GetComponents(UriComponents.Port, UriFormat.Unescaped);
             
-            if (!int.TryParse(baseAddress.GetComponents(UriComponents.Port, UriFormat.Unescaped), out var port))
+            int port;
+
+            if (string.IsNullOrEmpty(portComponent))
+            {
+                port = -1;
+            }
+            else if (!int.TryParse(portComponent, out port))
             {
                 throw new ArgumentOutOfRangeException(nameof(baseAddress), "Port has invalid format (integer was expected)");
             }

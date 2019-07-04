@@ -19,6 +19,7 @@ namespace EloquentObjects.RPC.Server.Implementation
         private Timer _heartbeatTimer;
         private IOutputChannel _outputChannel;
         private readonly ILogger _logger;
+        private bool _disposed;
 
         public Session(IBinding binding, IHostAddress clientHostAddress, IEndpointHub endpointHub)
         {
@@ -39,6 +40,10 @@ namespace EloquentObjects.RPC.Server.Implementation
 
         public void Dispose()
         {
+            if (_disposed)
+                throw new ObjectDisposedException(GetType().FullName);
+
+            _disposed = true;
             foreach (var connection in _connections.Values)
             {
                 connection.Dispose();
@@ -72,6 +77,9 @@ namespace EloquentObjects.RPC.Server.Implementation
 
         public void HandleSessionMessage(SessionMessage sessionMessage, Stream stream)
         {
+            if (_disposed)
+                throw new ObjectDisposedException(GetType().FullName);
+
             //The sessionMessage.ClientHostAddress should always match ClientHostAddress. We do not check it here for optimization purposes.
             
             switch (sessionMessage)

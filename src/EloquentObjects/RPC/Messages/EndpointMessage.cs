@@ -21,7 +21,7 @@ namespace EloquentObjects.RPC.Messages
 
         public static EndpointMessage Read(Stream stream, ISerializer serializer)
         {
-            var messageType = (EndpointMessageType) stream.ReadByte();
+            var messageType = (EndpointMessageType) stream.TakeByte();
 
             switch (messageType)
             {

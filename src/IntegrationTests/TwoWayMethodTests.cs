@@ -87,6 +87,7 @@ namespace IntegrationTests
         
         [Test]
         [TestCase("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001")]
+        [TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
         public void ShallCallRemoteMethodsTwoWay(string serverAddress, string clientAddress)
         {
             //Arrange
@@ -116,6 +117,7 @@ namespace IntegrationTests
         
         [Test]
         [TestCase("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001")]
+        [TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
         public void ShallCallReturnValue(string serverAddress, string clientAddress)
         {
             //Arrange
@@ -152,6 +154,7 @@ namespace IntegrationTests
 
         [Test]
         [TestCase("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001")]
+        [TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
         public void ShallRethrowExceptionWhenCalledRemoteMethodsTwoWay(string serverAddress, string clientAddress)
         {
             //Arrange
@@ -184,6 +187,7 @@ namespace IntegrationTests
         
         [Test]
         [TestCase("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001")]
+        [TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
         public void ShallCallRemoteMethodTwoWayWithParameters(string serverAddress, string clientAddress)
         {
             //Arrange

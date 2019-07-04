@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.IO;
 using EloquentObjects.Channels;
+using EloquentObjects.Logging;
 using EloquentObjects.RPC.Messages;
 using EloquentObjects.RPC.Messages.Session;
 
@@ -15,6 +16,7 @@ namespace EloquentObjects.RPC.Server.Implementation
 
         private readonly ConcurrentDictionary<IHostAddress, ISession> _sessions = new ConcurrentDictionary<IHostAddress, ISession>();
         private bool _disposed;
+        private readonly ILogger _logger;
 
         public Server(IBinding binding, IInputChannel inputChannel, IEndpointHub endpointHub)
         {
@@ -25,6 +27,9 @@ namespace EloquentObjects.RPC.Server.Implementation
             _inputChannel.MessageReady += InputChannelOnMessageReady;
 
             _inputChannel.Start();
+            
+            _logger = Logger.Factory.Create(GetType());
+            _logger.Info(() => "Created)");
         }
 
         #region IDisposable
@@ -32,12 +37,11 @@ namespace EloquentObjects.RPC.Server.Implementation
         public void Dispose()
         {
             if (_disposed)
-                throw new ObjectDisposedException(nameof(Server));
+                throw new ObjectDisposedException(GetType().FullName);
 
             _disposed = true;
+            
             _inputChannel.MessageReady -= InputChannelOnMessageReady;
-            _inputChannel.Dispose();
-
 
             foreach (var session in _sessions.Values)
             {
@@ -46,6 +50,8 @@ namespace EloquentObjects.RPC.Server.Implementation
             }
 
             _sessions.Clear();
+
+            _logger.Info(() => "Disposed)");
         }
 
         #endregion
@@ -55,24 +61,17 @@ namespace EloquentObjects.RPC.Server.Implementation
             if (_disposed)
                 return;
 
-            try
+            var sessionMessage = SessionMessage.Read(stream);
+    
+            switch (sessionMessage)
             {
-                var sessionMessage = SessionMessage.Read(stream);
-        
-                switch (sessionMessage)
-                {
-                    case HelloSessionMessage helloMessage:
-                        HandleHello(helloMessage, stream);
-                        break;
-                    default:
-                        var session = _sessions[sessionMessage.ClientHostAddress];
-                        session.HandleSessionMessage(sessionMessage, stream);
-                        break;
-                }
-            }
-            catch (Exception)
-            {
-                //Hide all exceptions and continue receiving new messages
+                case HelloSessionMessage helloMessage:
+                    HandleHello(helloMessage, stream);
+                    break;
+                default:
+                    var session = _sessions[sessionMessage.ClientHostAddress];
+                    session.HandleSessionMessage(sessionMessage, stream);
+                    break;
             }
         }
 

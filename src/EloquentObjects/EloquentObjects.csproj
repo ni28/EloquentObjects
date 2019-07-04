@@ -52,6 +52,9 @@
     <Compile Include="Channels\Implementation\TcpBinding.cs" />
     <Compile Include="Channels\Implementation\HostAddress.cs" />
     <Compile Include="Channels\IOutputChannelContext.cs" />
+    <Compile Include="Channels\NamedPipesBinding\InputChannel.cs" />
+    <Compile Include="Channels\NamedPipesBinding\NamedPipesBinding.cs" />
+    <Compile Include="Channels\NamedPipesBinding\OutputChannel.cs" />
     <Compile Include="Contracts\IEventDescription.cs" />
     <Compile Include="Contracts\Implementation\ContractDescription.cs" />
     <Compile Include="Contracts\Implementation\CachedContractDescriptionFactory.cs" />

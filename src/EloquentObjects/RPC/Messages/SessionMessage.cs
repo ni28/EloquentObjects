@@ -27,7 +27,7 @@ namespace EloquentObjects.RPC.Messages
 
         public static SessionMessage Read(Stream stream)
         {
-            var messageType = (SessionMessageType)stream.ReadByte();
+            var messageType = (SessionMessageType)stream.TakeByte();
             var clientHostAddress = HostAddress.Read(stream);
 
             switch (messageType)
