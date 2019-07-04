@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Runtime.Serialization;
 
 namespace EloquentObjects
 {
@@ -37,12 +36,6 @@ namespace EloquentObjects
             _innerException = innerException;
             StackTrace = stackTrace;
             ExceptionType = exceptionType;
-        }
-
-        public FaultException(SerializationInfo info, StreamingContext context)
-            : base(info, context)
-        {
-            ExceptionType = info.GetString(nameof(ExceptionType));
         }
 
         public string ExceptionType { get; }
