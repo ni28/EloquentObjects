@@ -12,7 +12,7 @@ namespace IntegrationTests
     [TestFixture]
     public sealed class EventTests
     {
-        [EloquentInterface]
+        [EloquentContract]
         public interface IContract
         {
             [EloquentEvent]

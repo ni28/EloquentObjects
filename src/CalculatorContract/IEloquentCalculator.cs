@@ -3,7 +3,7 @@ using EloquentObjects;
 
 namespace ConsoleApplication1
 {
-    [EloquentInterface]
+    [EloquentContract]
     public interface IEloquentCalculator
     {
         [EloquentProperty]

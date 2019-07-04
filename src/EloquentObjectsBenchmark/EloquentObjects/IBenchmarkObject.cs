@@ -3,7 +3,7 @@ using EloquentObjects;
 
 namespace EloquentObjectsBenchmark.EloquentObjects
 {
-    [EloquentInterface]
+    [EloquentContract]
     public interface IBenchmarkObject
     {
         [EloquentMethod(IsOneWay = false)]

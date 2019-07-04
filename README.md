@@ -66,7 +66,7 @@ See full tutorial here: [TBD]
 2. Define an attributed contract in a Contract assembly that is available both for server and client:
 
 ```csharp 
-    [EloquentInterface]
+    [EloquentContract]
     public interface IEloquentCalculator
     {
         [EloquentProperty]
@@ -226,6 +226,7 @@ void OnRegularEvent(object sender, EventArgs args)
 3. Client event that connection is lost. Restore connection.
 
 ## Improvements
+0. Timeouts?
 1. Default parameters for interfaces
 2. Proto nuget
 3. Benchmark: gRPC

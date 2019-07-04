@@ -15,11 +15,11 @@ namespace EloquentObjects.Contracts.Implementation
             if (contractType == null)
                 throw new ArgumentNullException(nameof(contractType));
 
-            var attribute = contractType.GetCustomAttribute<EloquentInterfaceAttribute>();
+            var attribute = contractType.GetCustomAttribute<EloquentContractAttribute>();
 
             if (attribute == null)
                 throw new InvalidOperationException(
-                    $"The provided type does not contain a {nameof(EloquentInterfaceAttribute)} attribute: {contractType}");
+                    $"The provided type does not contain a {nameof(EloquentContractAttribute)} attribute: {contractType}");
 
             var contract = new ContractDescription(contractType);
 
@@ -70,9 +70,10 @@ namespace EloquentObjects.Contracts.Implementation
                 .Select(info =>
                 {
                     var propertyAttribute = info.GetCustomAttribute<EloquentPropertyAttribute>();
-                    var getMethodDescription = new MethodDescription(info.GetMethod.Name, info.GetMethod, propertyAttribute.IsOneWay);
-                    var setMethodDescription = new MethodDescription(info.SetMethod.Name, info.SetMethod, propertyAttribute.IsOneWay);
-                    return new IMethodDescription[] {getMethodDescription, setMethodDescription};
+                    
+                    var getMethodDescription = info.GetMethod == null ? null : new MethodDescription(info.GetMethod.Name, info.GetMethod, propertyAttribute.IsOneWay);
+                    var setMethodDescription = info.SetMethod == null ? null : new MethodDescription(info.SetMethod.Name, info.SetMethod, propertyAttribute.IsOneWay);
+                    return new IMethodDescription[] {getMethodDescription, setMethodDescription}.Where(md => md != null).ToArray();
                 })
                 .SelectMany(md => md)
                 .ToArray();

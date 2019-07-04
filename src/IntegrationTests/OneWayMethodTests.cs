@@ -9,7 +9,7 @@ namespace IntegrationTests
     [TestFixture]
     public sealed class OneWayMethodTests
     {
-        [EloquentInterface]
+        [EloquentContract]
         public interface IContract
         {
             [EloquentMethod(IsOneWay = true)]

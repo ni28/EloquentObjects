@@ -8,7 +8,7 @@ namespace IntegrationTests
     [TestFixture]
     public sealed class TwoWayMethodTests
     {
-        [EloquentInterface]
+        [EloquentContract]
         public interface IContract
         {
             [EloquentMethod]

@@ -6,7 +6,7 @@ namespace EloquentObjects
     /// Indicates that an interface defines a contract that can be used with EloquentObjects framework to provide remote access for objects that implement this interface.
     /// </summary>
     [AttributeUsage(AttributeTargets.Interface)]
-    public sealed class EloquentInterfaceAttribute : Attribute
+    public sealed class EloquentContractAttribute : Attribute
     {
     }
     
