@@ -2,22 +2,21 @@
 
     <PropertyGroup>
         <RootNamespace>EloquentObjects</RootNamespace>
-        <TargetFrameworks>net45;netstandard2.0</TargetFrameworks>
         <PackageVersion>1.0.2</PackageVersion>
+        <FileVersion>1.0.2.0</FileVersion>
         <Title>EloquentObjects</Title>
         <Authors>ni28</Authors>
         <Description>.NET object-oriented Inter-Process Communication (IPC) and Remote-Procedure Call (RPC) framework that allows clients to work with hosted objects remotelly (call methods, get or set properties, subscribe to events, etc.).</Description>
         <PackageProjectUrl>https://github.com/ni28/EloquentObjects</PackageProjectUrl>
-        <PackageLicenseUrl>MIT</PackageLicenseUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <RepositoryUrl>https://github.com/ni28/EloquentObjects</RepositoryUrl>
         <PackageTags>RPC OORPC Remote Remoting Service Host WCF</PackageTags>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <TargetFrameworks>net45;netstandard2.0</TargetFrameworks>
     </PropertyGroup>
 
     <ItemGroup>
-      <Reference Include="Castle.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc">
-        <HintPath>C:\Program Files\JetBrains\JetBrains Rider 2019.1.2\lib\ReSharperHost\nunit3\Castle.Core.dll</HintPath>
-      </Reference>
+      <PackageReference Include="Castle.Core" Version="4.4.0" />
     </ItemGroup>
 
 </Project>

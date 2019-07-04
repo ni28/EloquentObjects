@@ -59,7 +59,6 @@ When object is hosted you can connect to remote object:
 	}
 ```	
 
-See full tutorial here: [TBD]
 
 ## Quick start example
 1. Create Server, Client and Contract assemblies. Add dependency from Contract assembly both to Server and to Client.

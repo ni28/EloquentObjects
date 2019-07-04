@@ -14,12 +14,8 @@
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     </PropertyGroup>
 
-    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-      <PackageReference Include="System.Reflection.TypeExtensions" Version="4.6.0-preview6.19303.8" />
-    </ItemGroup>
-
     <ItemGroup>
-      <PackageReference Include="protobuf-net" Version="3.0.0-alpha.43" />
+      <PackageReference Include="protobuf-net" Version="2.4.0" />
     </ItemGroup>
 
     <ItemGroup>
@@ -28,6 +24,10 @@
 
     <ItemGroup>
       <Folder Include="Properties" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+      <PackageReference Include="System.Reflection.TypeExtensions" Version="4.5.1" />
     </ItemGroup>
     
 </Project>
