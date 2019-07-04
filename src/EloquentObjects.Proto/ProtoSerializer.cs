@@ -18,15 +18,15 @@ namespace EloquentObjects.Proto
             return Serializer.Deserialize<object>(stream);
         }
 
-        public void WriteCall(Stream stream, Call call)
+        public void WriteCall(Stream stream, CallInfo callInfo)
         {
-            Serializer.Serialize(stream, new CallEnvelope(call.OperationName, call.Parameters));
+            Serializer.Serialize(stream, new CallEnvelope(callInfo.OperationName, callInfo.Parameters));
         }
 
-        public Call ReadCall(Stream stream)
+        public CallInfo ReadCall(Stream stream)
         {
             var envelope = Serializer.Deserialize<CallEnvelope>(stream);
-            return new Call(envelope.OperationName, envelope.Parameters);
+            return new CallInfo(envelope.OperationName, envelope.Parameters);
         }
 
         #endregion

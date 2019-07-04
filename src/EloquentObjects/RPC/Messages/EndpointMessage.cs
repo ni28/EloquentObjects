@@ -59,17 +59,17 @@ namespace EloquentObjects.RPC.Messages
         }
 
         [NotNull]
-        protected static byte[] SerializeCall(ISerializer serializer, Call call)
+        protected static byte[] SerializeCall(ISerializer serializer, CallInfo callInfo)
         {
             using (var memoryStream = new MemoryStream())
             {
-                serializer.WriteCall(memoryStream, call);
+                serializer.WriteCall(memoryStream, callInfo);
                 //memoryStream.Position = 0;
                 return memoryStream.ToArray();
             }
         }
         
-        protected static Call DeserializeCall(ISerializer deserializer, [NotNull] byte[] bytes)
+        protected static CallInfo DeserializeCall(ISerializer deserializer, [NotNull] byte[] bytes)
         {
             using (Stream stream = new MemoryStream())
             {

@@ -10,6 +10,9 @@ using JetBrains.Annotations;
 
 namespace EloquentObjects
 {
+    /// <summary>
+    /// Represents an EloquentObjects client that can create connections to remote objects by their identifiers.
+    /// </summary>
     public sealed class EloquentClient : IEloquentClient
     {
         private readonly ISerializerFactory _serializerFactory;
@@ -19,10 +22,24 @@ namespace EloquentObjects
         private readonly ProxyGenerator _proxyGenerator;
         private readonly SessionAgent _sessionAgent;
 
+        /// <summary>
+        /// Creates an EloquentObjects client with default settings and serializer (DataContractSerializer is used).
+        /// </summary>
+        /// <param name="serverAddress">Address of the server that hosts object. Can be prefixed with 'tcp://' for TCP binding or 'pipe://' for Named Pipes binding</param>
+        /// <param name="clientAddress">Client-side address that is used to send server-to-client events. Can be prefixed with 'tcp://' for TCP binding or 'pipe://' for Named Pipes binding</param>
+        /// <exception cref="ArgumentException">Client Uri scheme should match server Uri scheme</exception>
         public EloquentClient(string serverAddress, string clientAddress) : this(serverAddress, clientAddress, new EloquentSettings())
         {
         }
         
+        /// <summary>
+        /// Creates an EloquentObjects client with ability to specify custom settings and dependencies.
+        /// </summary>
+        /// <param name="serverAddress">Address of the server that hosts object. Can be prefixed with 'tcp://' for TCP binding or 'pipe://' for Named Pipes binding</param>
+        /// <param name="clientAddress">Client-side address that is used to send server-to-client events. Can be prefixed with 'tcp://' for TCP binding or 'pipe://' for Named Pipes binding</param>
+        /// <param name="settings">Custom settings</param>
+        /// <param name="serializerFactory">Factory that can create serializer to be used for serializing/deserializing data sent between server and client</param>
+        /// <exception cref="ArgumentException">Client Uri scheme should match server Uri scheme</exception>
         public EloquentClient(string serverAddress, string clientAddress, EloquentSettings settings, [CanBeNull] ISerializerFactory serializerFactory=null)
         {
             _serializerFactory = serializerFactory ?? new DefaultSerializerFactory();
@@ -63,6 +80,7 @@ namespace EloquentObjects
 
         #endregion
 
+        /// <inheritdoc />
         public IConnection<T> Connect<T>(string objectId) where T : class
         {
             var contractDescription = _contractDescriptionFactory.Create(typeof(T));

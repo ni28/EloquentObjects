@@ -11,6 +11,7 @@ using JetBrains.Annotations;
 
 namespace EloquentObjects
 {
+    /// <inheritdoc />
     public sealed class EloquentServer : IEloquentServer
     {
         private readonly ISerializerFactory _serializerFactory;
@@ -19,10 +20,20 @@ namespace EloquentObjects
         private readonly IInputChannel _inputChannel;
         private readonly Server _server;
 
+        /// <summary>
+        /// Creates an EloquentObjects server with default settings and serializer (DataContractSerializer is used).
+        /// </summary>
+        /// <param name="address">Address of the server that hosts object. Can be prefixed with 'tcp://' for TCP binding or 'pipe://' for Named Pipes binding</param>
         public EloquentServer(string address) : this(address, new EloquentSettings())
         {
         }
 
+        /// <summary>
+        /// Creates an EloquentObjects server with ability to specify custom settings and dependencies.
+        /// </summary>
+        /// <param name="address">Address of the server that hosts object. Can be prefixed with 'tcp://' for TCP binding or 'pipe://' for Named Pipes binding</param>
+        /// <param name="settings">Custom settings</param>
+        /// <param name="serializerFactory">Factory that can create serializer to be used for serializing/deserializing data sent between server and client</param>
         public EloquentServer(string address, EloquentSettings settings, [CanBeNull] ISerializerFactory serializerFactory=null)
         {
             _serializerFactory = serializerFactory ?? new DefaultSerializerFactory();
@@ -55,6 +66,7 @@ namespace EloquentObjects
 
         #endregion
 
+        /// <inheritdoc />
         public void Add<T>(string objectId, T obj, SynchronizationContext synchronizationContext = null)
         {
             var contractDescription = _contractDescriptionFactory.Create(typeof(T));

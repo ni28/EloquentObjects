@@ -17,7 +17,7 @@ namespace EloquentObjects
         /// <param name="message">Reason of the fault.</param>
         /// <param name="stackTrace">Stack stackTrace</param>
         /// <param name="exceptionType">Exception type as a string</param>
-        public FaultException(string message, string stackTrace, string exceptionType) : base(message)
+        private FaultException(string message, string stackTrace, string exceptionType) : base(message)
         {
             StackTrace = stackTrace;
             ExceptionType = exceptionType;
@@ -30,7 +30,7 @@ namespace EloquentObjects
         /// <param name="stackTrace">Stack stackTrace</param>
         /// <param name="exceptionType">Exception type as a string</param>
         /// <param name="innerException">Inner exception</param>
-        public FaultException(string message, string stackTrace, string exceptionType, FaultException innerException) : base(
+        private FaultException(string message, string stackTrace, string exceptionType, FaultException innerException) : base(
             message, Create(innerException))
         {
             _innerException = innerException;
@@ -46,7 +46,7 @@ namespace EloquentObjects
 
         #endregion
 
-        public void Write(Stream stream)
+        internal void Write(Stream stream)
         {
             stream.WriteString(Message);
             stream.WriteString(StackTrace);
@@ -62,7 +62,7 @@ namespace EloquentObjects
             }
         }
 
-        public static FaultException Read(Stream stream)
+        internal static FaultException Read(Stream stream)
         {
             var message = stream.TakeString();
             var stackTrace = stream.TakeString();
@@ -80,7 +80,7 @@ namespace EloquentObjects
                 : new FaultException(message, stackTrace, exceptionType, innerException);
         }
 
-        public static FaultException Create(Exception exception)
+        internal static FaultException Create(Exception exception)
         {
             return exception.InnerException == null
                 ? new FaultException(exception.Message, exception.StackTrace, exception.GetType().FullName)

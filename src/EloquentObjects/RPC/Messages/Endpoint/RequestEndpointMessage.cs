@@ -25,7 +25,7 @@ namespace EloquentObjects.RPC.Messages.Endpoint
         {
             stream.WriteString(EndpointId);
             stream.WriteInt(ConnectionId);
-            stream.WritePayload(SerializeCall(serializer, new Call(MethodName, Parameters)));
+            stream.WritePayload(SerializeCall(serializer, new CallInfo(MethodName, Parameters)));
         }
 
         #endregion

@@ -1,8 +1,9 @@
 # EloquentObjects
 EloquentObjects is a .NET object-oriented Inter-Process Communication (IPC) and Remote-Procedure Call (RPC) framework that allows clients to work with hosted objects remotelly (call methods, get or set properties, subscribe to events, etc.).
 
-## Supported Runtimes
-- .NET Framework 4.5+ 
+## Target Frameworks
+- .NET Framework 4.5+
+- .NET Standard 2.0+
 
 ## Installation
 
@@ -216,7 +217,9 @@ void OnRegularEvent(object sender, EventArgs args)
 }
 ```
 
+
 # TODO
+
 ## Features
 1. Security
 2. Polling mode

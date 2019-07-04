@@ -11,6 +11,7 @@
         <PackageLicenseUrl>MIT</PackageLicenseUrl>
         <RepositoryUrl>https://github.com/ni28/EloquentObjects</RepositoryUrl>
         <PackageTags>RPC OORPC Remote Remoting Service Host WCF</PackageTags>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     </PropertyGroup>
 
     <ItemGroup>

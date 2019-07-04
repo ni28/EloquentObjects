@@ -30,15 +30,15 @@ namespace EloquentObjects.Serialization.Implementation
             return _serializer.ReadObject(stream);
         }
 
-        public void WriteCall(Stream stream, Call call)
+        public void WriteCall(Stream stream, CallInfo callInfo)
         {
-            _serializer.WriteObject(stream, new CallEnvelope(call.OperationName, call.Parameters));
+            _serializer.WriteObject(stream, new CallEnvelope(callInfo.OperationName, callInfo.Parameters));
         }
 
-        public Call ReadCall(Stream stream)
+        public CallInfo ReadCall(Stream stream)
         {
             var envelope = (CallEnvelope)_serializer.ReadObject(stream);
-            return new Call(envelope.OperationName, envelope.Parameters);
+            return new CallInfo(envelope.OperationName, envelope.Parameters);
         }
 
         #endregion
