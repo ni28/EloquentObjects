@@ -5,11 +5,13 @@ namespace EloquentObjectsBenchmark.EloquentObjects.Benchmarks
 {
     internal sealed class Events: IBenchmark
     {
+        private readonly string _scheme;
         private readonly int _iterations;
         private readonly int _numberOfEventClients;
 
-        public Events(int iterations, int numberOfEventClients)
+        public Events(string scheme, int iterations, int numberOfEventClients)
         {
+            _scheme = scheme;
             _iterations = iterations;
             _numberOfEventClients = numberOfEventClients;
         }
@@ -18,7 +20,7 @@ namespace EloquentObjectsBenchmark.EloquentObjects.Benchmarks
 
         public MeasurementResult Measure()
         {
-            using (var remoteObjectServer = new EloquentServer("tcp://127.0.0.1:50000", new EloquentSettings
+            using (var remoteObjectServer = new EloquentServer($"{_scheme}://127.0.0.1:50000", new EloquentSettings
             {
                 HeartBeatMs = 1000,
                 MaxHeartBeatLost = 5,
@@ -35,7 +37,7 @@ namespace EloquentObjectsBenchmark.EloquentObjects.Benchmarks
                 var autoResetEvent = new AutoResetEvent(false);
                 for (var i = 0; i < _numberOfEventClients; i++)
                 {
-                    clients[i] = new EloquentClient("tcp://127.0.0.1:50000", $"tcp://127.0.0.1:6000{i}", new EloquentSettings
+                    clients[i] = new EloquentClient($"{_scheme}://127.0.0.1:50000", $"{_scheme}://127.0.0.1:6000{i}", new EloquentSettings
                     {
                         HeartBeatMs = 1000,
                         SendTimeout = 1000,
@@ -49,7 +51,7 @@ namespace EloquentObjectsBenchmark.EloquentObjects.Benchmarks
                     };
                 }
 
-                var result = MeasurementResult.Measure("Events", () =>
+                var result = MeasurementResult.Measure($"EloquentObjects: Events with {_scheme}", () =>
                 {
                     connections[0].Object.StartEvents(_iterations / _numberOfEventClients);
 

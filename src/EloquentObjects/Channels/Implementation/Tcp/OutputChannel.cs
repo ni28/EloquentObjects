@@ -5,7 +5,7 @@ using System.Net.Sockets;
 using System.Threading;
 using EloquentObjects.Logging;
 
-namespace EloquentObjects.Channels.Implementation
+namespace EloquentObjects.Channels.Implementation.Tcp
 {
     internal sealed class OutputChannel : IOutputChannel
     {

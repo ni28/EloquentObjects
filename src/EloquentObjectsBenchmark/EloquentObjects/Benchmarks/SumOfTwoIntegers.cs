@@ -1,14 +1,15 @@
-using System;
 using EloquentObjects;
 
 namespace EloquentObjectsBenchmark.EloquentObjects.Benchmarks
 {
     internal sealed class SumOfTwoIntegers: IBenchmark
     {
+        private readonly string _scheme;
         private readonly int _iterations;
 
-        public SumOfTwoIntegers(int iterations)
+        public SumOfTwoIntegers(string scheme, int iterations)
         {
+            _scheme = scheme;
             _iterations = iterations;
         }
 
@@ -16,8 +17,8 @@ namespace EloquentObjectsBenchmark.EloquentObjects.Benchmarks
 
         public MeasurementResult Measure()
         {
-            using (var remoteObjectServer = new EloquentServer("tcp://127.0.0.1:50000"))
-            using (var remoteObjectClient = new EloquentClient("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001"))
+            using (var remoteObjectServer = new EloquentServer($"{_scheme}://127.0.0.1:50000"))
+            using (var remoteObjectClient = new EloquentClient($"{_scheme}://127.0.0.1:50000", $"{_scheme}://127.0.0.1:50001"))
             {
                 remoteObjectServer.Add<IBenchmarkObject>("endpoint1", new BenchmarkObject());
 
@@ -25,7 +26,7 @@ namespace EloquentObjectsBenchmark.EloquentObjects.Benchmarks
                 {
                     var benchmarkObj = session.Object;
 
-                    return MeasurementResult.Measure("Sum of two integers", () =>
+                    return MeasurementResult.Measure($"EloquentObjects: Sum of two integers with {_scheme}", () =>
                     {
                         for (var i = 0; i < _iterations; i++)
                         {

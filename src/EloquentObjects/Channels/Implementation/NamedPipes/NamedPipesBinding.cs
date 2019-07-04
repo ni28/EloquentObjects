@@ -1,15 +1,11 @@
-using System;
-using System.IO;
-using System.Net;
-
-namespace EloquentObjects.Channels.Implementation
+namespace EloquentObjects.Channels.Implementation.NamedPipes
 {
-    internal sealed class TcpBinding : IBinding
+    internal sealed class NamedPipesBinding : IBinding
     {
         private readonly int _sendTimeout;
         private readonly int _receiveTimeout;
 
-        public TcpBinding(int heartBeatMs, int maxHeartBeatLost, int sendTimeout, int receiveTimeout)
+        public NamedPipesBinding(int heartBeatMs, int maxHeartBeatLost, int sendTimeout, int receiveTimeout)
         {
             HeartBeatMs = heartBeatMs;
             MaxHeartBeatLost = maxHeartBeatLost;
@@ -24,12 +20,12 @@ namespace EloquentObjects.Channels.Implementation
         
         public IInputChannel CreateInputChannel(IHostAddress address)
         {
-            return new InputChannel(IPAddress.Parse(address.IpAddress), address.Port, _sendTimeout);
+            return new InputChannel($"{address.IpAddress}:{address.Port}");
         }
 
         public IOutputChannel CreateOutputChannel(IHostAddress address)
         {
-            return new OutputChannel(IPAddress.Parse(address.IpAddress), address.Port, _sendTimeout, _receiveTimeout);
+            return new OutputChannel($"{address.IpAddress}:{address.Port}");
         }
 
         #endregion

@@ -4,10 +4,12 @@ namespace EloquentObjectsBenchmark.EloquentObjects.Benchmarks
 {
     internal sealed class OneWayCallsWithParameter: IBenchmark
     {
+        private readonly string _scheme;
         private readonly int _iterations;
 
-        public OneWayCallsWithParameter(int iterations)
+        public OneWayCallsWithParameter(string scheme, int iterations)
         {
+            _scheme = scheme;
             _iterations = iterations;
         }
 
@@ -15,8 +17,8 @@ namespace EloquentObjectsBenchmark.EloquentObjects.Benchmarks
 
         public MeasurementResult Measure()
         {
-            using (var remoteObjectServer = new EloquentServer("tcp://127.0.0.1:50000"))
-            using (var remoteObjectClient = new EloquentClient("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001"))
+            using (var remoteObjectServer = new EloquentServer($"{_scheme}://127.0.0.1:50000"))
+            using (var remoteObjectClient = new EloquentClient($"{_scheme}://127.0.0.1:50000", $"{_scheme}://127.0.0.1:50001"))
             {
                 remoteObjectServer.Add<IBenchmarkObject>("endpoint1", new BenchmarkObject());
 
@@ -41,7 +43,7 @@ namespace EloquentObjectsBenchmark.EloquentObjects.Benchmarks
                         }
                     };
                     
-                    return MeasurementResult.Measure("One-way calls with parameter", () =>
+                    return MeasurementResult.Measure($"EloquentObjects: One-way calls with parameter with {_scheme}", () =>
                     {
                         for (var i = 0; i < _iterations; i++)
                         {

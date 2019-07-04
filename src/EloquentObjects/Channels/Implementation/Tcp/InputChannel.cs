@@ -5,7 +5,7 @@ using System.Net.Sockets;
 using System.Threading;
 using EloquentObjects.Logging;
 
-namespace EloquentObjects.Channels.Implementation
+namespace EloquentObjects.Channels.Implementation.Tcp
 {
     internal sealed class InputChannel : IInputChannel
     {
@@ -73,8 +73,8 @@ namespace EloquentObjects.Channels.Implementation
             try
             {
                 using (var networkStream = tcpClient.GetStream())
+                using(var bufferedStream = new BufferedStream(networkStream))
                 {
-                    var bufferedStream = new BufferedStream(networkStream);
                     while (!_disposed)
                     {
                         MessageReady?.Invoke(this, bufferedStream);

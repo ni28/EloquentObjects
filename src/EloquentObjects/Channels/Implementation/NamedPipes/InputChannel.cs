@@ -3,14 +3,14 @@ using System.IO;
 using System.IO.Pipes;
 using EloquentObjects.Logging;
 
-namespace EloquentObjects.Channels.NamedPipesBinding
+namespace EloquentObjects.Channels.Implementation.NamedPipes
 {
     internal sealed class InputChannel : IInputChannel
     {
         private readonly string _pipeName;
-        private NamedPipeServerStream _stream;
         private readonly ILogger _logger;
         private bool _disposed;
+        private NamedPipeServerStream _stream;
 
         public InputChannel(string pipeName)
         {
@@ -29,7 +29,7 @@ namespace EloquentObjects.Channels.NamedPipesBinding
 
             _disposed = true;
             
-            _stream.Dispose();
+            _stream?.Dispose();
             
             _logger.Info(() => $"Disposed (pipeName = {_pipeName})");
         }
@@ -43,32 +43,39 @@ namespace EloquentObjects.Channels.NamedPipesBinding
             if (_disposed)
                 throw new ObjectDisposedException(GetType().Name);
 
-            _stream = new NamedPipeServerStream(_pipeName, PipeDirection.InOut, NamedPipeServerStream.MaxAllowedServerInstances, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+            CreateStream();
+        }
+
+        private void CreateStream()
+        {
+            _stream = new NamedPipeServerStream(_pipeName, PipeDirection.InOut, NamedPipeServerStream.MaxAllowedServerInstances,
+                PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
             _stream.BeginWaitForConnection(WaitForConnectionCallback, _stream);
         }
 
         private void WaitForConnectionCallback(IAsyncResult ar)
         {
-            Start();
-
+            if (_disposed)
+                return;
             var stream = (NamedPipeServerStream)ar.AsyncState;
             stream.EndWaitForConnection(ar);
+            _stream = null;
+
+            CreateStream();
 
             try
             {
-                while (!_disposed)
+                using (var bufferedStream = new BufferedStream(stream))
                 {
-                    MessageReady?.Invoke(this, stream);
+                    while (!_disposed)
+                    {
+                        MessageReady?.Invoke(this, bufferedStream);
+                    }
                 }
             }
             catch (Exception)
             {
                 // Hide all exceptions for unexpected connection lost with the client
-            }
-            finally
-            {
-                stream.Close();
-                stream.Dispose();
             }
         }
 

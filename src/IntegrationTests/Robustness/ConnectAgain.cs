@@ -1,4 +1,5 @@
-﻿using EloquentObjects;
+﻿using System;
+using EloquentObjects;
 using NUnit.Framework;
 
 namespace IntegrationTests.Robustness
@@ -105,6 +106,8 @@ namespace IntegrationTests.Robustness
 
                 using (var client = new EloquentClient(serverAddress, clientAddress))
                 {
+                    try
+                    {
                     using (var connection = client.Connect<IContract>(objectId))
                     {
                         var remoteObject = connection.Object;
@@ -117,6 +120,13 @@ namespace IntegrationTests.Robustness
 
                         //Assert
                         Assert.AreEqual(6, remoteObject.Value);
+                    }
+
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                        throw;
                     }
                 }
             }

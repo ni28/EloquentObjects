@@ -1,7 +1,8 @@
 using System;
 using EloquentObjects.Channels;
 using EloquentObjects.Channels.Implementation;
-using EloquentObjects.Channels.NamedPipesBinding;
+using EloquentObjects.Channels.Implementation.NamedPipes;
+using EloquentObjects.Channels.Implementation.Tcp;
 
 namespace EloquentObjects
 {

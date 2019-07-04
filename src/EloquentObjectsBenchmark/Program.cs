@@ -1,4 +1,5 @@
 ﻿using System;
+using EloquentObjectsBenchmark.EloquentObjects.Benchmarks;
 
 namespace EloquentObjectsBenchmark
 {
@@ -9,7 +10,7 @@ namespace EloquentObjectsBenchmark
             const int iterations = 10000;
             const int numberOfEventClients = 5;
 
-            RunWcfBenchmarks(iterations, numberOfEventClients);
+            //RunWcfBenchmarks(iterations, numberOfEventClients);
 
             RunEloquentObjectsBenchmarks(iterations, numberOfEventClients);
 
@@ -37,13 +38,22 @@ namespace EloquentObjectsBenchmark
         {
             var benchmarks = new IBenchmark[]
             {
-                new EloquentObjects.Benchmarks.OneWayCalls(iterations),
-                new EloquentObjects.Benchmarks.TwoWayCalls(iterations),
-                new EloquentObjects.Benchmarks.SumOfTwoIntegers(iterations),
-                new EloquentObjects.Benchmarks.Events(iterations, numberOfEventClients),
-                new EloquentObjects.Benchmarks.OneWayCallsWithParameter(iterations), 
+                new OneWayCalls("pipe", iterations),
+                new OneWayCalls("tcp", iterations),
                 new EloquentObjects.Proto.Benchmarks.OneWayCalls(iterations),
+
+                new TwoWayCalls("pipe", iterations),
+                new TwoWayCalls("tcp", iterations),
                 new EloquentObjects.Proto.Benchmarks.TwoWayCalls(iterations),
+
+                new SumOfTwoIntegers("pipe", iterations),
+                new SumOfTwoIntegers("tcp", iterations),
+
+                new Events("pipe", iterations, numberOfEventClients),
+                new Events("tcp", iterations, numberOfEventClients),
+
+                new OneWayCallsWithParameter("pipe", iterations),
+                new OneWayCallsWithParameter("tcp", iterations), 
                 new EloquentObjects.Proto.Benchmarks.OneWayCallsWithParameter(iterations)
             };
 
