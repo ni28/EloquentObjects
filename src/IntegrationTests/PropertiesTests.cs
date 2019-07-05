@@ -272,11 +272,66 @@ namespace IntegrationTests
                 }
             }
         }
-        
+
         [Test]
         [TestCase("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001")]
         [TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
-        public void ShallRaiseExceptionForTwoWayProperties(string serverAddress, string clientAddress)
+        public void ShallRaiseExceptionForGetters(string serverAddress, string clientAddress)
+        {
+            //Arrange
+            var objectId = "obj";
+
+            var hostedObject = new HostedObject();
+
+            using (var server = new EloquentServer(serverAddress))
+            using (var client = new EloquentClient(serverAddress, clientAddress))
+            {
+                server.Add<IContract>(objectId, hostedObject);
+
+                using (var connection = client.Connect<IContract>(objectId))
+                {
+                    var remoteObject = connection.Object;
+                    hostedObject.Value = 5;
+                    hostedObject.Action = () => throw new InvalidOperationException("qwerty");
+
+                    //Act
+                    int val = 0;
+                    var exception = Assert.Catch<FaultException>(() => { val = remoteObject.Get; });
+                    //Assert
+                    Assert.AreEqual(0, val);
+                    Assert.AreEqual("qwerty", exception.Message);
+                    Assert.AreEqual(typeof(InvalidOperationException).FullName, exception.ExceptionType);
+
+                    //Act
+                    exception = Assert.Catch<FaultException>(() => { val = remoteObject.GetSet; });
+                    //Assert
+                    Assert.AreEqual(0, val);
+                    Assert.AreEqual("qwerty", exception.Message);
+                    Assert.AreEqual(typeof(InvalidOperationException).FullName, exception.ExceptionType);
+
+                    //Act
+                    exception = Assert.Catch<FaultException>(() => { val = remoteObject.OneWayGetSet; });
+                    //Assert
+                    Assert.AreEqual(0, val);
+                    Assert.AreEqual("qwerty", exception.Message);
+                    Assert.AreEqual(typeof(InvalidOperationException).FullName, exception.ExceptionType);
+
+                    //Act
+                    ComplexParameter complex = null;
+                    exception = Assert.Catch<FaultException>(() => { complex = remoteObject.ComplexGetSet; });
+                    //Assert
+                    Assert.AreEqual(null, complex);
+                    Assert.AreEqual("qwerty", exception.Message);
+                    Assert.AreEqual(typeof(InvalidOperationException).FullName, exception.ExceptionType);
+
+                }
+            }
+        }
+
+        [Test]
+        [TestCase("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001")]
+        [TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
+        public void ShallRaiseExceptionForTwoWaySetters(string serverAddress, string clientAddress)
         {
             //Arrange
             var objectId = "obj";
@@ -291,33 +346,85 @@ namespace IntegrationTests
                 using (var connection = client.Connect<IContract>(objectId))
                 {
                     var remoteObject = connection.Object;
-                    hostedObject.Value = 5;
-                    hostedObject.Action = () =>
-                    {
-                        throw new InvalidOperationException("qwerty");
-                    };
+                    hostedObject.Value = 0;
+                    hostedObject.Action = () => throw new InvalidOperationException("qwerty");
                     
                     //Act
-                    int val = 0;
                     var exception = Assert.Catch<FaultException>(() =>
                     {
-                        val = remoteObject.Get;
+                        remoteObject.Set = 5;
                     } );
                     //Assert
-                    Assert.AreEqual(0, val);
+                    Assert.AreEqual(0, hostedObject.Value);
                     Assert.AreEqual("qwerty", exception.Message);
                     Assert.AreEqual(typeof(InvalidOperationException).FullName, exception.ExceptionType);
                     
                     //Act
                     exception = Assert.Catch<FaultException>(() =>
                     {
-                        val = remoteObject.GetSet;
+                        remoteObject.GetSet = 5;
                     } );
                     //Assert
-                    Assert.AreEqual(0, val);
+                    Assert.AreEqual(0, hostedObject.Value);
                     Assert.AreEqual("qwerty", exception.Message);
                     Assert.AreEqual(typeof(InvalidOperationException).FullName, exception.ExceptionType);
                     
+                    //Act
+                    exception = Assert.Catch<FaultException>(() =>
+                        {
+                            remoteObject.ComplexGetSet = new ComplexParameter {A = 5};
+                        } );
+                    //Assert
+                    Assert.AreEqual(0, hostedObject.Value);
+                    Assert.AreEqual("qwerty", exception.Message);
+                    Assert.AreEqual(typeof(InvalidOperationException).FullName, exception.ExceptionType);
+                    
+                    //Act
+                    ComplexParameter complex = null;
+                    exception = Assert.Catch<FaultException>(() =>
+                    {
+                        complex = remoteObject.ComplexGetSet;
+                    } );
+                    //Assert
+                    Assert.AreEqual(null, complex);
+                    Assert.AreEqual("qwerty", exception.Message);
+                    Assert.AreEqual(typeof(InvalidOperationException).FullName, exception.ExceptionType);
+                    
+                }
+            }
+        }
+        
+
+        [Test]
+        [TestCase("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001")]
+        [TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
+        public void ShallHideExceptionForOneWaySetters(string serverAddress, string clientAddress)
+        {
+            //Arrange
+            var objectId = "obj";
+
+            var hostedObject = new HostedObject();
+            
+            using (var server = new EloquentServer(serverAddress))
+            using (var client = new EloquentClient(serverAddress, clientAddress))
+            {
+                server.Add<IContract>(objectId, hostedObject);
+
+                using (var connection = client.Connect<IContract>(objectId))
+                {
+                    var remoteObject = connection.Object;
+                    hostedObject.Value = 0;
+                    hostedObject.Action = () => throw new InvalidOperationException("qwerty");
+                    
+                    //Act
+                    remoteObject.OneWaySet = 5;
+                    //Assert
+                    Assert.AreEqual(0, hostedObject.Value);
+                    
+                    //Act
+                    remoteObject.OneWayGetSet = 5;
+                    //Assert
+                    Assert.AreEqual(0, hostedObject.Value);
                 }
             }
         }
