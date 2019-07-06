@@ -215,6 +215,28 @@ void OnRegularEvent(object sender, EventArgs args)
 }
 ```
 
+# Modification history
+[!] - Breaking API change
+[+] - New feature
+[B] - Bug fix
+
+## 1.0.3
+[+] Added robustness integration tests
+[B] Fixed exception on a client when server is lost
+[B] Fixed exception on a client when server stopped hosting object
+[B] Fixed exception on a client when server does not host any objects for requested ID
+
+## 1.0.2
+[!] Renamed EloquentInterfaceAttribute to EloquentContractAttribute
+[+] Added named pipes transport protocol support
+[+] Added integration tests
+[+] Added support for EventHandler and EventHandler<T> event types
+
+## 1.0.1
+[!] Channged scheme in URI address to contain "xxx://" prefix (tcp is used for TCP transport protocol, pipe is used for named pipes)
+
+## 1.0.0
+[+] Initial release.
 
 # TODO
 
