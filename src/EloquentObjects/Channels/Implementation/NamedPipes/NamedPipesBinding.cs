@@ -25,7 +25,7 @@ namespace EloquentObjects.Channels.Implementation.NamedPipes
 
         public IOutputChannel CreateOutputChannel(IHostAddress address)
         {
-            return new OutputChannel($"{address.IpAddress}:{address.Port}");
+            return new OutputChannel($"{address.IpAddress}:{address.Port}", _sendTimeout);
         }
 
         #endregion

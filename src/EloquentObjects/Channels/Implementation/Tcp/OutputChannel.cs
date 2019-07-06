@@ -12,7 +12,6 @@ namespace EloquentObjects.Channels.Implementation.Tcp
         private readonly IPAddress _ipAddress;
         private readonly int _port;
         private readonly TcpClient _client;
-        private readonly NetworkStream _stream;
         private readonly AutoResetEvent _resetEvent = new AutoResetEvent(true);
         private readonly ILogger _logger;
         private readonly BufferedStream _bufferedStream;
@@ -30,8 +29,8 @@ namespace EloquentObjects.Channels.Implementation.Tcp
 
             _client.Connect(ipAddress, port);
 
-            _stream = _client.GetStream();
-            _bufferedStream = new BufferedStream(_stream);
+            var stream = _client.GetStream();
+            _bufferedStream = new BufferedStream(stream);
 
             _logger = Logger.Factory.Create(GetType());
             _logger.Info(() => $"Created (ipAddress = {ipAddress}, port = {port})");
@@ -46,10 +45,25 @@ namespace EloquentObjects.Channels.Implementation.Tcp
                 throw new ObjectDisposedException(GetType().Name);
 
             _disposed = true;
-            _bufferedStream.Dispose();
-            _stream.Dispose();
-            _client.Close();
-            ((IDisposable)_client).Dispose();
+
+            try
+            {
+                _bufferedStream.Dispose();
+            }
+            catch (IOException)
+            {
+                //Hide exceptions when disposing a broken stream (e.g. when server dead).
+            }
+
+            try
+            {
+                ((IDisposable)_client).Dispose();
+            }
+            catch (IOException)
+            {
+                //Hide exceptions when disposing a broken stream (e.g. when server dead).
+            }
+
             _resetEvent.Dispose();
 
             _logger.Info(() => $"Disposed (ipAddress = {_ipAddress}, port = {_port})");

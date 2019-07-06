@@ -1,9 +1,11 @@
 using System;
+using System.IO;
 using System.Threading;
 using EloquentObjects.Channels;
 using EloquentObjects.Channels.Implementation;
 using EloquentObjects.Contracts;
 using EloquentObjects.Contracts.Implementation;
+using EloquentObjects.RPC.Server;
 using EloquentObjects.RPC.Server.Implementation;
 using EloquentObjects.Serialization;
 using EloquentObjects.Serialization.Implementation;
@@ -16,7 +18,7 @@ namespace EloquentObjects
     {
         private readonly ISerializerFactory _serializerFactory;
         private readonly IContractDescriptionFactory _contractDescriptionFactory;
-        private readonly EndpointHub _endpointHub;
+        private readonly IEndpointHub _endpointHub;
         private readonly IInputChannel _inputChannel;
         private readonly Server _server;
 
@@ -48,8 +50,15 @@ namespace EloquentObjects
 
             _contractDescriptionFactory = new CachedContractDescriptionFactory(new ContractDescriptionFactory());
 
-            _inputChannel = binding.CreateInputChannel(serverHostAddress);
-
+            try
+            {
+                _inputChannel = binding.CreateInputChannel(serverHostAddress);
+            }
+            catch (Exception e)
+            {
+                throw new IOException("Failed creating input channel", e);
+            }
+            
             _endpointHub = new EndpointHub();
 
             _server = new Server(binding, _inputChannel, _endpointHub);
@@ -67,14 +76,14 @@ namespace EloquentObjects
         #endregion
 
         /// <inheritdoc />
-        public void Add<T>(string objectId, T obj, SynchronizationContext synchronizationContext = null)
+        public IDisposable Add<T>(string objectId, T obj, SynchronizationContext synchronizationContext = null)
         {
             var contractDescription = _contractDescriptionFactory.Create(typeof(T));
             
             var knownTypes = contractDescription.GetTypes();
             var serializer = _serializerFactory.Create(typeof(object), knownTypes);
 
-            _endpointHub.AddEndpoint(objectId, new ServiceEndpoint(contractDescription, serializer, synchronizationContext, obj));
+            return _endpointHub.AddEndpoint(objectId, new ServiceEndpoint(contractDescription, serializer, synchronizationContext, obj));
         }
     }
 }

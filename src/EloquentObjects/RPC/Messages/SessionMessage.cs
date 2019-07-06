@@ -35,7 +35,7 @@ namespace EloquentObjects.RPC.Messages
                 case SessionMessageType.Hello:
                     return HelloSessionMessage.ReadInternal(clientHostAddress, stream);
                 case SessionMessageType.HelloAck:
-                    return HelloAckSessionMessage.ReadInternal(clientHostAddress);
+                    return HelloAckSessionMessage.ReadInternal(clientHostAddress, stream);
                 case SessionMessageType.Heartbeat:
                     return HeartbeatSessionMessage.ReadInternal(clientHostAddress);
                 case SessionMessageType.EndpointRequestStart:

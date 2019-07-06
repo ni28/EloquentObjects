@@ -19,9 +19,9 @@ namespace EloquentObjects.Proto
         
         #region Implementation of IEloquentServer
 
-        public void Add<T>(string objectId, T obj, SynchronizationContext synchronizationContext = null)
+        public IDisposable Add<T>(string objectId, T obj, SynchronizationContext synchronizationContext = null)
         {
-            _eloquentServer.Add(objectId, obj, synchronizationContext);
+            return _eloquentServer.Add(objectId, obj, synchronizationContext);
         }
 
         #endregion

@@ -23,48 +23,35 @@ namespace EloquentObjects.RPC.Server.Implementation
 
         #endregion
 
-        private IEndpoint GetEndpoint(string endpointId)
+        #region Implementation of IEndpointHub
+
+        public bool TryConnectEndpoint(string endpointId, IHostAddress clientHostAddress, int connectionId,
+            IOutputChannel outputChannel, out IConnection connection)
         {
+            if (_disposed) throw new ObjectDisposedException(nameof(EndpointHub));
+
+            connection = null;
             IEndpoint endpoint;
             lock (_endpoints)
             {
-                if (_disposed) throw new ObjectDisposedException(nameof(EndpointHub));
                 if (!_endpoints.TryGetValue(endpointId, out endpoint))
-                    throw new InvalidOperationException($"Endpoint with address {endpointId} was not found");
+                    return false;
             }
-
-            return endpoint;
-        }
-
-        #region Implementation of IEndpointHub
-
-        public IConnection ConnectEndpoint(string endpointId, IHostAddress clientHostAddress, int connectionId,
-            IOutputChannel outputChannel)
-        {
-            var endpoint = GetEndpoint(endpointId);
-            return endpoint.Connect(endpointId, clientHostAddress, connectionId, outputChannel);
+            
+            connection = endpoint.Connect(endpointId, clientHostAddress, connectionId, outputChannel);
+            return true;
         }
 
         public IDisposable AddEndpoint(string endpointId, IEndpoint endpoint)
         {
+            if (_disposed) throw new ObjectDisposedException(nameof(EndpointHub));
+
             lock (_endpoints)
             {
-                if (_disposed) throw new ObjectDisposedException(nameof(EndpointHub));
-
                 _endpoints.Add(endpointId, endpoint);
             }
             
             return new Disposable(() => RemoveEndpoint(endpointId));
-        }
-
-        public bool ContainsEndpoint(string endpointId)
-        {
-            lock (_endpoints)
-            {
-                if (_disposed) throw new ObjectDisposedException(nameof(EndpointHub));
-
-                return _endpoints.ContainsKey(endpointId);
-            }
         }
 
         #endregion
@@ -73,8 +60,6 @@ namespace EloquentObjects.RPC.Server.Implementation
         {
             lock (_endpoints)
             {
-                if (_disposed) throw new ObjectDisposedException(nameof(EndpointHub));
-
                 _endpoints.Remove(endpointId);
             }
         }

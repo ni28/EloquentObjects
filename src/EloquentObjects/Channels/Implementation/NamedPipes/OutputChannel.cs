@@ -14,16 +14,16 @@ namespace EloquentObjects.Channels.Implementation.NamedPipes
         private bool _disposed;
         private readonly BufferedStream _bufferedStream;
 
-        public OutputChannel(string pipeName)
+        public OutputChannel(string pipeName, int sendTimeout)
         {
             _pipeName = pipeName;
-            
+
             _logger = Logger.Factory.Create(GetType());
             _logger.Info(() => $"Created (pipeName = {_pipeName})");
 
             //TODO: what is server name?
             var stream = new NamedPipeClientStream(".", _pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
-            stream.Connect();
+            stream.Connect(sendTimeout);
             _bufferedStream = new BufferedStream(stream);
         }
 
@@ -35,8 +35,16 @@ namespace EloquentObjects.Channels.Implementation.NamedPipes
                 throw new ObjectDisposedException(GetType().Name);
 
             _disposed = true;
-            
-            _bufferedStream.Dispose();
+
+            try
+            {
+                _bufferedStream.Dispose();
+            }
+            catch (IOException)
+            {
+                //Hide exceptions when disposing a broken stream (e.g. when server dead).
+            }
+
             _resetEvent.Dispose();
 
             _logger.Info(() => $"Disposed (pipeName = {_pipeName})");

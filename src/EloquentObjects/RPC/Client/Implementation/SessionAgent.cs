@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using EloquentObjects.Channels;
@@ -45,17 +46,27 @@ namespace EloquentObjects.RPC.Client.Implementation
             var helloMessage = new HelloSessionMessage(_clientHostAddress, endpointId, connectionId);
 
             SessionMessage response;
-            using (var context = _outputChannel.BeginWriteRead())
+
+            try
             {
-                helloMessage.Write(context.Stream);
-                response = SessionMessage.Read(context.Stream);
+                using (var context = _outputChannel.BeginWriteRead())
+                {
+                    helloMessage.Write(context.Stream);
+                    response = SessionMessage.Read(context.Stream);
+                }
+            }
+            catch (Exception e)
+            {
+                throw new IOException("Connection failed. Check that server is still alive", e);
             }
 
             switch (response)
             {
                 case ExceptionSessionMessage exceptionMessage:
                     throw exceptionMessage.Exception;
-                case HelloAckSessionMessage _:
+                case HelloAckSessionMessage helloAckMessage:
+                    if (!helloAckMessage.Acknowledged)
+                        throw new KeyNotFoundException($"No objects with ID {endpointId} are hosted on server");
                     return CreateConnectionAgent(connectionId, endpointId, serializer);
                 default:
                     throw new IOException("Unexpected failure. Connection is not acknowledged by the server.");
@@ -131,11 +142,18 @@ namespace EloquentObjects.RPC.Client.Implementation
 
         private void Terminate()
         {
-            var terminateSessionMessage = new TerminateSessionSessionMessage(_clientHostAddress);
-
-            using (var context = _outputChannel.BeginWriteRead())
+            try
             {
-                terminateSessionMessage.Write(context.Stream);
+                var terminateSessionMessage = new TerminateSessionSessionMessage(_clientHostAddress);
+
+                using (var context = _outputChannel.BeginWriteRead())
+                {
+                    terminateSessionMessage.Write(context.Stream);
+                }
+            }
+            catch (IOException)
+            {
+                //Hide IOException when disposing a client while the server is not alive.
             }
         }
     }

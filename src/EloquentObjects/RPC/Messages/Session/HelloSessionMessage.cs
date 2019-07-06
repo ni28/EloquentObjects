@@ -34,9 +34,9 @@ namespace EloquentObjects.RPC.Messages.Session
             return new HelloSessionMessage(hostAddress, endpointId, connectionId);
         }
         
-        public HelloAckSessionMessage CreateAck()
+        public HelloAckSessionMessage CreateAck(bool acknowledged)
         {
-            return new HelloAckSessionMessage(ClientHostAddress);
+            return new HelloAckSessionMessage(ClientHostAddress, acknowledged);
         }
     }
 }

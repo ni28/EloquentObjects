@@ -182,11 +182,21 @@ namespace EloquentObjects.RPC.Server.Implementation
         {
             //All callback agents reuse the same output channel
             if (_outputChannel == null)
-                _outputChannel = _binding.CreateOutputChannel(ClientHostAddress);
-            
-            var connection = _endpointHub.ConnectEndpoint(helloSessionMessage.EndpointId, ClientHostAddress, helloSessionMessage.ConnectionId, _outputChannel);
+            {
+                try
+                {
+                    _outputChannel = _binding.CreateOutputChannel(ClientHostAddress);
+                }
+                catch (Exception e)
+                {
+                    throw new IOException("Connection failed. Client callback channel was not found.", e);
+                }
 
-            var helloAck = helloSessionMessage.CreateAck();
+            }
+            
+            var acknowledged = _endpointHub.TryConnectEndpoint(helloSessionMessage.EndpointId, ClientHostAddress, helloSessionMessage.ConnectionId, _outputChannel, out var connection);
+
+            var helloAck = helloSessionMessage.CreateAck(acknowledged);
             helloAck.Write(writingStream);
 
             return connection;

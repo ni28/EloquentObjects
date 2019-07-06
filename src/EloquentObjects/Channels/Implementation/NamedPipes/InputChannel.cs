@@ -28,8 +28,15 @@ namespace EloquentObjects.Channels.Implementation.NamedPipes
                 throw new ObjectDisposedException(GetType().Name);
 
             _disposed = true;
-            
-            _stream?.Dispose();
+
+            try
+            {
+                _stream?.Dispose();
+            }
+            catch (Exception)
+            {
+                //Hide exception if the stream is broken already
+            }
             
             _logger.Info(() => $"Disposed (pipeName = {_pipeName})");
         }

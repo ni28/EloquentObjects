@@ -62,6 +62,9 @@ namespace EloquentObjects.RPC.Server.Implementation
                 return;
 
             var sessionMessage = SessionMessage.Read(stream);
+
+            if (_disposed)
+                return;
     
             switch (sessionMessage)
             {

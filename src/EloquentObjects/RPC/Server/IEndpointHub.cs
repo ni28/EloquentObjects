@@ -1,13 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using EloquentObjects.Channels;
 
 namespace EloquentObjects.RPC.Server
 {
     internal interface IEndpointHub : IDisposable
     {
-        IConnection ConnectEndpoint(string endpointId, IHostAddress clientHostAddress, int connectionId,
-            IOutputChannel outputChannel);
+        bool TryConnectEndpoint(string endpointId, IHostAddress clientHostAddress, int connectionId, IOutputChannel outputChannel, out IConnection connection);
         IDisposable AddEndpoint(string endpointId, IEndpoint endpoint);
-        bool ContainsEndpoint(string endpointId);
     }
 }

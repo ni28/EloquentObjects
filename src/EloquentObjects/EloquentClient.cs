@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Castle.DynamicProxy;
 using EloquentObjects.Channels;
 using EloquentObjects.Channels.Implementation;
@@ -64,8 +65,23 @@ namespace EloquentObjects
 
             _proxyGenerator = new ProxyGenerator();
 
-            _inputChannel = binding.CreateInputChannel(clientHostAddress);
-            _outputChannel = binding.CreateOutputChannel(serverHostAddress);
+            try
+            {
+                _inputChannel = binding.CreateInputChannel(clientHostAddress);
+            }
+            catch (Exception e)
+            {
+                throw new IOException("Failed creating input channel", e);
+            }
+
+            try
+            {
+                _outputChannel = binding.CreateOutputChannel(serverHostAddress);
+            }
+            catch (Exception e)
+            {
+                throw new IOException("Connection failed. Server not found.", e);
+            }
             _sessionAgent = new SessionAgent(binding, _inputChannel, _outputChannel, clientHostAddress);
         }
 

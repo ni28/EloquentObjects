@@ -61,7 +61,14 @@ namespace EloquentObjects.Channels.Implementation.Tcp
                 throw new ObjectDisposedException(GetType().Name);
 
             _disposed = true;
-            _listener?.Stop();
+            try
+            {
+                _listener?.Stop();
+            }
+            catch
+            {
+                //Hide exception on disposal
+            }
 
             _logger.Info(() => $"Disposed (ipAddress = {_ipAddress}, port = {_port})");
         }
@@ -72,7 +79,7 @@ namespace EloquentObjects.Channels.Implementation.Tcp
         {
             try
             {
-                using (var networkStream = tcpClient.GetStream())
+                var networkStream = tcpClient.GetStream();
                 using(var bufferedStream = new BufferedStream(networkStream))
                 {
                     while (!_disposed)
