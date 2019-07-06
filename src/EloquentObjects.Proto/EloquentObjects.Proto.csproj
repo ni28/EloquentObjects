@@ -3,7 +3,7 @@
     <PropertyGroup>
         <RootNamespace>EloquentObjects.Proto</RootNamespace>
         <TargetFrameworks>net45;netstandard2.0</TargetFrameworks>
-        <PackageVersion>1.0.2</PackageVersion>
+        <PackageVersion>1.0.0</PackageVersion>
         <Title>EloquentObjects.Proto</Title>
         <Authors>ni28</Authors>
         <Description>Protobuf serializer for EloquentObjects.</Description>

@@ -218,12 +218,12 @@ void OnRegularEvent(object sender, EventArgs args)
 
 # TODO
 
-## Features
+## Features TODO
 1. Security
 2. Polling mode
 3. Client event that connection is lost. Restore connection.
 
-## Improvements
+## Improvements TODO
 0. Timeouts?
 1. Default parameters for interfaces
 2. Proto nuget
@@ -231,3 +231,5 @@ void OnRegularEvent(object sender, EventArgs args)
 4. Benchmark: .NET Remoting
 5. Send only subscribed events
 6. Raise exception if contract has method, property or event without attribute.
+7. Rename IEndpointHub => IObjectsHub and "endpoint" to "object" everywhere
+
