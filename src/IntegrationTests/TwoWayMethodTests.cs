@@ -22,6 +22,9 @@ namespace IntegrationTests
 
             [EloquentMethod]
             ComplexParameter CallTwoWayWithReturnValue(int i, bool b, string s, double d);
+
+            [EloquentMethod]
+            void CallTwoWayWithDefaultParameter(int i = 5);
         }
 
         [DataContract]
@@ -80,6 +83,11 @@ namespace IntegrationTests
                     S = s,
                     D = d
                 };
+            }
+
+            public void CallTwoWayWithDefaultParameter(int i = 5)
+            {
+                Parameters = new object[] {i};
             }
 
             #endregion
@@ -291,6 +299,43 @@ namespace IntegrationTests
                     Assert.AreEqual(null , hostedObject.Parameters[5]);
                     Assert.AreEqual(null , hostedObject.Parameters[6]);
                     Assert.AreEqual(null , hostedObject.Parameters[7]);
+                }
+            }
+        }
+
+                
+        [Test]
+        [TestCase("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001")]
+        [TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
+        public void ShallUseDefaultParametersIfAny(string serverAddress, string clientAddress)
+        {
+            //Arrange
+            var objectId = "obj";
+
+            var hostedObject = new HostedObject();
+            
+            using (var server = new EloquentServer(serverAddress))
+            using (var client = new EloquentClient(serverAddress, clientAddress))
+            {
+                server.Add<IContract>(objectId, hostedObject);
+
+                using (var connection = client.Connect<IContract>(objectId))
+                {
+                    var remoteObject = connection.Object;
+
+                    Assert.IsFalse(hostedObject.TwoWayCalled);
+                    
+                    //Act
+                    remoteObject.CallTwoWayWithDefaultParameter();
+
+                    //Assert
+                    Assert.AreEqual(new[] {5}, hostedObject.Parameters);
+
+                    //Act
+                    remoteObject.CallTwoWayWithDefaultParameter(6);
+
+                    //Assert
+                    Assert.AreEqual(new [] {6}, hostedObject.Parameters);
                 }
             }
         }
