@@ -1,4 +1,3 @@
-using System;
 using System.Threading;
 
 namespace EloquentObjects.Proto
@@ -19,7 +18,7 @@ namespace EloquentObjects.Proto
         
         #region Implementation of IEloquentServer
 
-        public IDisposable Add<T>(string objectId, T obj, SynchronizationContext synchronizationContext = null)
+        public IObjectHost<T> Add<T>(string objectId, T obj, SynchronizationContext synchronizationContext = null) where T: class
         {
             return _eloquentServer.Add(objectId, obj, synchronizationContext);
         }

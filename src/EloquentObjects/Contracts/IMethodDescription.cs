@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 using JetBrains.Annotations;
 
 namespace EloquentObjects.Contracts
@@ -24,5 +25,13 @@ namespace EloquentObjects.Contracts
         /// Indicates that the remote call of this method will not return any result (exceptions will be hidden as well).
         /// </summary>
         bool IsOneWay { get; }
+        
+        /// <summary>
+        /// Returns T type for method which result is IEloquent{T}.
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException">Return type is not IEloquent{T}</exception>
+        Type GetEloquentObjectType();
+
     }
 }

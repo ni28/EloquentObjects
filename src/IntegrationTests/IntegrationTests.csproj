@@ -47,6 +47,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ChildEloquentObjectsTests.cs" />
     <Compile Include="EventTests.cs" />
     <Compile Include="OneWayMethodTests.cs" />
     <Compile Include="PropertiesTests.cs" />

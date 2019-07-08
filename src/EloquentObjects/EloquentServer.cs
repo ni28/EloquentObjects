@@ -76,14 +76,16 @@ namespace EloquentObjects
         #endregion
 
         /// <inheritdoc />
-        public IDisposable Add<T>(string objectId, T obj, SynchronizationContext synchronizationContext = null)
+        public IObjectHost<T> Add<T>(string objectId, T obj, SynchronizationContext synchronizationContext = null) where T : class
         {
             var contractDescription = _contractDescriptionFactory.Create(typeof(T));
             
             var knownTypes = contractDescription.GetTypes();
             var serializer = _serializerFactory.Create(typeof(object), knownTypes);
 
-            return _endpointHub.AddEndpoint(objectId, new ServiceEndpoint(contractDescription, serializer, synchronizationContext, obj));
+            var objectHost = _endpointHub.AddEndpoint(objectId,
+                new ServiceEndpoint(contractDescription, serializer, synchronizationContext, obj));
+            return new ServerEloquentObject<T>(objectId, null, objectHost);
         }
     }
 }

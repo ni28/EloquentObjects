@@ -109,7 +109,7 @@ namespace EloquentObjects
 
             var eventHandlersRepository = new EventHandlersRepository(contractDescription, outerProxy);
             
-            return new Connection<T>(objectId, innerProxy, outerProxy, eventHandlersRepository, _sessionAgent, serializer);
+            return new Connection<T>(objectId, innerProxy, outerProxy, eventHandlersRepository, _sessionAgent, serializer, contractDescription, this);
         }
     }
 }

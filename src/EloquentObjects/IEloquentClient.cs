@@ -1,4 +1,5 @@
 using System;
+using JetBrains.Annotations;
 
 namespace EloquentObjects
 {
@@ -13,6 +14,7 @@ namespace EloquentObjects
         /// <param name="objectId">Object identifier for which a connection will be created</param>
         /// <typeparam name="T">Eloquent contract (an interface which attributed members can be accessed remotely)</typeparam>
         /// <returns>A connection object that provides an access to the remote object</returns>
-        IConnection<T> Connect<T>(string objectId) where T : class;
+        [NotNull]
+        IConnection<T> Connect<T>([NotNull] string objectId) where T : class;
     }
 }

@@ -30,6 +30,13 @@ namespace EloquentObjects.Contracts.Implementation
 
         public MethodInfo Method { get; }
         public bool IsOneWay { get; }
+        
+        public Type GetEloquentObjectType()
+        {
+            if (Method.ReturnType.GetGenericTypeDefinition() != typeof(IEloquent<>))
+                throw new InvalidOperationException("Return type is not IEloquent<T>");
+            return Method.ReturnType.GenericTypeArguments[0];
+        }
 
         #endregion
     }

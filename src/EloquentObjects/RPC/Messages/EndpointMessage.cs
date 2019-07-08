@@ -1,5 +1,4 @@
 using System.IO;
-using System.Text;
 using EloquentObjects.RPC.Messages.Endpoint;
 using EloquentObjects.Serialization;
 using JetBrains.Annotations;
@@ -38,7 +37,7 @@ namespace EloquentObjects.RPC.Messages
         }
         
         [NotNull]
-        protected static byte[] Serialize(ISerializer serializer, [NotNull] object obj)
+        protected static byte[] Serialize(ISerializer serializer, object obj)
         {
             using (var memoryStream = new MemoryStream())
             {

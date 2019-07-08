@@ -6,9 +6,9 @@
         <PackageVersion>1.0.0</PackageVersion>
         <Title>EloquentObjects.Proto</Title>
         <Authors>ni28</Authors>
-        <Description>Protobuf serializer for EloquentObjects.</Description>
+        <Description>EloquentObjects client and server with Protobuf serializer (using protobuf-net).</Description>
         <PackageProjectUrl>https://github.com/ni28/EloquentObjects</PackageProjectUrl>
-        <PackageLicenseUrl>MIT</PackageLicenseUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <RepositoryUrl>https://github.com/ni28/EloquentObjects</RepositoryUrl>
         <PackageTags>RPC OORPC Remote Remoting Service Host Protobuf</PackageTags>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>

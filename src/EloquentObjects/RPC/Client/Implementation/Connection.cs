@@ -1,4 +1,5 @@
 using System;
+using EloquentObjects.Contracts;
 using EloquentObjects.Logging;
 using EloquentObjects.Serialization;
 
@@ -6,10 +7,11 @@ namespace EloquentObjects.RPC.Client.Implementation
 {
     internal sealed class Connection<T> : IConnection<T>
     {
-        private readonly string _objectId;
         private readonly IProxy _innerProxy;
         private readonly EventHandlersRepository _eventHandlersRepository;
         private readonly ISessionAgent _sessionAgent;
+        private readonly IContractDescription _contractDescription;
+        private readonly EloquentClient _eloquentClient;
         private readonly T _outerProxy;
         private bool _disposed;
         private readonly IConnectionAgent _connectionAgent;
@@ -20,12 +22,15 @@ namespace EloquentObjects.RPC.Client.Implementation
             T outerProxy,
             EventHandlersRepository eventHandlersRepository,
             ISessionAgent sessionAgent,
-            ISerializer serializer)
+            ISerializer serializer,
+            IContractDescription contractDescription,
+            EloquentClient eloquentClient)
         {
-            _objectId = objectId;
             _innerProxy = innerProxy;
             _eventHandlersRepository = eventHandlersRepository;
             _sessionAgent = sessionAgent;
+            _contractDescription = contractDescription;
+            _eloquentClient = eloquentClient;
             _outerProxy = outerProxy;
 
             _connectionAgent = sessionAgent.Connect(objectId, serializer);
@@ -40,7 +45,7 @@ namespace EloquentObjects.RPC.Client.Implementation
             _connectionAgent.EventReceived += ConnectionAgentOnEventReceived;
             
             _logger = Logger.Factory.Create(GetType());
-            _logger.Info(() => $"Created (objectId = {_objectId})");
+            _logger.Info(() => "Created");
         }
 
         private void SessionAgentOnEndpointMessageReady(object sender, EndpointMessageReadyEventArgs e)
@@ -58,7 +63,17 @@ namespace EloquentObjects.RPC.Client.Implementation
 
         private void InnerProxyOnCalled(object sender, CallEventArgs e)
         {
-            e.ReturnValue = _connectionAgent.Call(e.MethodName, e.Parameters);
+            var result = _connectionAgent.Call(e.MethodName, e.Parameters);
+
+            if (result is IEloquent eloquentInfo)
+            {
+                var clientType = _contractDescription.GetOperationDescription(e.MethodName, e.Parameters).Method.ReturnType.GenericTypeArguments[0];
+                var eloquentType = typeof(ClientEloquentObject<>).MakeGenericType(clientType);
+                e.ReturnValue =  Activator.CreateInstance(eloquentType, eloquentInfo.ObjectId, eloquentInfo.ObjectId, _eloquentClient);
+                return;
+            }
+
+            e.ReturnValue = result;
         }
 
         private void InnerProxyOnEventSubscribed(object sender, SubscriptionEventArgs e)
@@ -105,7 +120,7 @@ namespace EloquentObjects.RPC.Client.Implementation
             _eventHandlersRepository.Dispose();
             _innerProxy.Dispose();
 
-            _logger.Info(() => $"Disposed (objectId = {_objectId})");
+            _logger.Info(() => "Disposed");
         }
 
         #endregion

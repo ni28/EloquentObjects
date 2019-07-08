@@ -10,12 +10,12 @@ namespace EloquentObjects
     public interface IEloquentServer: IDisposable
     {
         /// <summary>
-        /// Adds a new object to hosted objects. Returns an IDisposable that stops hosting an object when disposed.
+        /// Adds a new object to hosted objects. Returns an IObjectHost{T} that stops hosting an object when disposed.
         /// </summary>
         /// <param name="objectId">Identifier that can be used by a client to access this object remotely</param>
         /// <param name="obj">Object that implements the Eloquent interface</param>
         /// <param name="synchronizationContext"></param>
         /// <typeparam name="T">Eloquent contract (an interface which attributed members can be accessed remotely)</typeparam>
-        IDisposable Add<T>(string objectId, T obj, [CanBeNull] SynchronizationContext synchronizationContext = null);
+        IObjectHost<T> Add<T>(string objectId, T obj, [CanBeNull] SynchronizationContext synchronizationContext = null) where T : class;
     }
 }
