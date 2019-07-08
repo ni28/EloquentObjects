@@ -42,6 +42,6 @@ namespace EloquentObjects
     /// <typeparam name="T"></typeparam>
     public interface IObjectHost<out T> : IEloquent<T>, IDisposable where T : class
     {
-        
+        T Object { get; }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Linq;
-using ConsoleApplication1;
+using CalculatorContract;
 using EloquentObjects;
 
 namespace Client
@@ -12,52 +11,64 @@ namespace Client
         public static void Main(string[] args)
         {
             using (var client = new EloquentClient("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001"))
-            using (var client2 = new EloquentClient("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50002"))
+            using (var calcObjConnection = client.Connect<IEloquentCalculator>("calculator"))
             {
-                using (var calcObjConnection = client.Connect<IEloquentCalculator>("endpoint1"))
-                {
-                    calcObjConnection.Object.ResultReady += ObjectOnResultReady;
-                    foreach (var i in Enumerable.Range(0, 2))
-                    {
-                        calcObjConnection.Object.Sqrt(i);
-                    }
-                    Console.WriteLine(calcObjConnection.Object.Add(1,4));
-                    Console.WriteLine(calcObjConnection.Object.Name);
-                    
-                    
-                    using (var objConnection = client2.Connect<IEloquentCalculator>("endpoint1"))
-                    {
-                        objConnection.Object.ResultReady += ObjectOnResultReady;
-                        foreach (var i in Enumerable.Range(0, 2))
-                        {
-                            objConnection.Object.Sqrt(i);
-                        }
-                        Console.WriteLine(objConnection.Object.Add(1,4));
-                        Console.WriteLine(objConnection.Object.Name);
-                        objConnection.Object.Name = "1234";
-                        Console.WriteLine(objConnection.Object.Name);
-                        Console.ReadLine();
-                        objConnection.Object.ResultReady -= ObjectOnResultReady;
-                    }
+                var calculator = calcObjConnection.Object;
 
+                //Property get
+                Console.WriteLine($"Calculator name: {calculator.Name}");
 
-                    Console.ReadLine();
-                    calcObjConnection.Object.Name = "1234";
-                    Console.WriteLine(calcObjConnection.Object.Name);
-                    Console.ReadLine();
-                    calcObjConnection.Object.ResultReady -= ObjectOnResultReady;
+                //Property set
+                calculator.Name = "MyCalculator";
+                Console.WriteLine($"New calculator name: {calculator.Name}");
 
-                }
+                //Method call
+                Console.WriteLine($"1 + 2 = {calculator.Add(1, 2)}");
+
+                //Subscribe to event
+                calculator.ResultReady += CalculatorOnResultReady;                
+                Console.WriteLine($"Call one-way long running operation: ");
+                calculator.Sqrt(4);
+                
+                
+                Console.WriteLine("Press Enter to exit");
                 Console.ReadLine();
             }
-
-            Console.ReadLine();
-
         }
 
-        private static void ObjectOnResultReady(string id, OperationResult obj)
+        private static void CalculatorOnResultReady(object sender, OperationResult result)
         {
-            Console.WriteLine(id + ": " + obj.Value);
+            Console.WriteLine($"Long running operation result: {result.Value}");
+
+            //Accessing to sender
+            var senderAsClient = (IEloquentCalculator) sender;
+
+            //Get Last Operations
+            using (var connection = senderAsClient.OperationsHistory.Connect())
+            {
+                var history = connection.Object;
+
+                Console.WriteLine("Last operations:");
+                foreach (var entry in history.OperationsHistory)
+                {
+                    Console.WriteLine($"\t{entry}");
+                }
+                
+                Console.WriteLine();
+                
+                history.Clear();
+                
+                Console.WriteLine("Last operations after clear:");
+                foreach (var entry in history.OperationsHistory)
+                {
+                    Console.WriteLine($"\t{entry}");
+                }
+                
+            }
+
+
+            
+            Console.WriteLine($"Sender name = {senderAsClient.Name}");
         }
     }
 

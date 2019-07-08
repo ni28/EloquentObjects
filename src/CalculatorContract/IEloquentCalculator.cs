@@ -1,7 +1,7 @@
 using System;
 using EloquentObjects;
 
-namespace ConsoleApplication1
+namespace CalculatorContract
 {
     [EloquentContract]
     public interface IEloquentCalculator
@@ -12,10 +12,13 @@ namespace ConsoleApplication1
         [EloquentMethod]
         int Add(int a, int b);
         
-        [EloquentMethod]
+        [EloquentMethod(IsOneWay = true)]
         void Sqrt(int a);
 
+        [EloquentProperty]
+        IEloquent<IEloquentOperationsHistory> OperationsHistory { get; }
+
         [EloquentEvent]
-        event Action<string, OperationResult> ResultReady;
+        event EventHandler<OperationResult> ResultReady;
     }
 }

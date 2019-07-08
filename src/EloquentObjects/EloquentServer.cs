@@ -85,7 +85,7 @@ namespace EloquentObjects
 
             var objectHost = _endpointHub.AddEndpoint(objectId,
                 new ServiceEndpoint(contractDescription, serializer, synchronizationContext, obj));
-            return new ServerEloquentObject<T>(objectId, null, objectHost);
+            return new ServerEloquentObject<T>(obj, objectId, null, objectHost);
         }
     }
 }

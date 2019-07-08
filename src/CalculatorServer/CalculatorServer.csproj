@@ -45,7 +45,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="EloquentCalculator.cs" />
+    <Compile Include="DomainModel\Calculator.cs" />
+    <Compile Include="DomainModel\OperationsHistory.cs" />
+    <Compile Include="HostingModel\EloquentCalculator.cs" />
+    <Compile Include="HostingModel\EloquentOperationsHistory.cs" />
+    <Compile Include="ICalculator.cs" />
+    <Compile Include="IOperationsHistory.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

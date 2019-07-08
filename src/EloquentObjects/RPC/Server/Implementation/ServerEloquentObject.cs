@@ -6,8 +6,9 @@ namespace EloquentObjects.RPC.Server.Implementation
     {
         private readonly IDisposable _objectHost;
 
-        public ServerEloquentObject(string objectId, object info, IDisposable objectHost)
+        public ServerEloquentObject(T obj, string objectId, object info, IDisposable objectHost)
         {
+            Object = obj;
             _objectHost = objectHost;
             ObjectId = objectId;
             Info = info;
@@ -32,6 +33,12 @@ namespace EloquentObjects.RPC.Server.Implementation
         {
             throw new InvalidOperationException("The Connect method is intended to be called on client only");
         }
+
+        #endregion
+
+        #region Implementation of IObjectHost<out T>
+
+        public T Object { get; }
 
         #endregion
     }

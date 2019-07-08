@@ -1,6 +1,6 @@
 using System.Runtime.Serialization;
 
-namespace ConsoleApplication1
+namespace CalculatorContract
 {
     [DataContract]
     public sealed class OperationResult
