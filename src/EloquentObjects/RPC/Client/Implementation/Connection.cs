@@ -1,6 +1,7 @@
 using System;
 using EloquentObjects.Contracts;
 using EloquentObjects.Logging;
+using EloquentObjects.RPC.Messages.Session;
 using EloquentObjects.Serialization;
 
 namespace EloquentObjects.RPC.Client.Implementation
@@ -35,7 +36,7 @@ namespace EloquentObjects.RPC.Client.Implementation
 
             _connectionAgent = sessionAgent.Connect(objectId, serializer);
 
-            _sessionAgent.EndpointMessageReady += SessionAgentOnEndpointMessageReady;
+            _sessionAgent.EventReceived += SessionAgentOnEventReceived;
 
             _innerProxy.Notified += InnerProxyOnNotified;
             _innerProxy.Called += InnerProxyOnCalled;
@@ -48,12 +49,12 @@ namespace EloquentObjects.RPC.Client.Implementation
             _logger.Info(() => "Created");
         }
 
-        private void SessionAgentOnEndpointMessageReady(object sender, EndpointMessageReadyEventArgs e)
+        private void SessionAgentOnEventReceived(object sender, EventMessage e)
         {
             if (e.ConnectionId != _connectionAgent.ConnectionId)
                 return;
             
-            _connectionAgent.ReceiveAndHandleEndpointMessage(e.Stream);
+            _connectionAgent.HandleEvent(e);
         }
 
         private void InnerProxyOnNotified(object sender, NotifyEventArgs e)
@@ -63,17 +64,7 @@ namespace EloquentObjects.RPC.Client.Implementation
 
         private void InnerProxyOnCalled(object sender, CallEventArgs e)
         {
-            var result = _connectionAgent.Call(e.MethodName, e.Parameters);
-
-            if (result is IEloquent eloquentInfo)
-            {
-                var clientType = _contractDescription.GetOperationDescription(e.MethodName, e.Parameters).Method.ReturnType.GenericTypeArguments[0];
-                var eloquentType = typeof(ClientEloquentObject<>).MakeGenericType(clientType);
-                e.ReturnValue =  Activator.CreateInstance(eloquentType, eloquentInfo.ObjectId, eloquentInfo.ObjectId, _eloquentClient);
-                return;
-            }
-
-            e.ReturnValue = result;
+            e.ReturnValue = _connectionAgent.Call(_eloquentClient, _contractDescription, e.MethodName, e.Parameters);
         }
 
         private void InnerProxyOnEventSubscribed(object sender, SubscriptionEventArgs e)
@@ -107,7 +98,7 @@ namespace EloquentObjects.RPC.Client.Implementation
         {
             _disposed = true;
             
-            _sessionAgent.EndpointMessageReady -= SessionAgentOnEndpointMessageReady;
+            _sessionAgent.EventReceived -= SessionAgentOnEventReceived;
 
             _innerProxy.Notified -= InnerProxyOnNotified;
             _innerProxy.Called -= InnerProxyOnCalled;

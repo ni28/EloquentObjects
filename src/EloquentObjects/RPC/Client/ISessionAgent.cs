@@ -1,4 +1,5 @@
 ﻿using System;
+using EloquentObjects.RPC.Messages.Session;
 using EloquentObjects.Serialization;
 
 namespace EloquentObjects.RPC.Client
@@ -7,6 +8,6 @@ namespace EloquentObjects.RPC.Client
     {
         IConnectionAgent Connect(string endpointId, ISerializer serializer);
 
-        event EventHandler<EndpointMessageReadyEventArgs> EndpointMessageReady;
+        event EventHandler<EventMessage> EventReceived;
     }
 }

@@ -3,31 +3,30 @@ using EloquentObjects.Channels;
 
 namespace EloquentObjects.RPC.Messages.Session
 {
-    internal sealed class HelloAckSessionMessage : SessionMessage
+    internal sealed class HelloAckMessage : Message
     {
         public bool Acknowledged { get; }
 
-        internal HelloAckSessionMessage(IHostAddress clientHostAddress, bool acknowledged) : base(clientHostAddress)
+        internal HelloAckMessage(IHostAddress clientHostAddress, bool acknowledged) : base(clientHostAddress)
         {
             Acknowledged = acknowledged;
         }
 
         #region Overrides of SessionMessage
 
-        public override SessionMessageType MessageType => SessionMessageType.HelloAck;
+        public override MessageType MessageType => MessageType.HelloAck;
         protected override void WriteInternal(Stream stream)
         {
             stream.WriteBool(Acknowledged);
-            stream.Flush();
         }
 
         #endregion
 
-        public static SessionMessage ReadInternal(IHostAddress hostAddress, Stream stream)
+        public static Message ReadInternal(IHostAddress hostAddress, Stream stream)
         {
             var acknowledged = stream.TakeBool();
 
-            return new HelloAckSessionMessage(hostAddress, acknowledged);
+            return new HelloAckMessage(hostAddress, acknowledged);
         }
     }
 }

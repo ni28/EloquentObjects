@@ -3,9 +3,9 @@ using EloquentObjects.Channels;
 
 namespace EloquentObjects.RPC.Messages.Session
 {
-    internal sealed class HelloSessionMessage : SessionMessage
+    internal sealed class HelloMessage : Message
     {
-        internal HelloSessionMessage(IHostAddress clientHostAddress, string endpointId, int connectionId) : base(
+        internal HelloMessage(IHostAddress clientHostAddress, string endpointId, int connectionId) : base(
             clientHostAddress)
         {
             EndpointId = endpointId;
@@ -17,26 +17,25 @@ namespace EloquentObjects.RPC.Messages.Session
 
         #region Overrides of SessionMessage
 
-        public override SessionMessageType MessageType => SessionMessageType.Hello;
+        public override MessageType MessageType => MessageType.Hello;
         protected override void WriteInternal(Stream stream)
         {
             stream.WriteString(EndpointId);
             stream.WriteInt(ConnectionId);
-            stream.Flush();
         }
 
         #endregion
 
-        public static SessionMessage ReadInternal(IHostAddress hostAddress, Stream stream)
+        public static Message ReadInternal(IHostAddress hostAddress, Stream stream)
         {
             var endpointId = stream.TakeString();
             var connectionId = stream.TakeInt();
-            return new HelloSessionMessage(hostAddress, endpointId, connectionId);
+            return new HelloMessage(hostAddress, endpointId, connectionId);
         }
         
-        public HelloAckSessionMessage CreateAck(bool acknowledged)
+        public HelloAckMessage CreateAck(bool acknowledged)
         {
-            return new HelloAckSessionMessage(ClientHostAddress, acknowledged);
+            return new HelloAckMessage(ClientHostAddress, acknowledged);
         }
     }
 }

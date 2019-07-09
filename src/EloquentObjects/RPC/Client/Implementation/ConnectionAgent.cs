@@ -1,9 +1,9 @@
 using System;
 using System.IO;
 using EloquentObjects.Channels;
+using EloquentObjects.Contracts;
 using EloquentObjects.Logging;
 using EloquentObjects.RPC.Messages;
-using EloquentObjects.RPC.Messages.Endpoint;
 using EloquentObjects.RPC.Messages.Session;
 using EloquentObjects.Serialization;
 
@@ -35,7 +35,7 @@ namespace EloquentObjects.RPC.Client.Implementation
 
         public void Dispose()
         {
-            var disconnectMessage = new DisconnectSessionMessage(_clientHostAddress, ConnectionId);
+            var disconnectMessage = new DisconnectMessage(_clientHostAddress, ConnectionId);
 
             using (var context = _outputChannel.BeginWriteRead())
             {
@@ -53,54 +53,48 @@ namespace EloquentObjects.RPC.Client.Implementation
 
         public void Notify(string eventName, object[] arguments)
         {
-            var endpointMessageStart = new EndpointRequestStartSessionMessage(_clientHostAddress, ConnectionId);
-            var eventMessage = new EventEndpointMessage(_endpointId, ConnectionId, eventName, arguments);
+            var payload = _serializer.SerializeCall(new CallInfo(eventName, arguments));
+            var eventMessage = new EventMessage(_clientHostAddress, _endpointId, ConnectionId, payload);
 
             using (var context = _outputChannel.BeginWriteRead())
             {
-                endpointMessageStart.Write(context.Stream);
-                eventMessage.Write(context.Stream, _serializer);
+                eventMessage.Write(context.Stream);
             }
         }
 
-        public object Call(string methodName, object[] parameters)
+        public object Call(IEloquentClient eloquentClient, IContractDescription contractDescription, string methodName,
+            object[] parameters)
         {
-            var endpointMessageStart = new EndpointRequestStartSessionMessage(_clientHostAddress, ConnectionId);
-            var requestMessage = new RequestEndpointMessage(_endpointId, ConnectionId, methodName, parameters);
+            var payload = _serializer.SerializeCall(new CallInfo(methodName, parameters));
+            var requestMessage = new RequestMessage(_clientHostAddress, _endpointId, ConnectionId, payload);
 
             using (var context = _outputChannel.BeginWriteRead())
             {
-                endpointMessageStart.Write(context.Stream);
-                requestMessage.Write(context.Stream, _serializer);
+                requestMessage.Write(context.Stream);
 
-                var responseSessionMessage = SessionMessage.Read(context.Stream);
-                switch (responseSessionMessage)
+                var result = Message.Read(context.Stream);
+                switch (result)
                 {
-                    case ExceptionSessionMessage exceptionSessionMessage:
+                    case ExceptionMessage exceptionSessionMessage:
                         throw exceptionSessionMessage.Exception;
-                    case EndpointResponseStartSessionMessage _:
-                        var response = (ResponseEndpointMessage)EndpointMessage.Read(context.Stream, _serializer);
-                        return response.Response;
+                    case EloquentObjectMessage eloquentObjectMessage:
+                        var clientType = contractDescription.GetOperationDescription(methodName, parameters).Method.ReturnType.GenericTypeArguments[0];
+                        var eloquentType = typeof(ClientEloquentObject<>).MakeGenericType(clientType);
+                        return Activator.CreateInstance(eloquentType, eloquentObjectMessage.ObjectId, null, eloquentClient);
+                    case ResponseMessage responseMessage:
+                        return _serializer.Deserialize<object>(responseMessage.Payload);
                     default:
-                        throw new IOException($"Unexpected session message type: {responseSessionMessage.MessageType}");
+                        throw new IOException($"Unexpected session message type: {result.MessageType}");
                 }
             }
         }
 
         public event EventHandler<NotifyEventArgs> EventReceived;
-
-        public void ReceiveAndHandleEndpointMessage(Stream stream)
+        
+        public void HandleEvent(EventMessage eventMessage)
         {
-            var endpointMessage = EndpointMessage.Read(stream, _serializer);
-            switch (endpointMessage)
-            {
-                case EventEndpointMessage eventMessage:
-                    EventReceived?.Invoke(this, new NotifyEventArgs(eventMessage.EventName, eventMessage.Arguments));
-                    break;
-                default:
-                    //No profit to raise exception as this is running in input channel thread
-                    return;
-            }
+            var callInfo = _serializer.DeserializeCall(eventMessage.Payload);
+            EventReceived?.Invoke(this, new NotifyEventArgs(callInfo.OperationName, callInfo.Parameters));
         }
 
         #endregion

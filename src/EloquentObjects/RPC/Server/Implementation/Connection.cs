@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using EloquentObjects.Channels;
 using EloquentObjects.Logging;
-using EloquentObjects.RPC.Messages.Endpoint;
 using EloquentObjects.RPC.Messages.Session;
 using EloquentObjects.Serialization;
 
@@ -52,26 +51,36 @@ namespace EloquentObjects.RPC.Server.Implementation
             if (_disposed)
                 throw new ObjectDisposedException(nameof(Connection));
 
-            var endpointMessageStart = new EndpointRequestStartSessionMessage(_clientHostAddress, _connectionId);
-            var eventMessage = new EventEndpointMessage(_endpointId, _connectionId, eventName, arguments);
+            var payload = _serializer.SerializeCall(new CallInfo(eventName, arguments));
+            var eventMessage = new EventMessage(_clientHostAddress, _endpointId, _connectionId, payload);
 
             using (var context = _outputChannel.BeginWriteRead())
             {
-                endpointMessageStart.Write(context.Stream);
-                eventMessage.Write(context.Stream, _serializer);
+                eventMessage.Write(context.Stream);
             }
         }
 
-        public void Receive(Stream stream, IHostAddress clientHostAddress)
+        public void HandleRequest(Stream stream, RequestMessage requestMessage)
         {
             if (_disposed)
                 throw new ObjectDisposedException(nameof(Connection));
 
-            MessageReady?.Invoke(stream, clientHostAddress);
+            var call = _serializer.DeserializeCall(requestMessage.Payload);
+            RequestReceived?.Invoke(stream, requestMessage.ClientHostAddress, call);
+        }
+
+        public void HandleEvent(Stream stream, EventMessage eventMessage)
+        {
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(Connection));
+
+            var call = _serializer.DeserializeCall(eventMessage.Payload);
+            EventReceived?.Invoke(eventMessage.ClientHostAddress, call);
         }
 
         public event EventHandler Disconnected;
-        public event Action<Stream, IHostAddress> MessageReady;
+        public event Action<IHostAddress, CallInfo> EventReceived;
+        public event Action<Stream, IHostAddress, CallInfo> RequestReceived;
 
         #endregion
     }

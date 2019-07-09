@@ -75,28 +75,31 @@ namespace EloquentObjects.RPC.Server.Implementation
 
         public event EventHandler Terminated;
 
-        public void HandleSessionMessage(SessionMessage sessionMessage, Stream stream)
+        public void HandleMessage(Message message, Stream stream)
         {
             if (_disposed)
                 throw new ObjectDisposedException(GetType().FullName);
 
             //The sessionMessage.ClientHostAddress should always match ClientHostAddress. We do not check it here for optimization purposes.
             
-            switch (sessionMessage)
+            switch (message)
             {
-                case HelloSessionMessage helloMessage:
+                case HelloMessage helloMessage:
                     HandleHello(helloMessage, stream);
                     break;
-                case HeartbeatSessionMessage _:
+                case HeartbeatMessage _:
                     HandleHeartbeat();
                     break;
-                case EndpointRequestStartSessionMessage endpointStartMessage:
-                    HandleEndpointStartMessage(endpointStartMessage, stream);
+                case RequestMessage requestMessage:
+                    HandleRequestMessage(requestMessage, stream);
                     break;
-                case DisconnectSessionMessage disconnectMessage:
+                case EventMessage eventMessage:
+                    HandleEventMessage(eventMessage, stream);
+                    break;
+                case DisconnectMessage disconnectMessage:
                     HandleDisconnect(disconnectMessage);
                     break;
-                case TerminateSessionSessionMessage _:
+                case TerminateMessage _:
                     HandleTerminate();
                     break;
                 default:
@@ -109,15 +112,15 @@ namespace EloquentObjects.RPC.Server.Implementation
         /// <summary>
         /// Creates a new connection
         /// </summary>
-        private void HandleHello(HelloSessionMessage helloSessionMessage, Stream stream)
+        private void HandleHello(HelloMessage helloMessage, Stream stream)
         {
             //Create a new connection or throw an exception if connection already exists
-            _connections.AddOrUpdate(helloSessionMessage.ConnectionId, 
+            _connections.AddOrUpdate(helloMessage.ConnectionId, 
                 id =>
                 {
                     try
                     {
-                        return CreateConnection(helloSessionMessage, stream);
+                        return CreateConnection(helloMessage, stream);
                     }
                     catch (Exception e)
                     {
@@ -127,7 +130,7 @@ namespace EloquentObjects.RPC.Server.Implementation
                 },
                 (id, c) =>
                 {
-                    WriteException(stream, new InvalidOperationException($"Connection with ID {helloSessionMessage.ConnectionId} already exists."));
+                    WriteException(stream, new InvalidOperationException($"Connection with ID {helloMessage.ConnectionId} already exists."));
                     return c;
                 });
         }
@@ -141,28 +144,43 @@ namespace EloquentObjects.RPC.Server.Implementation
         }
 
         /// <summary>
-        /// Starts receiving endpoint message that follows the Endpoint Message Start session messages
+        /// Redirects handling of the request message to target connection.
         /// </summary>
-        /// <param name="endpointRequestStartSessionStartMessage"></param>
+        /// <param name="requestMessage"></param>
         /// <param name="stream"></param>
-        private void HandleEndpointStartMessage(
-            EndpointRequestStartSessionMessage endpointRequestStartSessionStartMessage, Stream stream)
+        private void HandleRequestMessage(RequestMessage requestMessage, Stream stream)
         {
-            if (!_connections.TryGetValue(endpointRequestStartSessionStartMessage.ConnectionId, out var connection))
+            if (!_connections.TryGetValue(requestMessage.ConnectionId, out var connection))
             {
-                WriteException(stream, new InvalidOperationException($"Connection with ID {endpointRequestStartSessionStartMessage.ConnectionId} was not established."));
+                WriteException(stream, new InvalidOperationException($"Connection with ID {requestMessage.ConnectionId} was not established."));
                 return;
             }
 
-            connection.Receive(stream, endpointRequestStartSessionStartMessage.ClientHostAddress);
+            connection.HandleRequest(stream, requestMessage);
+        }
+
+        /// <summary>
+        /// Redirects handling of the event message to target connection.
+        /// </summary>
+        /// <param name="eventMessage"></param>
+        /// <param name="stream"></param>
+        private void HandleEventMessage(EventMessage eventMessage, Stream stream)
+        {
+            if (!_connections.TryGetValue(eventMessage.ConnectionId, out var connection))
+            {
+                //No exception as the client does not expect responses for events
+                return;
+            }
+
+            connection.HandleEvent(stream, eventMessage);
         }
 
         /// <summary>
         /// Disconnects the endpoint.
         /// </summary>
-        private void HandleDisconnect(DisconnectSessionMessage disconnectSessionMessage)
+        private void HandleDisconnect(DisconnectMessage disconnectMessage)
         {
-            if (!_connections.TryRemove(disconnectSessionMessage.ConnectionId, out var connection))
+            if (!_connections.TryRemove(disconnectMessage.ConnectionId, out var connection))
                 return;
             
             connection.Dispose();
@@ -177,7 +195,7 @@ namespace EloquentObjects.RPC.Server.Implementation
         }
        
         
-        private IConnection CreateConnection(HelloSessionMessage helloSessionMessage,
+        private IConnection CreateConnection(HelloMessage helloMessage,
             Stream writingStream)
         {
             //All callback agents reuse the same output channel
@@ -194,9 +212,9 @@ namespace EloquentObjects.RPC.Server.Implementation
 
             }
             
-            var acknowledged = _endpointHub.TryConnectEndpoint(helloSessionMessage.EndpointId, ClientHostAddress, helloSessionMessage.ConnectionId, _outputChannel, out var connection);
+            var acknowledged = _endpointHub.TryConnectEndpoint(helloMessage.EndpointId, ClientHostAddress, helloMessage.ConnectionId, _outputChannel, out var connection);
 
-            var helloAck = helloSessionMessage.CreateAck(acknowledged);
+            var helloAck = helloMessage.CreateAck(acknowledged);
             helloAck.Write(writingStream);
 
             return connection;
@@ -204,7 +222,7 @@ namespace EloquentObjects.RPC.Server.Implementation
 
         private void WriteException(Stream stream, Exception exception)
         {
-            var exceptionMessage = new ExceptionSessionMessage(ClientHostAddress, FaultException.Create(exception));
+            var exceptionMessage = new ExceptionMessage(ClientHostAddress, FaultException.Create(exception));
             exceptionMessage.Write(stream);
         }
     }

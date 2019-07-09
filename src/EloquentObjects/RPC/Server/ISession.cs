@@ -23,8 +23,8 @@ namespace EloquentObjects.RPC.Server
         /// <summary>
         ///     Handles a sessionMessage from the client.
         /// </summary>
-        /// <param name="sessionMessage">SessionMessage</param>
+        /// <param name="message">SessionMessage</param>
         /// <param name="stream">Stream that will be used to send a response</param>
-        void HandleSessionMessage(SessionMessage sessionMessage, Stream stream);
+        void HandleMessage(Message message, Stream stream);
     }
 }

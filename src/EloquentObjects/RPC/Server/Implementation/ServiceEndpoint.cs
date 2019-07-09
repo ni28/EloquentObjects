@@ -7,8 +7,6 @@ using System.Reflection;
 using System.Threading;
 using EloquentObjects.Channels;
 using EloquentObjects.Contracts;
-using EloquentObjects.RPC.Messages;
-using EloquentObjects.RPC.Messages.Endpoint;
 using EloquentObjects.RPC.Messages.Session;
 using EloquentObjects.Serialization;
 
@@ -103,7 +101,8 @@ namespace EloquentObjects.RPC.Server.Implementation
         {
             var connection = new Connection(endpointId, clientHostAddress, connectionId, outputChannel, _serializer);
 
-            connection.MessageReady += ConnectionOnMessageReady;
+            connection.RequestReceived += ConnectionOnRequestReceived;
+            connection.EventReceived += ConnectionOnEventReceived;
             connection.Disconnected += ConnectionOnDisconnected;
 
             lock (_connections)
@@ -119,7 +118,8 @@ namespace EloquentObjects.RPC.Server.Implementation
         private void ConnectionOnDisconnected(object sender, EventArgs e)
         {
             var connection = (IConnection) sender;
-            connection.MessageReady -= ConnectionOnMessageReady;
+            connection.RequestReceived -= ConnectionOnRequestReceived;
+            connection.EventReceived -= ConnectionOnEventReceived;
             connection.Disconnected -= ConnectionOnDisconnected;
 
             lock (_connections)
@@ -128,38 +128,27 @@ namespace EloquentObjects.RPC.Server.Implementation
             }
         }
 
-        private void ConnectionOnMessageReady(Stream stream, IHostAddress clientHostAddress)
+        private void ConnectionOnRequestReceived(Stream stream, IHostAddress clientHostAddress, CallInfo callInfo)
         {
-            ReceiveAndHandleEndpointMessage(stream, clientHostAddress);
-        }
-
-        private void ReceiveAndHandleEndpointMessage(Stream stream, IHostAddress clientHostAddress)
-        {
-            var message = EndpointMessage.Read(stream, _serializer);
-            switch (message)
+            try
             {
-                case EventEndpointMessage eventEndpointMessage:
-                    HandleEvent(eventEndpointMessage.EventName, eventEndpointMessage.Arguments);
-                    break;
-                case RequestEndpointMessage requestEndpointMessage:
-                    try
-                    {
-                        HandleRequest(clientHostAddress, stream, requestEndpointMessage.MethodName, requestEndpointMessage.Parameters);
-                    }
-                    catch (Exception e)
-                    {
-                        WriteException(stream, e, clientHostAddress);
-                    }
-
-                    break;
-                default:
-                    throw new InvalidOperationException("Unexpected Endpoint message type");
+                HandleRequest(clientHostAddress, stream, callInfo.OperationName, callInfo.Parameters);
+            }
+            catch (Exception e)
+            {
+                WriteException(stream, e, clientHostAddress);
             }
         }
 
-        private void HandleEvent(string eventName, object[] arguments)
+        private void ConnectionOnEventReceived(IHostAddress clientHostAddress, CallInfo callInfo)
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(ServiceEndpoint));
+            HandleEvent(callInfo.OperationName, callInfo.Parameters);
+        }
+
+        public void HandleEvent(string eventName, object[] arguments)
+        {
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(ServiceEndpoint));
 
             var operationDescription = _contractDescription.GetOperationDescription(eventName, arguments);
 
@@ -182,7 +171,7 @@ namespace EloquentObjects.RPC.Server.Implementation
             }
         }
 
-        private void HandleRequest(IHostAddress clientHostAddress, Stream stream, string methodName,
+        public void HandleRequest(IHostAddress clientHostAddress, Stream stream, string methodName,
             object[] parameters)
         {
             if (_disposed) throw new ObjectDisposedException(nameof(ServiceEndpoint));
@@ -202,11 +191,19 @@ namespace EloquentObjects.RPC.Server.Implementation
                 WriteException(stream, e.InnerException ?? e, clientHostAddress);
                 return;
             }
-            
-            var startEndpointMessage = new EndpointResponseStartSessionMessage(clientHostAddress);
-            startEndpointMessage.Write(stream);
-            var responseMessage = new ResponseEndpointMessage(result);
-            responseMessage.Write(stream, _serializer);
+
+            if (result is IEloquent eloquent)
+            {
+                var payload = _serializer.Serialize(eloquent.Info);
+                var responseMessage = new EloquentObjectMessage(clientHostAddress, eloquent.ObjectId, payload);
+                responseMessage.Write(stream);
+            }
+            else
+            {
+                var payload = _serializer.Serialize(result);
+                var responseMessage = new ResponseMessage(clientHostAddress, payload);
+                responseMessage.Write(stream);
+            }
         }
 
 
@@ -253,7 +250,7 @@ namespace EloquentObjects.RPC.Server.Implementation
         
         private void WriteException(Stream stream, Exception exception, IHostAddress clientHostAddress)
         {
-            var exceptionMessage = new ExceptionSessionMessage(clientHostAddress, FaultException.Create(exception));
+            var exceptionMessage = new ExceptionMessage(clientHostAddress, FaultException.Create(exception));
             exceptionMessage.Write(stream);
         }
     }

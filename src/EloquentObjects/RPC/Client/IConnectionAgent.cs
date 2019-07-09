@@ -1,5 +1,6 @@
 using System;
-using System.IO;
+using EloquentObjects.Contracts;
+using EloquentObjects.RPC.Messages.Session;
 
 namespace EloquentObjects.RPC.Client
 {
@@ -20,16 +21,23 @@ namespace EloquentObjects.RPC.Client
         /// <summary>
         /// Send request and receive response from the server
         /// </summary>
+        /// <param name="eloquentClient"></param>
+        /// <param name="contractDescription"></param>
         /// <param name="methodName"></param>
         /// <param name="parameters"></param>
         /// <returns></returns>
-        object Call(string methodName, object[] parameters);
+        object Call(IEloquentClient eloquentClient, IContractDescription contractDescription, string methodName,
+            object[] parameters);
 
         /// <summary>
         /// Occurs when event is received from the server
         /// </summary>
         event EventHandler<NotifyEventArgs> EventReceived;
 
-        void ReceiveAndHandleEndpointMessage(Stream stream);
+        /// <summary>
+        /// Handles event message received from the server.
+        /// </summary>
+        /// <param name="eventMessage">Event message</param>
+        void HandleEvent(EventMessage eventMessage);
     }
 }

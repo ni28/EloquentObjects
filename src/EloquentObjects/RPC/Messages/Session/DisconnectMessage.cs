@@ -3,9 +3,9 @@ using EloquentObjects.Channels;
 
 namespace EloquentObjects.RPC.Messages.Session
 {
-    internal sealed class DisconnectSessionMessage : SessionMessage
+    internal sealed class DisconnectMessage : Message
     {
-        public DisconnectSessionMessage(IHostAddress clientHostAddress, int connectionId) : base(
+        public DisconnectMessage(IHostAddress clientHostAddress, int connectionId) : base(
             clientHostAddress)
         {
             ConnectionId = connectionId;
@@ -15,19 +15,18 @@ namespace EloquentObjects.RPC.Messages.Session
 
         #region Overrides of SessionMessage
 
-        public override SessionMessageType MessageType => SessionMessageType.Disconnect;
+        public override MessageType MessageType => MessageType.Disconnect;
         protected override void WriteInternal(Stream stream)
         {
             stream.WriteInt(ConnectionId);
-            stream.Flush();
         }
 
         #endregion
 
-        public static SessionMessage ReadInternal(IHostAddress hostAddress, Stream stream)
+        public static Message ReadInternal(IHostAddress hostAddress, Stream stream)
         {
             var connectionId = stream.TakeInt();
-            return new DisconnectSessionMessage(hostAddress, connectionId);
+            return new DisconnectMessage(hostAddress, connectionId);
         }
     }
 }

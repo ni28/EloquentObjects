@@ -61,26 +61,26 @@ namespace EloquentObjects.RPC.Server.Implementation
             if (_disposed)
                 return;
 
-            var sessionMessage = SessionMessage.Read(stream);
+            var sessionMessage = Message.Read(stream);
 
             if (_disposed)
                 return;
     
             switch (sessionMessage)
             {
-                case HelloSessionMessage helloMessage:
+                case HelloMessage helloMessage:
                     HandleHello(helloMessage, stream);
                     break;
                 default:
                     var session = _sessions[sessionMessage.ClientHostAddress];
-                    session.HandleSessionMessage(sessionMessage, stream);
+                    session.HandleMessage(sessionMessage, stream);
                     break;
             }
         }
 
-        private void HandleHello(SessionMessage helloSessionMessage, Stream stream)
+        private void HandleHello(Message helloMessage, Stream stream)
         {
-            var clientHostAddress = helloSessionMessage.ClientHostAddress;
+            var clientHostAddress = helloMessage.ClientHostAddress;
 
             var session = _sessions.GetOrAdd(clientHostAddress, address =>
             {
@@ -90,7 +90,7 @@ namespace EloquentObjects.RPC.Server.Implementation
                 return s;
             });
 
-            session.HandleSessionMessage(helloSessionMessage, stream);
+            session.HandleMessage(helloMessage, stream);
         }
 
         private void SessionOnTerminated(object sender, EventArgs e)

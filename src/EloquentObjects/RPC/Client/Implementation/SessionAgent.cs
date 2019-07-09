@@ -43,16 +43,16 @@ namespace EloquentObjects.RPC.Client.Implementation
             var connectionId = Interlocked.Increment(ref _lastConnectionId);
 
             //Send hello to ensure that endpoint exists
-            var helloMessage = new HelloSessionMessage(_clientHostAddress, endpointId, connectionId);
+            var helloMessage = new HelloMessage(_clientHostAddress, endpointId, connectionId);
 
-            SessionMessage response;
+            Message response;
 
             try
             {
                 using (var context = _outputChannel.BeginWriteRead())
                 {
                     helloMessage.Write(context.Stream);
-                    response = SessionMessage.Read(context.Stream);
+                    response = Message.Read(context.Stream);
                 }
             }
             catch (Exception e)
@@ -62,9 +62,9 @@ namespace EloquentObjects.RPC.Client.Implementation
 
             switch (response)
             {
-                case ExceptionSessionMessage exceptionMessage:
+                case ExceptionMessage exceptionMessage:
                     throw exceptionMessage.Exception;
-                case HelloAckSessionMessage helloAckMessage:
+                case HelloAckMessage helloAckMessage:
                     if (!helloAckMessage.Acknowledged)
                         throw new KeyNotFoundException($"No objects with ID {endpointId} are hosted on server");
                     return CreateConnectionAgent(connectionId, endpointId, serializer);
@@ -73,7 +73,7 @@ namespace EloquentObjects.RPC.Client.Implementation
             }
         }
 
-        public event EventHandler<EndpointMessageReadyEventArgs> EndpointMessageReady;
+        public event EventHandler<EventMessage> EventReceived;
 
         private IConnectionAgent CreateConnectionAgent(int connectionId, string endpointId, ISerializer serializer)
         {
@@ -113,12 +113,12 @@ namespace EloquentObjects.RPC.Client.Implementation
             if (_disposed)
                 return;
 
-            var message = SessionMessage.Read(stream);
+            var message = Message.Read(stream);
 
             switch (message)
             {
-                case EndpointRequestStartSessionMessage endpointStartMessage:
-                    EndpointMessageReady?.Invoke(this, new EndpointMessageReadyEventArgs(endpointStartMessage.ConnectionId, stream));
+                case EventMessage eventMessage:
+                    EventReceived?.Invoke(this, eventMessage);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -133,7 +133,7 @@ namespace EloquentObjects.RPC.Client.Implementation
                     return;
             }
 
-            var heartbeatMessage = new HeartbeatSessionMessage(_clientHostAddress);
+            var heartbeatMessage = new HeartbeatMessage(_clientHostAddress);
             using (var context = _outputChannel.BeginWriteRead())
             {
                 heartbeatMessage.Write(context.Stream);
@@ -144,7 +144,7 @@ namespace EloquentObjects.RPC.Client.Implementation
         {
             try
             {
-                var terminateSessionMessage = new TerminateSessionSessionMessage(_clientHostAddress);
+                var terminateSessionMessage = new TerminateMessage(_clientHostAddress);
 
                 using (var context = _outputChannel.BeginWriteRead())
                 {
