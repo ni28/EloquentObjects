@@ -4,8 +4,6 @@ using JetBrains.Annotations;
 
 namespace EloquentObjects.Contracts.Implementation
 {
-    //TODO: Add support for default parameters for methods
-
     internal sealed class MethodDescription : IMethodDescription
     {
         public MethodDescription(

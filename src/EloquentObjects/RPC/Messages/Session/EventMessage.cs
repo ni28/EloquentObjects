@@ -12,7 +12,6 @@ namespace EloquentObjects.RPC.Messages.Session
             Payload = payload;
         }
         
-        //TODO: Rename to objectId?
         public string ObjectId { get; }
         public int ConnectionId { get; }
         public byte[] Payload { get; }
