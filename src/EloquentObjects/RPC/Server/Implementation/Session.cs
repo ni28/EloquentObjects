@@ -12,7 +12,7 @@ namespace EloquentObjects.RPC.Server.Implementation
     internal sealed class Session : ISession
     {
         private readonly ConcurrentDictionary<int, IConnection> _connections = new ConcurrentDictionary<int, IConnection>();
-        private readonly IEndpointHub _endpointHub;
+        private readonly IObjectsRepository _objectsRepository;
         private readonly int _maxHeartBeatLost;
         private readonly IBinding _binding;
         private int _heartBeatLostCounter;
@@ -21,11 +21,11 @@ namespace EloquentObjects.RPC.Server.Implementation
         private readonly ILogger _logger;
         private bool _disposed;
 
-        public Session(IBinding binding, IHostAddress clientHostAddress, IEndpointHub endpointHub)
+        public Session(IBinding binding, IHostAddress clientHostAddress, IObjectsRepository objectsRepository)
         {
             _binding = binding;
             _maxHeartBeatLost = binding.MaxHeartBeatLost;
-            _endpointHub = endpointHub;
+            _objectsRepository = objectsRepository;
             ClientHostAddress = clientHostAddress;
 
             //When HeartBeatMs is 0 then no heart beats are listened.
@@ -176,7 +176,7 @@ namespace EloquentObjects.RPC.Server.Implementation
         }
 
         /// <summary>
-        /// Disconnects the endpoint.
+        /// Disconnects the object.
         /// </summary>
         private void HandleDisconnect(DisconnectMessage disconnectMessage)
         {
@@ -212,7 +212,7 @@ namespace EloquentObjects.RPC.Server.Implementation
 
             }
             
-            var acknowledged = _endpointHub.TryConnectEndpoint(helloMessage.EndpointId, ClientHostAddress, helloMessage.ConnectionId, _outputChannel, out var connection);
+            var acknowledged = _objectsRepository.TryConnectObject(helloMessage.ObjectId, ClientHostAddress, helloMessage.ConnectionId, _outputChannel, out var connection);
 
             var helloAck = helloMessage.CreateAck(acknowledged);
             helloAck.Write(writingStream);

@@ -18,7 +18,7 @@ namespace EloquentObjects
     {
         private readonly ISerializerFactory _serializerFactory;
         private readonly IContractDescriptionFactory _contractDescriptionFactory;
-        private readonly IEndpointHub _endpointHub;
+        private readonly IObjectsRepository _objectsRepository;
         private readonly IInputChannel _inputChannel;
         private readonly Server _server;
 
@@ -59,9 +59,9 @@ namespace EloquentObjects
                 throw new IOException("Failed creating input channel", e);
             }
             
-            _endpointHub = new EndpointHub();
+            _objectsRepository = new ObjectsRepository();
 
-            _server = new Server(binding, _inputChannel, _endpointHub);
+            _server = new Server(binding, _inputChannel, _objectsRepository);
         }
 
         #region IDisposable
@@ -69,7 +69,7 @@ namespace EloquentObjects
         public void Dispose()
         {
             _server.Dispose();
-            _endpointHub.Dispose();
+            _objectsRepository.Dispose();
             _inputChannel.Dispose();
         }
 
@@ -83,8 +83,8 @@ namespace EloquentObjects
             var knownTypes = contractDescription.GetTypes();
             var serializer = _serializerFactory.Create(typeof(object), knownTypes);
 
-            var objectHost = _endpointHub.AddEndpoint(objectId,
-                new ServiceEndpoint(contractDescription, serializer, synchronizationContext, obj));
+            var objectHost = _objectsRepository.Add(objectId,
+                new ObjectAdapter(contractDescription, serializer, synchronizationContext, obj));
             return new ServerEloquentObject<T>(obj, objectId, null, objectHost);
         }
     }

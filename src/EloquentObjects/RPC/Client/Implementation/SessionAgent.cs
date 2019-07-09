@@ -38,12 +38,12 @@ namespace EloquentObjects.RPC.Client.Implementation
             _logger.Info(() => $"Created (clientHostAddress = {_clientHostAddress})");
         }
 
-        public IConnectionAgent Connect(string endpointId, ISerializer serializer)
+        public IConnectionAgent Connect(string objectId, ISerializer serializer)
         {
             var connectionId = Interlocked.Increment(ref _lastConnectionId);
 
-            //Send hello to ensure that endpoint exists
-            var helloMessage = new HelloMessage(_clientHostAddress, endpointId, connectionId);
+            //Send hello to ensure that object is hosted
+            var helloMessage = new HelloMessage(_clientHostAddress, objectId, connectionId);
 
             Message response;
 
@@ -66,8 +66,8 @@ namespace EloquentObjects.RPC.Client.Implementation
                     throw exceptionMessage.Exception;
                 case HelloAckMessage helloAckMessage:
                     if (!helloAckMessage.Acknowledged)
-                        throw new KeyNotFoundException($"No objects with ID {endpointId} are hosted on server");
-                    return CreateConnectionAgent(connectionId, endpointId, serializer);
+                        throw new KeyNotFoundException($"No objects with ID {objectId} are hosted on server");
+                    return CreateConnectionAgent(connectionId, objectId, serializer);
                 default:
                     throw new IOException("Unexpected failure. Connection is not acknowledged by the server.");
             }
@@ -75,7 +75,7 @@ namespace EloquentObjects.RPC.Client.Implementation
 
         public event EventHandler<EventMessage> EventReceived;
 
-        private IConnectionAgent CreateConnectionAgent(int connectionId, string endpointId, ISerializer serializer)
+        private IConnectionAgent CreateConnectionAgent(int connectionId, string objectId, ISerializer serializer)
         {
             //Start sending heartbeats if not started yet
             //When HeartBeatMs is 0 then no heart beats are sent.
@@ -85,7 +85,7 @@ namespace EloquentObjects.RPC.Client.Implementation
                     _heartbeatTimer = new Timer(Heartbeat, null, 0, _binding.HeartBeatMs);
             }
 
-            return new ConnectionAgent(connectionId, endpointId, _outputChannel, _clientHostAddress, serializer);
+            return new ConnectionAgent(connectionId, objectId, _outputChannel, _clientHostAddress, serializer);
         }
 
         #region IDisposable

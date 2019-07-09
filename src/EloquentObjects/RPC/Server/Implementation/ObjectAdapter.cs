@@ -12,7 +12,7 @@ using EloquentObjects.Serialization;
 
 namespace EloquentObjects.RPC.Server.Implementation
 {
-    internal sealed class ServiceEndpoint : IEndpoint
+    internal sealed class ObjectAdapter : IObjectAdapter
     {
         private readonly List<IConnection> _connections = new List<IConnection>();
         private readonly IContractDescription _contractDescription;
@@ -22,7 +22,7 @@ namespace EloquentObjects.RPC.Server.Implementation
         private readonly SynchronizationContext _synchronizationContext;
         private bool _disposed;
 
-        public ServiceEndpoint(IContractDescription contractDescription,
+        public ObjectAdapter(IContractDescription contractDescription,
             ISerializer serializer,
             SynchronizationContext synchronizationContext,
             object serviceInstance)
@@ -73,7 +73,7 @@ namespace EloquentObjects.RPC.Server.Implementation
         
         private void SendEventToAllClients(string eventName, bool isStandardEvent, params object[] parameters)
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(ServiceEndpoint));
+            if (_disposed) throw new ObjectDisposedException(nameof(ObjectAdapter));
             var connections = new List<IConnection>();
 
             lock (_connections)
@@ -93,13 +93,13 @@ namespace EloquentObjects.RPC.Server.Implementation
             }
         }
 
-        #region Implementation of IEndpoint
+        #region Implementation of IObjectAdapter
 
-        public IConnection Connect(string endpointId,
+        public IConnection Connect(string objectId,
             IHostAddress clientHostAddress, int connectionId,
             IOutputChannel outputChannel)
         {
-            var connection = new Connection(endpointId, clientHostAddress, connectionId, outputChannel, _serializer);
+            var connection = new Connection(objectId, clientHostAddress, connectionId, outputChannel, _serializer);
 
             connection.RequestReceived += ConnectionOnRequestReceived;
             connection.EventReceived += ConnectionOnEventReceived;
@@ -148,7 +148,7 @@ namespace EloquentObjects.RPC.Server.Implementation
         public void HandleEvent(string eventName, object[] arguments)
         {
             if (_disposed)
-                throw new ObjectDisposedException(nameof(ServiceEndpoint));
+                throw new ObjectDisposedException(nameof(ObjectAdapter));
 
             var operationDescription = _contractDescription.GetOperationDescription(eventName, arguments);
 
@@ -174,7 +174,7 @@ namespace EloquentObjects.RPC.Server.Implementation
         public void HandleRequest(IHostAddress clientHostAddress, Stream stream, string methodName,
             object[] parameters)
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(ServiceEndpoint));
+            if (_disposed) throw new ObjectDisposedException(nameof(ObjectAdapter));
 
             var operationDescription = _contractDescription.GetOperationDescription(methodName, parameters);
 
@@ -239,7 +239,7 @@ namespace EloquentObjects.RPC.Server.Implementation
 
         public void Dispose()
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(ServiceEndpoint));
+            if (_disposed) throw new ObjectDisposedException(nameof(ObjectAdapter));
 
             _disposed = true;
             foreach (var hostedEvent in _hostedEvents)

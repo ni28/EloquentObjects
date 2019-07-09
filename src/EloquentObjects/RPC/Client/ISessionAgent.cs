@@ -6,7 +6,7 @@ namespace EloquentObjects.RPC.Client
 {
     internal interface ISessionAgent : IDisposable
     {
-        IConnectionAgent Connect(string endpointId, ISerializer serializer);
+        IConnectionAgent Connect(string objectId, ISerializer serializer);
 
         event EventHandler<EventMessage> EventReceived;
     }

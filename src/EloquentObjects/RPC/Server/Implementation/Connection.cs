@@ -11,25 +11,25 @@ namespace EloquentObjects.RPC.Server.Implementation
     {
         private bool _disposed;
         private readonly int _connectionId;
-        private readonly string _endpointId;
+        private readonly string _objectId;
         private readonly IHostAddress _clientHostAddress;
         private readonly IOutputChannel _outputChannel;
         private readonly ISerializer _serializer;
         private readonly ILogger _logger;
 
 
-        public Connection(string endpointId,
+        public Connection(string objectId,
             IHostAddress clientHostAddress, int connectionId,
             IOutputChannel outputChannel, ISerializer serializer)
         {
             _connectionId = connectionId;
-            _endpointId = endpointId;
+            _objectId = objectId;
             _clientHostAddress = clientHostAddress;
             _outputChannel = outputChannel;
             _serializer = serializer;
             
             _logger = Logger.Factory.Create(GetType());
-            _logger.Info(() => $"Created (clientHostAddress = {_clientHostAddress}, endpointId = {_endpointId}, connectionID = {_connectionId})");
+            _logger.Info(() => $"Created (clientHostAddress = {_clientHostAddress}, objectId = {_objectId}, connectionID = {_connectionId})");
         }
 
         #region Implementation of IDisposable
@@ -39,7 +39,7 @@ namespace EloquentObjects.RPC.Server.Implementation
             _disposed = true;
             Disconnected?.Invoke(this, EventArgs.Empty);
             
-            _logger.Info(() => $"Disposed (clientHostAddress = {_clientHostAddress}, endpointId = {_endpointId}, connectionID = {_connectionId})");
+            _logger.Info(() => $"Disposed (clientHostAddress = {_clientHostAddress}, objectId = {_objectId}, connectionID = {_connectionId})");
         }
 
         #endregion
@@ -52,7 +52,7 @@ namespace EloquentObjects.RPC.Server.Implementation
                 throw new ObjectDisposedException(nameof(Connection));
 
             var payload = _serializer.SerializeCall(new CallInfo(eventName, arguments));
-            var eventMessage = new EventMessage(_clientHostAddress, _endpointId, _connectionId, payload);
+            var eventMessage = new EventMessage(_clientHostAddress, _objectId, _connectionId, payload);
 
             using (var context = _outputChannel.BeginWriteRead())
             {

@@ -14,21 +14,21 @@ namespace EloquentObjects.RPC.Client.Implementation
     {
         private readonly IHostAddress _clientHostAddress;
         private readonly ISerializer _serializer;
-        private readonly string _endpointId;
+        private readonly string _objectId;
         private readonly IOutputChannel _outputChannel;
         private readonly ILogger _logger;
 
-        public ConnectionAgent(int connectionId, string endpointId,
+        public ConnectionAgent(int connectionId, string objectId,
             IOutputChannel outputChannel, IHostAddress clientHostAddress, ISerializer serializer)
         {
             ConnectionId = connectionId;
-            _endpointId = endpointId;
+            _objectId = objectId;
             _outputChannel = outputChannel;
             _clientHostAddress = clientHostAddress;
             _serializer = serializer;
 
             _logger = Logger.Factory.Create(GetType());
-            _logger.Info(() => $"Created (connectionId = {ConnectionId}, endpointId = {_endpointId}, clientHostAddress = {_clientHostAddress})");
+            _logger.Info(() => $"Created (connectionId = {ConnectionId}, objectId = {_objectId}, clientHostAddress = {_clientHostAddress})");
         }
 
         #region Implementation of IDisposable
@@ -42,7 +42,7 @@ namespace EloquentObjects.RPC.Client.Implementation
                 disconnectMessage.Write(context.Stream);
             }
 
-            _logger.Info(() => $"Disposed (connectionId = {ConnectionId}, endpointId = {_endpointId}, clientHostAddress = {_clientHostAddress})");
+            _logger.Info(() => $"Disposed (connectionId = {ConnectionId}, objectId = {_objectId}, clientHostAddress = {_clientHostAddress})");
         }
 
         #endregion
@@ -54,7 +54,7 @@ namespace EloquentObjects.RPC.Client.Implementation
         public void Notify(string eventName, object[] arguments)
         {
             var payload = _serializer.SerializeCall(new CallInfo(eventName, arguments));
-            var eventMessage = new EventMessage(_clientHostAddress, _endpointId, ConnectionId, payload);
+            var eventMessage = new EventMessage(_clientHostAddress, _objectId, ConnectionId, payload);
 
             using (var context = _outputChannel.BeginWriteRead())
             {
@@ -66,7 +66,7 @@ namespace EloquentObjects.RPC.Client.Implementation
             object[] parameters)
         {
             var payload = _serializer.SerializeCall(new CallInfo(methodName, parameters));
-            var requestMessage = new RequestMessage(_clientHostAddress, _endpointId, ConnectionId, payload);
+            var requestMessage = new RequestMessage(_clientHostAddress, _objectId, ConnectionId, payload);
 
             using (var context = _outputChannel.BeginWriteRead())
             {

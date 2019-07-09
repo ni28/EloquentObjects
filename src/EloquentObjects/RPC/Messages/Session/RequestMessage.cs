@@ -5,14 +5,14 @@ namespace EloquentObjects.RPC.Messages.Session
 {
     internal sealed class RequestMessage : Message
     {
-        internal RequestMessage(IHostAddress clientHostAddress, string endpointId, int connectionId, byte[] payload): base(clientHostAddress)
+        internal RequestMessage(IHostAddress clientHostAddress, string objectId, int connectionId, byte[] payload): base(clientHostAddress)
         {
-            EndpointId = endpointId;
+            ObjectId = objectId;
             ConnectionId = connectionId;
             Payload = payload;
         }
 
-        public string EndpointId { get; }
+        public string ObjectId { get; }
         public int ConnectionId { get; }
         public byte[] Payload { get; }
 
@@ -21,7 +21,7 @@ namespace EloquentObjects.RPC.Messages.Session
         public override MessageType MessageType => MessageType.Request;
         protected override void WriteInternal(Stream stream)
         {
-            stream.WriteString(EndpointId);
+            stream.WriteString(ObjectId);
             stream.WriteInt(ConnectionId);
             stream.WritePayload(Payload);
         }
@@ -30,11 +30,11 @@ namespace EloquentObjects.RPC.Messages.Session
 
         public static Message ReadInternal(IHostAddress clientHostAddress, Stream stream)
         {
-            var endpointId = stream.TakeString();
+            var objectId = stream.TakeString();
             var connectionId = stream.TakeInt();
             var payload = stream.TakePayload();
 
-            return new RequestMessage(clientHostAddress, endpointId, connectionId, payload);
+            return new RequestMessage(clientHostAddress, objectId, connectionId, payload);
         }
     }
 }

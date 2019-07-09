@@ -5,14 +5,14 @@ namespace EloquentObjects.RPC.Messages.Session
 {
     internal sealed class HelloMessage : Message
     {
-        internal HelloMessage(IHostAddress clientHostAddress, string endpointId, int connectionId) : base(
+        internal HelloMessage(IHostAddress clientHostAddress, string objectId, int connectionId) : base(
             clientHostAddress)
         {
-            EndpointId = endpointId;
+            ObjectId = objectId;
             ConnectionId = connectionId;
         }
 
-        public string EndpointId { get; }
+        public string ObjectId { get; }
         public int ConnectionId { get; }
 
         #region Overrides of Message
@@ -20,7 +20,7 @@ namespace EloquentObjects.RPC.Messages.Session
         public override MessageType MessageType => MessageType.Hello;
         protected override void WriteInternal(Stream stream)
         {
-            stream.WriteString(EndpointId);
+            stream.WriteString(ObjectId);
             stream.WriteInt(ConnectionId);
         }
 
@@ -28,9 +28,9 @@ namespace EloquentObjects.RPC.Messages.Session
 
         public static Message ReadInternal(IHostAddress hostAddress, Stream stream)
         {
-            var endpointId = stream.TakeString();
+            var objectId = stream.TakeString();
             var connectionId = stream.TakeInt();
-            return new HelloMessage(hostAddress, endpointId, connectionId);
+            return new HelloMessage(hostAddress, objectId, connectionId);
         }
         
         public HelloAckMessage CreateAck(bool acknowledged)

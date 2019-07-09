@@ -11,18 +11,18 @@ namespace EloquentObjects.RPC.Server.Implementation
     internal sealed class Server : IServer
     {
         private readonly IBinding _binding;
-        private readonly IEndpointHub _endpointHub;
+        private readonly IObjectsRepository _objectsRepository;
         private readonly IInputChannel _inputChannel;
 
         private readonly ConcurrentDictionary<IHostAddress, ISession> _sessions = new ConcurrentDictionary<IHostAddress, ISession>();
         private bool _disposed;
         private readonly ILogger _logger;
 
-        public Server(IBinding binding, IInputChannel inputChannel, IEndpointHub endpointHub)
+        public Server(IBinding binding, IInputChannel inputChannel, IObjectsRepository objectsRepository)
         {
             _binding = binding;
             _inputChannel = inputChannel;
-            _endpointHub = endpointHub;
+            _objectsRepository = objectsRepository;
 
             _inputChannel.MessageReady += InputChannelOnMessageReady;
 
@@ -84,7 +84,7 @@ namespace EloquentObjects.RPC.Server.Implementation
 
             var session = _sessions.GetOrAdd(clientHostAddress, address =>
             {
-                var s = new Session(_binding, clientHostAddress, _endpointHub);
+                var s = new Session(_binding, clientHostAddress, _objectsRepository);
 
                 s.Terminated += SessionOnTerminated;
                 return s;

@@ -3,9 +3,9 @@ using EloquentObjects.Channels;
 
 namespace EloquentObjects.RPC.Server
 {
-    internal interface IEndpoint : IDisposable
+    internal interface IObjectAdapter : IDisposable
     {
-        IConnection Connect(string endpointId,
+        IConnection Connect(string objectId,
             IHostAddress clientHostAddress, int connectionId,
             IOutputChannel outputChannel);
     }
