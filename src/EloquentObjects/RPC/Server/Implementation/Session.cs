@@ -80,7 +80,7 @@ namespace EloquentObjects.RPC.Server.Implementation
             if (_disposed)
                 throw new ObjectDisposedException(GetType().FullName);
 
-            //The sessionMessage.ClientHostAddress should always match ClientHostAddress. We do not check it here for optimization purposes.
+            //The message.ClientHostAddress should always match ClientHostAddress. We do not check it here for optimization purposes.
             
             switch (message)
             {

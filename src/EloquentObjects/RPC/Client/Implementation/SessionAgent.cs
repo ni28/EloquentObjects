@@ -144,11 +144,11 @@ namespace EloquentObjects.RPC.Client.Implementation
         {
             try
             {
-                var terminateSessionMessage = new TerminateMessage(_clientHostAddress);
+                var terminateMessage = new TerminateMessage(_clientHostAddress);
 
                 using (var context = _outputChannel.BeginWriteRead())
                 {
-                    terminateSessionMessage.Write(context.Stream);
+                    terminateMessage.Write(context.Stream);
                 }
             }
             catch (IOException)

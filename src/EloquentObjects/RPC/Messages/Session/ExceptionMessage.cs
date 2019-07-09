@@ -13,7 +13,7 @@ namespace EloquentObjects.RPC.Messages.Session
 
         public FaultException Exception { get; }
 
-        #region Overrides of SessionMessage
+        #region Overrides of Message
 
         public override MessageType MessageType => MessageType.Exception;
         protected override void WriteInternal(Stream stream)

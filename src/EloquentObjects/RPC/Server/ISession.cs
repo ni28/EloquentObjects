@@ -16,14 +16,14 @@ namespace EloquentObjects.RPC.Server
         IHostAddress ClientHostAddress { get; }
 
         /// <summary>
-        ///     Occurs when either heartbeat is considered lost or when client sent a terminate sessionMessage.
+        ///     Occurs when either heartbeat is considered lost or when client sent a terminate message.
         /// </summary>
         event EventHandler Terminated;
 
         /// <summary>
-        ///     Handles a sessionMessage from the client.
+        ///     Handles a message from the client.
         /// </summary>
-        /// <param name="message">SessionMessage</param>
+        /// <param name="message">Message from client</param>
         /// <param name="stream">Stream that will be used to send a response</param>
         void HandleMessage(Message message, Stream stream);
     }

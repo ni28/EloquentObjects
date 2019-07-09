@@ -15,7 +15,7 @@ namespace EloquentObjects.RPC.Messages.Session
         public string EndpointId { get; }
         public int ConnectionId { get; }
 
-        #region Overrides of SessionMessage
+        #region Overrides of Message
 
         public override MessageType MessageType => MessageType.Hello;
         protected override void WriteInternal(Stream stream)

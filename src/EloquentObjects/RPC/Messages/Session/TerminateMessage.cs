@@ -9,7 +9,7 @@ namespace EloquentObjects.RPC.Messages.Session
         {
         }
 
-        #region Overrides of SessionMessage
+        #region Overrides of Message
 
         public override MessageType MessageType => MessageType.TerminateSession;
         protected override void WriteInternal(Stream stream)

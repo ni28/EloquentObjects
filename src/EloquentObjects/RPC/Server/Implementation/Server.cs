@@ -61,19 +61,19 @@ namespace EloquentObjects.RPC.Server.Implementation
             if (_disposed)
                 return;
 
-            var sessionMessage = Message.Read(stream);
+            var message = Message.Read(stream);
 
             if (_disposed)
                 return;
     
-            switch (sessionMessage)
+            switch (message)
             {
                 case HelloMessage helloMessage:
                     HandleHello(helloMessage, stream);
                     break;
                 default:
-                    var session = _sessions[sessionMessage.ClientHostAddress];
-                    session.HandleMessage(sessionMessage, stream);
+                    var session = _sessions[message.ClientHostAddress];
+                    session.HandleMessage(message, stream);
                     break;
             }
         }

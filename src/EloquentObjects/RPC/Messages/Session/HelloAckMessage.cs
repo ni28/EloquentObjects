@@ -12,7 +12,7 @@ namespace EloquentObjects.RPC.Messages.Session
             Acknowledged = acknowledged;
         }
 
-        #region Overrides of SessionMessage
+        #region Overrides of Message
 
         public override MessageType MessageType => MessageType.HelloAck;
         protected override void WriteInternal(Stream stream)

@@ -75,8 +75,8 @@ namespace EloquentObjects.RPC.Client.Implementation
                 var result = Message.Read(context.Stream);
                 switch (result)
                 {
-                    case ExceptionMessage exceptionSessionMessage:
-                        throw exceptionSessionMessage.Exception;
+                    case ExceptionMessage exceptionMessage:
+                        throw exceptionMessage.Exception;
                     case EloquentObjectMessage eloquentObjectMessage:
                         var clientType = contractDescription.GetOperationDescription(methodName, parameters).Method.ReturnType.GenericTypeArguments[0];
                         var eloquentType = typeof(ClientEloquentObject<>).MakeGenericType(clientType);

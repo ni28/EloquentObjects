@@ -13,7 +13,7 @@ namespace EloquentObjects.RPC.Messages.Session
 
         public int ConnectionId { get; }
 
-        #region Overrides of SessionMessage
+        #region Overrides of Message
 
         public override MessageType MessageType => MessageType.Disconnect;
         protected override void WriteInternal(Stream stream)
