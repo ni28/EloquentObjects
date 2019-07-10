@@ -1,4 +1,3 @@
-using System.IO;
 using EloquentObjects.Channels;
 
 namespace EloquentObjects.RPC.Messages.Session
@@ -15,16 +14,16 @@ namespace EloquentObjects.RPC.Messages.Session
         #region Overrides of Message
 
         public override MessageType MessageType => MessageType.HelloAck;
-        protected override void WriteInternal(Stream stream)
+        protected override void WriteInternal(IFrameBuilder builder)
         {
-            stream.WriteBool(Acknowledged);
+            builder.WriteBool(Acknowledged);
         }
 
         #endregion
 
-        public static Message ReadInternal(IHostAddress hostAddress, Stream stream)
+        public static Message ReadInternal(IHostAddress hostAddress, IFrame frame)
         {
-            var acknowledged = stream.TakeBool();
+            var acknowledged = frame.TakeBool();
 
             return new HelloAckMessage(hostAddress, acknowledged);
         }

@@ -1,4 +1,3 @@
-using System.IO;
 using EloquentObjects.Channels;
 
 namespace EloquentObjects.RPC.Messages.Session
@@ -16,16 +15,16 @@ namespace EloquentObjects.RPC.Messages.Session
         #region Overrides of Message
 
         public override MessageType MessageType => MessageType.Disconnect;
-        protected override void WriteInternal(Stream stream)
+        protected override void WriteInternal(IFrameBuilder builder)
         {
-            stream.WriteInt(ConnectionId);
+            builder.WriteInt(ConnectionId);
         }
 
         #endregion
 
-        public static Message ReadInternal(IHostAddress hostAddress, Stream stream)
+        public static Message ReadInternal(IHostAddress hostAddress, IFrame frame)
         {
-            var connectionId = stream.TakeInt();
+            var connectionId = frame.TakeInt();
             return new DisconnectMessage(hostAddress, connectionId);
         }
     }

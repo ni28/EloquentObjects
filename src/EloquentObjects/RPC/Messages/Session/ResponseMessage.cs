@@ -1,4 +1,3 @@
-using System.IO;
 using EloquentObjects.Channels;
 
 namespace EloquentObjects.RPC.Messages.Session
@@ -15,16 +14,16 @@ namespace EloquentObjects.RPC.Messages.Session
         #region Overrides of Message
 
         public override MessageType MessageType => MessageType.Response;
-        protected override void WriteInternal(Stream stream)
+        protected override void WriteInternal(IFrameBuilder builder)
         {
-            stream.WritePayload(Payload);
+            builder.WriteBuffer(Payload);
         }
 
         #endregion
 
-        public static Message ReadInternal(IHostAddress clientHostAddress, Stream stream)
+        public static Message ReadInternal(IHostAddress clientHostAddress, IFrame frame)
         {
-            var payload = stream.TakePayload();
+            var payload = frame.TakeBuffer();
             return new ResponseMessage(clientHostAddress, payload);
         }
     }

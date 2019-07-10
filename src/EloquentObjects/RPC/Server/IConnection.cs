@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using EloquentObjects.Channels;
 using EloquentObjects.RPC.Messages.Session;
 using EloquentObjects.Serialization;
@@ -10,13 +9,13 @@ namespace EloquentObjects.RPC.Server
     {
         void Notify(string eventName, object[] arguments);
         
-        void HandleRequest(Stream stream, RequestMessage requestMessage);
-        void HandleEvent(Stream stream, EventMessage eventMessage);
+        void HandleRequest(IInputContext context, RequestMessage requestMessage);
+        void HandleEvent(EventMessage eventMessage);
 
         event EventHandler Disconnected;
         
         event Action<IHostAddress, CallInfo> EventReceived;
-        event Action<Stream, IHostAddress, CallInfo> RequestReceived;
+        event Action<IInputContext, IHostAddress, CallInfo> RequestReceived;
 
     }
 }

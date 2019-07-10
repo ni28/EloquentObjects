@@ -128,15 +128,15 @@ namespace EloquentObjects.RPC.Server.Implementation
             }
         }
 
-        private void ConnectionOnRequestReceived(Stream stream, IHostAddress clientHostAddress, CallInfo callInfo)
+        private void ConnectionOnRequestReceived(IInputContext context, IHostAddress clientHostAddress, CallInfo callInfo)
         {
             try
             {
-                HandleRequest(clientHostAddress, stream, callInfo.OperationName, callInfo.Parameters);
+                HandleRequest(clientHostAddress, context, callInfo.OperationName, callInfo.Parameters);
             }
             catch (Exception e)
             {
-                WriteException(stream, e, clientHostAddress);
+                WriteException(context, e, clientHostAddress);
             }
         }
 
@@ -171,7 +171,7 @@ namespace EloquentObjects.RPC.Server.Implementation
             }
         }
 
-        public void HandleRequest(IHostAddress clientHostAddress, Stream stream, string methodName,
+        public void HandleRequest(IHostAddress clientHostAddress, IInputContext context, string methodName,
             object[] parameters)
         {
             if (_disposed) throw new ObjectDisposedException(nameof(ObjectAdapter));
@@ -188,7 +188,7 @@ namespace EloquentObjects.RPC.Server.Implementation
             catch (Exception e)
             {
                 //Send exception back to client
-                WriteException(stream, e.InnerException ?? e, clientHostAddress);
+                WriteException(context, e.InnerException ?? e, clientHostAddress);
                 return;
             }
 
@@ -196,13 +196,13 @@ namespace EloquentObjects.RPC.Server.Implementation
             {
                 var payload = _serializer.Serialize(eloquent.Info);
                 var responseMessage = new EloquentObjectMessage(clientHostAddress, eloquent.ObjectId, payload);
-                responseMessage.Write(stream);
+                context.Write(responseMessage.ToFrame());
             }
             else
             {
                 var payload = _serializer.Serialize(result);
                 var responseMessage = new ResponseMessage(clientHostAddress, payload);
-                responseMessage.Write(stream);
+                context.Write(responseMessage.ToFrame());
             }
         }
 
@@ -248,10 +248,10 @@ namespace EloquentObjects.RPC.Server.Implementation
 
         #endregion
         
-        private void WriteException(Stream stream, Exception exception, IHostAddress clientHostAddress)
+        private void WriteException(IInputContext context, Exception exception, IHostAddress clientHostAddress)
         {
             var exceptionMessage = new ExceptionMessage(clientHostAddress, FaultException.Create(exception));
-            exceptionMessage.Write(stream);
+            context.Write(exceptionMessage.ToFrame());
         }
     }
 }

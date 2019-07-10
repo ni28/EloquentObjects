@@ -5,8 +5,10 @@ namespace EloquentObjects.Channels
     internal interface IOutputChannel : IDisposable
     {
         /// <summary>
-        /// Starts writing context.
+        /// Writes the frame to the channel.
         /// </summary>
-        IOutputChannelContext BeginWriteRead();
+        void Write(IFrame frame);
+
+        IFrame Read();
     }
 }

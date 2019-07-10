@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 
 namespace EloquentObjects.Channels.Implementation
 {
@@ -22,18 +21,18 @@ namespace EloquentObjects.Channels.Implementation
 
         #region Implementation of IHostAddress
 
-        public void Write(Stream stream)
+        public void Write(IFrameBuilder builder)
         {
-            stream.WriteString(IpAddress);
-            stream.WriteInt(Port);
+            builder.WriteString(IpAddress);
+            builder.WriteInt(Port);
         }
 
         #endregion
 
-        public static HostAddress Read(Stream stream)
+        public static HostAddress Read(IFrame frame)
         {
-            var ipAddress = stream.TakeString();
-            var port = stream.TakeInt();
+            var ipAddress = frame.TakeString();
+            var port = frame.TakeInt();
             return new HostAddress(ipAddress, port);
         }
         

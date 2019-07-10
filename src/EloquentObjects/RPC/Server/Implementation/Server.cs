@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.IO;
 using EloquentObjects.Channels;
 using EloquentObjects.Logging;
 using EloquentObjects.RPC.Messages;
@@ -56,12 +55,12 @@ namespace EloquentObjects.RPC.Server.Implementation
 
         #endregion
 
-        private void InputChannelOnMessageReady(object sender, Stream stream)
+        private void InputChannelOnMessageReady(object sender, IInputContext context)
         {
             if (_disposed)
                 return;
 
-            var message = Message.Read(stream);
+            var message = Message.Create(context.Frame);
 
             if (_disposed)
                 return;
@@ -69,16 +68,16 @@ namespace EloquentObjects.RPC.Server.Implementation
             switch (message)
             {
                 case HelloMessage helloMessage:
-                    HandleHello(helloMessage, stream);
+                    HandleHello(helloMessage, context);
                     break;
                 default:
                     var session = _sessions[message.ClientHostAddress];
-                    session.HandleMessage(message, stream);
+                    session.HandleMessage(message, context);
                     break;
             }
         }
 
-        private void HandleHello(Message helloMessage, Stream stream)
+        private void HandleHello(Message helloMessage, IInputContext context)
         {
             var clientHostAddress = helloMessage.ClientHostAddress;
 
@@ -90,7 +89,7 @@ namespace EloquentObjects.RPC.Server.Implementation
                 return s;
             });
 
-            session.HandleMessage(helloMessage, stream);
+            session.HandleMessage(helloMessage, context);
         }
 
         private void SessionOnTerminated(object sender, EventArgs e)

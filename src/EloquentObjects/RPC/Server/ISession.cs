@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using EloquentObjects.Channels;
 using EloquentObjects.RPC.Messages;
 
@@ -24,7 +23,7 @@ namespace EloquentObjects.RPC.Server
         ///     Handles a message from the client.
         /// </summary>
         /// <param name="message">Message from client</param>
-        /// <param name="stream">Stream that will be used to send a response</param>
-        void HandleMessage(Message message, Stream stream);
+        /// <param name="context">Context that will be used to send a response</param>
+        void HandleMessage(Message message, IInputContext context);
     }
 }

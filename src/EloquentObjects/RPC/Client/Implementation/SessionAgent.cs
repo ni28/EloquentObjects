@@ -49,11 +49,8 @@ namespace EloquentObjects.RPC.Client.Implementation
 
             try
             {
-                using (var context = _outputChannel.BeginWriteRead())
-                {
-                    helloMessage.Write(context.Stream);
-                    response = Message.Read(context.Stream);
-                }
+                _outputChannel.Write(helloMessage.ToFrame());
+                response = Message.Create(_outputChannel.Read());
             }
             catch (Exception e)
             {
@@ -108,12 +105,12 @@ namespace EloquentObjects.RPC.Client.Implementation
 
         #endregion
 
-        private void InputChannelOnMessageReady(object sender, Stream stream)
+        private void InputChannelOnMessageReady(object sender, IInputContext context)
         {
             if (_disposed)
                 return;
 
-            var message = Message.Read(stream);
+            var message = Message.Create(context.Frame);
 
             switch (message)
             {
@@ -134,10 +131,7 @@ namespace EloquentObjects.RPC.Client.Implementation
             }
 
             var heartbeatMessage = new HeartbeatMessage(_clientHostAddress);
-            using (var context = _outputChannel.BeginWriteRead())
-            {
-                heartbeatMessage.Write(context.Stream);
-            }
+            _outputChannel.Write(heartbeatMessage.ToFrame());
         }
 
         private void Terminate()
@@ -145,11 +139,7 @@ namespace EloquentObjects.RPC.Client.Implementation
             try
             {
                 var terminateMessage = new TerminateMessage(_clientHostAddress);
-
-                using (var context = _outputChannel.BeginWriteRead())
-                {
-                    terminateMessage.Write(context.Stream);
-                }
+                _outputChannel.Write(terminateMessage.ToFrame());
             }
             catch (IOException)
             {

@@ -1,4 +1,3 @@
-using System.IO;
 using EloquentObjects.Channels;
 
 namespace EloquentObjects.RPC.Messages.Session
@@ -16,16 +15,16 @@ namespace EloquentObjects.RPC.Messages.Session
         #region Overrides of Message
 
         public override MessageType MessageType => MessageType.Exception;
-        protected override void WriteInternal(Stream stream)
+        protected override void WriteInternal(IFrameBuilder builder)
         {
-            Exception.Write(stream);
+            Exception.Write(builder);
         }
 
         #endregion
 
-        public static Message ReadInternal(IHostAddress clientHostAddress, Stream stream)
+        public static Message ReadInternal(IHostAddress clientHostAddress, IFrame frame)
         {
-            var exception = FaultException.Read(stream);
+            var exception = FaultException.Read(frame);
             return new ExceptionMessage(clientHostAddress, exception);
         }
     }

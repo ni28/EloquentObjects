@@ -76,7 +76,10 @@ namespace EloquentObjects.Channels.Implementation.NamedPipes
                 {
                     while (!_disposed)
                     {
-                        MessageReady?.Invoke(this, bufferedStream);
+                        var frameBytes = bufferedStream.TakeBuffer();
+                        var frame = new Frame(frameBytes);
+                        var context = new InputContext(bufferedStream, frame);
+                        MessageReady?.Invoke(this, context);
                     }
                 }
             }
@@ -86,7 +89,7 @@ namespace EloquentObjects.Channels.Implementation.NamedPipes
             }
         }
 
-        public event EventHandler<Stream> MessageReady;
+        public event EventHandler<IInputContext> MessageReady;
 
         #endregion
     }

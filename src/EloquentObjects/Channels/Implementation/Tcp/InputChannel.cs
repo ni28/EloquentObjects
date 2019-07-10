@@ -51,7 +51,7 @@ namespace EloquentObjects.Channels.Implementation.Tcp
             }
         }
 
-        public event EventHandler<Stream> MessageReady;
+        public event EventHandler<IInputContext> MessageReady;
 
         #region IDisposable
 
@@ -84,7 +84,10 @@ namespace EloquentObjects.Channels.Implementation.Tcp
                 {
                     while (!_disposed)
                     {
-                        MessageReady?.Invoke(this, bufferedStream);
+                        var frameBytes = bufferedStream.TakeBuffer();
+                        var frame = new Frame(frameBytes);
+                        var context = new InputContext(bufferedStream, frame);
+                        MessageReady?.Invoke(this, context);
                     }
                 }
             }

@@ -36,11 +36,7 @@ namespace EloquentObjects.RPC.Client.Implementation
         public void Dispose()
         {
             var disconnectMessage = new DisconnectMessage(_clientHostAddress, ConnectionId);
-
-            using (var context = _outputChannel.BeginWriteRead())
-            {
-                disconnectMessage.Write(context.Stream);
-            }
+            _outputChannel.Write(disconnectMessage.ToFrame());
 
             _logger.Info(() => $"Disposed (connectionId = {ConnectionId}, objectId = {_objectId}, clientHostAddress = {_clientHostAddress})");
         }
@@ -55,11 +51,7 @@ namespace EloquentObjects.RPC.Client.Implementation
         {
             var payload = _serializer.SerializeCall(new CallInfo(eventName, arguments));
             var eventMessage = new EventMessage(_clientHostAddress, _objectId, ConnectionId, payload);
-
-            using (var context = _outputChannel.BeginWriteRead())
-            {
-                eventMessage.Write(context.Stream);
-            }
+            _outputChannel.Write(eventMessage.ToFrame());
         }
 
         public object Call(IEloquentClient eloquentClient, IContractDescription contractDescription, string methodName,
@@ -68,24 +60,21 @@ namespace EloquentObjects.RPC.Client.Implementation
             var payload = _serializer.SerializeCall(new CallInfo(methodName, parameters));
             var requestMessage = new RequestMessage(_clientHostAddress, _objectId, ConnectionId, payload);
 
-            using (var context = _outputChannel.BeginWriteRead())
+            _outputChannel.Write(requestMessage.ToFrame());
+            
+            var result = Message.Create(_outputChannel.Read());
+            switch (result)
             {
-                requestMessage.Write(context.Stream);
-
-                var result = Message.Read(context.Stream);
-                switch (result)
-                {
-                    case ExceptionMessage exceptionMessage:
-                        throw exceptionMessage.Exception;
-                    case EloquentObjectMessage eloquentObjectMessage:
-                        var clientType = contractDescription.GetOperationDescription(methodName, parameters).Method.ReturnType.GenericTypeArguments[0];
-                        var eloquentType = typeof(ClientEloquentObject<>).MakeGenericType(clientType);
-                        return Activator.CreateInstance(eloquentType, eloquentObjectMessage.ObjectId, null, eloquentClient);
-                    case ResponseMessage responseMessage:
-                        return _serializer.Deserialize<object>(responseMessage.Payload);
-                    default:
-                        throw new IOException($"Unexpected session message type: {result.MessageType}");
-                }
+                case ExceptionMessage exceptionMessage:
+                    throw exceptionMessage.Exception;
+                case EloquentObjectMessage eloquentObjectMessage:
+                    var clientType = contractDescription.GetOperationDescription(methodName, parameters).Method.ReturnType.GenericTypeArguments[0];
+                    var eloquentType = typeof(ClientEloquentObject<>).MakeGenericType(clientType);
+                    return Activator.CreateInstance(eloquentType, eloquentObjectMessage.ObjectId, null, eloquentClient);
+                case ResponseMessage responseMessage:
+                    return _serializer.Deserialize<object>(responseMessage.Payload);
+                default:
+                    throw new IOException($"Unexpected session message type: {result.MessageType}");
             }
         }
 

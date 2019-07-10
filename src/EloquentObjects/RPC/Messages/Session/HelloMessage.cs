@@ -1,4 +1,3 @@
-using System.IO;
 using EloquentObjects.Channels;
 
 namespace EloquentObjects.RPC.Messages.Session
@@ -18,18 +17,18 @@ namespace EloquentObjects.RPC.Messages.Session
         #region Overrides of Message
 
         public override MessageType MessageType => MessageType.Hello;
-        protected override void WriteInternal(Stream stream)
+        protected override void WriteInternal(IFrameBuilder builder)
         {
-            stream.WriteString(ObjectId);
-            stream.WriteInt(ConnectionId);
+            builder.WriteString(ObjectId);
+            builder.WriteInt(ConnectionId);
         }
 
         #endregion
 
-        public static Message ReadInternal(IHostAddress hostAddress, Stream stream)
+        public static Message ReadInternal(IHostAddress hostAddress, IFrame frame)
         {
-            var objectId = stream.TakeString();
-            var connectionId = stream.TakeInt();
+            var objectId = frame.TakeString();
+            var connectionId = frame.TakeInt();
             return new HelloMessage(hostAddress, objectId, connectionId);
         }
         

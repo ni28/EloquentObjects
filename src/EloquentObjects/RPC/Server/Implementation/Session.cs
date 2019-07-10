@@ -75,7 +75,7 @@ namespace EloquentObjects.RPC.Server.Implementation
 
         public event EventHandler Terminated;
 
-        public void HandleMessage(Message message, Stream stream)
+        public void HandleMessage(Message message, IInputContext context)
         {
             if (_disposed)
                 throw new ObjectDisposedException(GetType().FullName);
@@ -85,16 +85,16 @@ namespace EloquentObjects.RPC.Server.Implementation
             switch (message)
             {
                 case HelloMessage helloMessage:
-                    HandleHello(helloMessage, stream);
+                    HandleHello(helloMessage, context);
                     break;
                 case HeartbeatMessage _:
                     HandleHeartbeat();
                     break;
                 case RequestMessage requestMessage:
-                    HandleRequestMessage(requestMessage, stream);
+                    HandleRequestMessage(requestMessage, context);
                     break;
                 case EventMessage eventMessage:
-                    HandleEventMessage(eventMessage, stream);
+                    HandleEventMessage(eventMessage);
                     break;
                 case DisconnectMessage disconnectMessage:
                     HandleDisconnect(disconnectMessage);
@@ -112,7 +112,7 @@ namespace EloquentObjects.RPC.Server.Implementation
         /// <summary>
         /// Creates a new connection
         /// </summary>
-        private void HandleHello(HelloMessage helloMessage, Stream stream)
+        private void HandleHello(HelloMessage helloMessage, IInputContext context)
         {
             //Create a new connection or throw an exception if connection already exists
             _connections.AddOrUpdate(helloMessage.ConnectionId, 
@@ -120,17 +120,17 @@ namespace EloquentObjects.RPC.Server.Implementation
                 {
                     try
                     {
-                        return CreateConnection(helloMessage, stream);
+                        return CreateConnection(helloMessage, context);
                     }
                     catch (Exception e)
                     {
-                        WriteException(stream, e);
+                        WriteException(context, e);
                         throw;
                     }
                 },
                 (id, c) =>
                 {
-                    WriteException(stream, new InvalidOperationException($"Connection with ID {helloMessage.ConnectionId} already exists."));
+                    WriteException(context, new InvalidOperationException($"Connection with ID {helloMessage.ConnectionId} already exists."));
                     return c;
                 });
         }
@@ -147,24 +147,23 @@ namespace EloquentObjects.RPC.Server.Implementation
         /// Redirects handling of the request message to target connection.
         /// </summary>
         /// <param name="requestMessage"></param>
-        /// <param name="stream"></param>
-        private void HandleRequestMessage(RequestMessage requestMessage, Stream stream)
+        /// <param name="context"></param>
+        private void HandleRequestMessage(RequestMessage requestMessage, IInputContext context)
         {
             if (!_connections.TryGetValue(requestMessage.ConnectionId, out var connection))
             {
-                WriteException(stream, new InvalidOperationException($"Connection with ID {requestMessage.ConnectionId} was not established."));
+                WriteException(context, new InvalidOperationException($"Connection with ID {requestMessage.ConnectionId} was not established."));
                 return;
             }
 
-            connection.HandleRequest(stream, requestMessage);
+            connection.HandleRequest(context, requestMessage);
         }
 
         /// <summary>
         /// Redirects handling of the event message to target connection.
         /// </summary>
         /// <param name="eventMessage"></param>
-        /// <param name="stream"></param>
-        private void HandleEventMessage(EventMessage eventMessage, Stream stream)
+        private void HandleEventMessage(EventMessage eventMessage)
         {
             if (!_connections.TryGetValue(eventMessage.ConnectionId, out var connection))
             {
@@ -172,7 +171,7 @@ namespace EloquentObjects.RPC.Server.Implementation
                 return;
             }
 
-            connection.HandleEvent(stream, eventMessage);
+            connection.HandleEvent(eventMessage);
         }
 
         /// <summary>
@@ -196,7 +195,7 @@ namespace EloquentObjects.RPC.Server.Implementation
        
         
         private IConnection CreateConnection(HelloMessage helloMessage,
-            Stream writingStream)
+            IInputContext context)
         {
             //All callback agents reuse the same output channel
             if (_outputChannel == null)
@@ -215,15 +214,15 @@ namespace EloquentObjects.RPC.Server.Implementation
             var acknowledged = _objectsRepository.TryConnectObject(helloMessage.ObjectId, ClientHostAddress, helloMessage.ConnectionId, _outputChannel, out var connection);
 
             var helloAck = helloMessage.CreateAck(acknowledged);
-            helloAck.Write(writingStream);
+            context.Write(helloAck.ToFrame());
 
             return connection;
         }
 
-        private void WriteException(Stream stream, Exception exception)
+        private void WriteException(IInputContext context, Exception exception)
         {
             var exceptionMessage = new ExceptionMessage(ClientHostAddress, FaultException.Create(exception));
-            exceptionMessage.Write(stream);
+            context.Write(exceptionMessage.ToFrame());
         }
     }
 }

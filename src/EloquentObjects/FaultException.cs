@@ -1,5 +1,5 @@
 using System;
-using System.IO;
+using EloquentObjects.Channels;
 
 namespace EloquentObjects
 {
@@ -46,33 +46,33 @@ namespace EloquentObjects
 
         #endregion
 
-        internal void Write(Stream stream)
+        internal void Write(IFrameBuilder builder)
         {
-            stream.WriteString(Message);
-            stream.WriteString(StackTrace);
-            stream.WriteString(ExceptionType);
+            builder.WriteString(Message);
+            builder.WriteString(StackTrace);
+            builder.WriteString(ExceptionType);
             if (InnerException != null)
             {
-                stream.WriteBool(true);
-                _innerException.Write(stream);
+                builder.WriteBool(true);
+                _innerException.Write(builder);
             }
             else
             {
-                stream.WriteBool(false);
+                builder.WriteBool(false);
             }
         }
 
-        internal static FaultException Read(Stream stream)
+        internal static FaultException Read(IFrame frame)
         {
-            var message = stream.TakeString();
-            var stackTrace = stream.TakeString();
-            var exceptionType = stream.TakeString();
-            var hasException = stream.TakeBool();
+            var message = frame.TakeString();
+            var stackTrace = frame.TakeString();
+            var exceptionType = frame.TakeString();
+            var hasException = frame.TakeBool();
 
             FaultException innerException = null;
             if (hasException)
             {
-                innerException = Read(stream);
+                innerException = Read(frame);
             }
 
             return innerException == null

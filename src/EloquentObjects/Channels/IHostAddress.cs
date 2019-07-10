@@ -1,5 +1,3 @@
-using System.IO;
-
 namespace EloquentObjects.Channels
 {
     /// <summary>
@@ -16,11 +14,11 @@ namespace EloquentObjects.Channels
         /// Gets a port as an integer.
         /// </summary>
         int Port { get; }
-        
+
         /// <summary>
-        /// Writes a serialized host address to given stream.
+        /// Writes a serialized host address to given frame builder..
         /// </summary>
-        /// <returns>a string representation of the host address</returns>
-        void Write(Stream stream);
+        void Write(IFrameBuilder builder);
+
     }
 }

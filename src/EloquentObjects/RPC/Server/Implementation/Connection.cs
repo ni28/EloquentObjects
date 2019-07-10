@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using EloquentObjects.Channels;
 using EloquentObjects.Logging;
 using EloquentObjects.RPC.Messages.Session;
@@ -53,23 +52,19 @@ namespace EloquentObjects.RPC.Server.Implementation
 
             var payload = _serializer.SerializeCall(new CallInfo(eventName, arguments));
             var eventMessage = new EventMessage(_clientHostAddress, _objectId, _connectionId, payload);
-
-            using (var context = _outputChannel.BeginWriteRead())
-            {
-                eventMessage.Write(context.Stream);
-            }
+            _outputChannel.Write(eventMessage.ToFrame());
         }
 
-        public void HandleRequest(Stream stream, RequestMessage requestMessage)
+        public void HandleRequest(IInputContext context, RequestMessage requestMessage)
         {
             if (_disposed)
                 throw new ObjectDisposedException(nameof(Connection));
 
             var call = _serializer.DeserializeCall(requestMessage.Payload);
-            RequestReceived?.Invoke(stream, requestMessage.ClientHostAddress, call);
+            RequestReceived?.Invoke(context, requestMessage.ClientHostAddress, call);
         }
 
-        public void HandleEvent(Stream stream, EventMessage eventMessage)
+        public void HandleEvent(EventMessage eventMessage)
         {
             if (_disposed)
                 throw new ObjectDisposedException(nameof(Connection));
@@ -80,7 +75,7 @@ namespace EloquentObjects.RPC.Server.Implementation
 
         public event EventHandler Disconnected;
         public event Action<IHostAddress, CallInfo> EventReceived;
-        public event Action<Stream, IHostAddress, CallInfo> RequestReceived;
+        public event Action<IInputContext, IHostAddress, CallInfo> RequestReceived;
 
         #endregion
     }

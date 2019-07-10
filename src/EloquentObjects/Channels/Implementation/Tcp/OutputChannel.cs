@@ -64,6 +64,7 @@ namespace EloquentObjects.Channels.Implementation.Tcp
                 //Hide exceptions when disposing a broken stream (e.g. when server dead).
             }
 
+            _resetEvent.Set();
             _resetEvent.Dispose();
 
             _logger.Info(() => $"Disposed (ipAddress = {_ipAddress}, port = {_port})");
@@ -73,14 +74,22 @@ namespace EloquentObjects.Channels.Implementation.Tcp
 
 
         #region Implementation of IOutputChannel
-
-        public IOutputChannelContext BeginWriteRead()
+        
+        public void Write(IFrame frame)
         {
             if (_disposed)
                 throw new ObjectDisposedException(GetType().Name);
 
             _resetEvent.WaitOne();
-            return new OutputChannelContext(_bufferedStream, _resetEvent);
+            _bufferedStream.WriteBuffer(frame.ToArray());
+            _bufferedStream.Flush();
+            _resetEvent.Set();
+        }
+
+        public IFrame Read()
+        {
+            var bytes = _bufferedStream.TakeBuffer();
+            return new Frame(bytes);
         }
 
         #endregion
