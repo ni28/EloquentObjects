@@ -79,7 +79,7 @@ namespace EloquentObjects.Channels.Implementation.NamedPipes
                         var frameBytes = bufferedStream.TakeBuffer();
                         var frame = new Frame(frameBytes);
                         var context = new InputContext(bufferedStream, frame);
-                        MessageReady?.Invoke(this, context);
+                        FrameReceived?.Invoke(this, context);
                     }
                 }
             }
@@ -89,7 +89,7 @@ namespace EloquentObjects.Channels.Implementation.NamedPipes
             }
         }
 
-        public event EventHandler<IInputContext> MessageReady;
+        public event EventHandler<IInputContext> FrameReceived;
 
         #endregion
     }

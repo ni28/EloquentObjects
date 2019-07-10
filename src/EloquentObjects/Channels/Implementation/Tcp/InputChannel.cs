@@ -51,7 +51,7 @@ namespace EloquentObjects.Channels.Implementation.Tcp
             }
         }
 
-        public event EventHandler<IInputContext> MessageReady;
+        public event EventHandler<IInputContext> FrameReceived;
 
         #region IDisposable
 
@@ -87,7 +87,7 @@ namespace EloquentObjects.Channels.Implementation.Tcp
                         var frameBytes = bufferedStream.TakeBuffer();
                         var frame = new Frame(frameBytes);
                         var context = new InputContext(bufferedStream, frame);
-                        MessageReady?.Invoke(this, context);
+                        FrameReceived?.Invoke(this, context);
                     }
                 }
             }

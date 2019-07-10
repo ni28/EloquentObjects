@@ -13,6 +13,7 @@ namespace EloquentObjects.Channels.Implementation.NamedPipes
         private readonly ILogger _logger;
         private bool _disposed;
         private readonly BufferedStream _bufferedStream;
+        private readonly NamedPipeClientStream _stream;
 
         public OutputChannel(string pipeName, int sendTimeout)
         {
@@ -22,9 +23,9 @@ namespace EloquentObjects.Channels.Implementation.NamedPipes
             _logger.Info(() => $"Created (pipeName = {_pipeName})");
 
             //TODO: what is server name?
-            var stream = new NamedPipeClientStream(".", _pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
-            stream.Connect(sendTimeout);
-            _bufferedStream = new BufferedStream(stream);
+            _stream = new NamedPipeClientStream(".", _pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
+            _stream.Connect(sendTimeout);
+            _bufferedStream = new BufferedStream(_stream);
         }
 
         #region IDisposable
@@ -61,9 +62,15 @@ namespace EloquentObjects.Channels.Implementation.NamedPipes
                 throw new ObjectDisposedException(GetType().Name);
 
             _resetEvent.WaitOne();
-            _bufferedStream.WriteBuffer(frame.ToArray());
-            _bufferedStream.Flush();
-            _resetEvent.Set();
+            try
+            {
+                _bufferedStream.WriteBuffer(frame.ToArray());
+                _bufferedStream.Flush();
+            }
+            finally
+            {
+                _resetEvent.Set();
+            }
         }
         
         public IFrame Read()

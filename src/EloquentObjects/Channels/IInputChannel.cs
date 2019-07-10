@@ -6,6 +6,6 @@ namespace EloquentObjects.Channels
     {
         void Start();
         
-        event EventHandler<IInputContext> MessageReady;
+        event EventHandler<IInputContext> FrameReceived;
     }
 }

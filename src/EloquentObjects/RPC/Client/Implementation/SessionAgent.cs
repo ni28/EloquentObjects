@@ -31,7 +31,7 @@ namespace EloquentObjects.RPC.Client.Implementation
             _outputChannel = outputChannel;
             _clientHostAddress = clientHostAddress;
 
-            _inputChannel.MessageReady += InputChannelOnMessageReady;
+            _inputChannel.FrameReceived += InputChannelOnFrameReceived;
             _inputChannel.Start();
             
             _logger = Logger.Factory.Create(GetType());
@@ -98,14 +98,14 @@ namespace EloquentObjects.RPC.Client.Implementation
             Terminate();
 
             _disposed = true;
-            _inputChannel.MessageReady -= InputChannelOnMessageReady;
+            _inputChannel.FrameReceived -= InputChannelOnFrameReceived;
 
             _logger.Info(() => $"Disposed (clientHostAddress = {_clientHostAddress})");
         }
 
         #endregion
 
-        private void InputChannelOnMessageReady(object sender, IInputContext context)
+        private void InputChannelOnFrameReceived(object sender, IInputContext context)
         {
             if (_disposed)
                 return;

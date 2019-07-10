@@ -23,7 +23,7 @@ namespace EloquentObjects.RPC.Server.Implementation
             _inputChannel = inputChannel;
             _objectsRepository = objectsRepository;
 
-            _inputChannel.MessageReady += InputChannelOnMessageReady;
+            _inputChannel.FrameReceived += InputChannelOnFrameReceived;
 
             _inputChannel.Start();
             
@@ -40,7 +40,7 @@ namespace EloquentObjects.RPC.Server.Implementation
 
             _disposed = true;
             
-            _inputChannel.MessageReady -= InputChannelOnMessageReady;
+            _inputChannel.FrameReceived -= InputChannelOnFrameReceived;
 
             foreach (var session in _sessions.Values)
             {
@@ -55,7 +55,7 @@ namespace EloquentObjects.RPC.Server.Implementation
 
         #endregion
 
-        private void InputChannelOnMessageReady(object sender, IInputContext context)
+        private void InputChannelOnFrameReceived(object sender, IInputContext context)
         {
             if (_disposed)
                 return;

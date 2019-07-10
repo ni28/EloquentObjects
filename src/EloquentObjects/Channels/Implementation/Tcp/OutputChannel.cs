@@ -81,9 +81,15 @@ namespace EloquentObjects.Channels.Implementation.Tcp
                 throw new ObjectDisposedException(GetType().Name);
 
             _resetEvent.WaitOne();
-            _bufferedStream.WriteBuffer(frame.ToArray());
-            _bufferedStream.Flush();
-            _resetEvent.Set();
+            try
+            {
+                _bufferedStream.WriteBuffer(frame.ToArray());
+                _bufferedStream.Flush();
+            }
+            finally
+            {
+                _resetEvent.Set();
+            }
         }
 
         public IFrame Read()
