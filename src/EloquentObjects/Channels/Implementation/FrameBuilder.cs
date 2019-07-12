@@ -33,17 +33,17 @@ namespace EloquentObjects.Channels.Implementation
             WriteBytes(bytes);
         }
 
-        public void WriteString(string str)
+        public void WriteString(string value)
         {
-            var bytes = Encoding.UTF8.GetBytes(string.IsNullOrEmpty(str) ? "" : str);
+            var bytes = Encoding.UTF8.GetBytes(string.IsNullOrEmpty(value) ? "" : value);
             WriteInt(bytes.Length);
             WriteBytes(bytes);
         }
 
-        public void WriteBuffer(byte[] bytes)
+        public void WriteBuffer(byte[] value)
         {
-            WriteInt(bytes.Length);
-            WriteBytes(bytes);
+            WriteInt(value.Length);
+            WriteBytes(value);
         }
 
         public IFrame ToFrame()
