@@ -22,35 +22,34 @@ namespace EloquentObjectsBenchmark.EloquentObjects.Proto.Benchmarks
             {
                 remoteObjectServer.Add<IBenchmarkObject>("endpoint1", new BenchmarkObject());
 
-                using (var session = remoteObjectClient.Connect<IBenchmarkObject>("endpoint1"))
-                {
-                    var benchmarkObj = session.Object;
+                var benchmarkObj = remoteObjectClient.Get<IBenchmarkObject>("endpoint1");
 
-                    var parameter = new Parameter
+                var parameter = new Parameter
+                {
+                    Parameter1 = new InnerParameter1
                     {
-                        Parameter1 = new InnerParameter1
+                        Parameter2 = new InnerParameter2
                         {
-                            Parameter2 = new InnerParameter2
+                            Parameter3 = new InnerParameter3
                             {
-                                Parameter3 = new InnerParameter3
-                                {
-                                    IntValue = 123,
-                                    BoolValue = false,
-                                    DoubleValue = 123.123,
-                                    StringValue = "123"
-                                }
+                                IntValue = 123,
+                                BoolValue = false,
+                                DoubleValue = 123.123,
+                                StringValue = "123"
                             }
                         }
-                    };
-                    
-                    return MeasurementResult.Measure($"EloquentObjects.Proto: One-way calls with parameter with {_scheme}", () =>
+                    }
+                };
+
+                return MeasurementResult.Measure($"EloquentObjects.Proto: One-way calls with parameter with {_scheme}",
+                    () =>
                     {
                         for (var i = 0; i < _iterations; i++)
                         {
                             benchmarkObj.OneWayCallWithParameter(parameter);
                         }
                     });
-                }
+
             }
         }
 

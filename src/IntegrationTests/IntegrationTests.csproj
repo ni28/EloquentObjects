@@ -55,6 +55,7 @@
     <Compile Include="Robustness\ConfigurationExceptions.cs" />
     <Compile Include="Robustness\ConnectAgain.cs" />
     <Compile Include="Robustness\ConnectionExceptions.cs" />
+    <Compile Include="Robustness\MemoryLeaks.cs" />
     <Compile Include="TwoWayMethodTests.cs" />
   </ItemGroup>
   <ItemGroup>

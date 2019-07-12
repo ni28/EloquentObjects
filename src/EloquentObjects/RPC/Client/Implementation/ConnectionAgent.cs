@@ -4,7 +4,8 @@ using EloquentObjects.Channels;
 using EloquentObjects.Contracts;
 using EloquentObjects.Logging;
 using EloquentObjects.RPC.Messages;
-using EloquentObjects.RPC.Messages.Session;
+using EloquentObjects.RPC.Messages.Acknowledged;
+using EloquentObjects.RPC.Messages.OneWay;
 using EloquentObjects.Serialization;
 
 namespace EloquentObjects.RPC.Client.Implementation
@@ -18,64 +19,71 @@ namespace EloquentObjects.RPC.Client.Implementation
         private readonly IOutputChannel _outputChannel;
         private readonly ILogger _logger;
 
-        public ConnectionAgent(int connectionId, string objectId,
+        public ConnectionAgent(string objectId,
             IOutputChannel outputChannel, IHostAddress clientHostAddress, ISerializer serializer)
         {
-            ConnectionId = connectionId;
             _objectId = objectId;
             _outputChannel = outputChannel;
             _clientHostAddress = clientHostAddress;
             _serializer = serializer;
 
             _logger = Logger.Factory.Create(GetType());
-            _logger.Info(() => $"Created (connectionId = {ConnectionId}, objectId = {_objectId}, clientHostAddress = {_clientHostAddress})");
+            _logger.Info(() => $"Created (objectId = {_objectId}, clientHostAddress = {_clientHostAddress})");
         }
 
         #region Implementation of IDisposable
 
         public void Dispose()
         {
-            var disconnectMessage = new DisconnectMessage(_clientHostAddress, ConnectionId);
-            _outputChannel.Write(disconnectMessage.ToFrame());
-
-            _logger.Info(() => $"Disposed (connectionId = {ConnectionId}, objectId = {_objectId}, clientHostAddress = {_clientHostAddress})");
+            _logger.Info(() => $"Disposed (objectId = {_objectId}, clientHostAddress = {_clientHostAddress})");
         }
 
         #endregion
 
         #region Implementation of IConnectionAgent
 
-        public int ConnectionId { get; }
-
         public void Notify(string eventName, object[] arguments)
         {
             var payload = _serializer.SerializeCall(new CallInfo(eventName, arguments));
-            var eventMessage = new EventMessage(_clientHostAddress, _objectId, ConnectionId, payload);
-            _outputChannel.Write(eventMessage.ToFrame());
+            var eventMessage = new NotificationMessage(_clientHostAddress, _objectId, payload);
+            _outputChannel.Send(eventMessage);
         }
 
         public object Call(IEloquentClient eloquentClient, IContractDescription contractDescription, string methodName,
             object[] parameters)
         {
             var payload = _serializer.SerializeCall(new CallInfo(methodName, parameters));
-            var requestMessage = new RequestMessage(_clientHostAddress, _objectId, ConnectionId, payload);
-
-            _outputChannel.Write(requestMessage.ToFrame());
+            var requestMessage = new RequestMessage(_clientHostAddress, _objectId, payload);
+            _outputChannel.Send(requestMessage);
             
+            //TODO: move to RequestMessage?
             var result = Message.Create(_outputChannel.Read());
             switch (result)
             {
+                case ErrorMessage errorMessage:
+                    throw errorMessage.ToException();
                 case ExceptionMessage exceptionMessage:
                     throw exceptionMessage.Exception;
                 case EloquentObjectMessage eloquentObjectMessage:
-                    var clientType = contractDescription.GetOperationDescription(methodName, parameters).Method.ReturnType.GenericTypeArguments[0];
-                    var eloquentType = typeof(ClientEloquentObject<>).MakeGenericType(clientType);
-                    return Activator.CreateInstance(eloquentType, eloquentObjectMessage.ObjectId, null, eloquentClient);
+                    var objectType = contractDescription.GetOperationDescription(methodName, parameters).Method.ReturnType;
+                    return eloquentClient.Get(objectType, eloquentObjectMessage.ObjectId);
                 case ResponseMessage responseMessage:
                     return _serializer.Deserialize<object>(responseMessage.Payload);
                 default:
                     throw new IOException($"Unexpected session message type: {result.MessageType}");
             }
+        }
+
+        public void Subscribe(string eventName)
+        {
+            var subscribeMessage = new SubscribeEventMessage(_clientHostAddress, _objectId, eventName);
+            _outputChannel.SendWithAck(subscribeMessage);
+        }
+
+        public void Unsubscribe(string eventName)
+        {
+            var unsubscribeMessage = new UnsubscribeEventMessage(_clientHostAddress, _objectId, eventName);
+            _outputChannel.SendWithAck(unsubscribeMessage);
         }
 
         public event EventHandler<NotifyEventArgs> EventReceived;

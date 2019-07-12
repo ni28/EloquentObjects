@@ -22,18 +22,15 @@ namespace EloquentObjectsBenchmark.EloquentObjects.Benchmarks
             {
                 remoteObjectServer.Add<IBenchmarkObject>("endpoint1", new BenchmarkObject());
 
-                using (var session = remoteObjectClient.Connect<IBenchmarkObject>("endpoint1"))
-                {
-                    var benchmarkObj = session.Object;
+                var benchmarkObj = remoteObjectClient.Get<IBenchmarkObject>("endpoint1");
 
-                    return MeasurementResult.Measure($"EloquentObjects: Two-way calls with {_scheme}", () =>
+                return MeasurementResult.Measure($"EloquentObjects: Two-way calls with {_scheme}", () =>
+                {
+                    for (var i = 0; i < _iterations; i++)
                     {
-                        for (var i = 0; i < _iterations; i++)
-                        {
-                            benchmarkObj.TwoWayCall();
-                        }
-                    });
-                }
+                        benchmarkObj.TwoWayCall();
+                    }
+                });
             }
         }
 

@@ -11,6 +11,7 @@ namespace EloquentObjects.RPC.Client.Implementation
         
         private bool _disposed;
         private readonly ILogger _logger;
+        private IConnection _connection;
 
         public ClientInterceptor(IContractDescription contractDescription)
         {
@@ -93,7 +94,7 @@ namespace EloquentObjects.RPC.Client.Implementation
             if (invocation.Method.Name.StartsWith("add_"))
             {
                 var eventName = invocation.Method.Name.Substring(4);
-                EventSubscribed?.Invoke(this, new SubscriptionEventArgs(eventName, (Delegate) invocation.Arguments[0]));
+                _connection.Subscribe(eventName, (Delegate) invocation.Arguments[0]);
                 return;
             }
 
@@ -101,7 +102,7 @@ namespace EloquentObjects.RPC.Client.Implementation
             if (invocation.Method.Name.StartsWith("remove_"))
             {
                 var eventName = invocation.Method.Name.Substring(7);
-                EventUnsubscribed?.Invoke(this, new SubscriptionEventArgs(eventName, (Delegate) invocation.Arguments[0]));
+                _connection.Unsubscribe(eventName, (Delegate) invocation.Arguments[0]);
                 return;
             }
             
@@ -112,23 +113,21 @@ namespace EloquentObjects.RPC.Client.Implementation
         
         private void Notify(string name, object[] parameters)
         {
-            Notified?.Invoke(this, new NotifyEventArgs(name, parameters));
+            _connection.Notify(name, parameters);
         }
 
         private object Call(string name, object[] parameters)
         {
-            var args = new CallEventArgs(name, parameters);
-            Called?.Invoke(this, args);
-            return args.ReturnValue;
+            return _connection.Call(name, parameters);
         }
 
         #region Implementation of IProxy
 
-        public event EventHandler<NotifyEventArgs> Notified;
-        public event EventHandler<CallEventArgs> Called;
-        public event EventHandler<SubscriptionEventArgs> EventSubscribed;
-        public event EventHandler<SubscriptionEventArgs> EventUnsubscribed;
-
+        public void Subscribe(IConnection connection)
+        {
+            _connection = connection;
+        }
+        
         #endregion
     }
 }

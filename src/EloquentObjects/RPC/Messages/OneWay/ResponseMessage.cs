@@ -1,8 +1,8 @@
 using EloquentObjects.Channels;
 
-namespace EloquentObjects.RPC.Messages.Session
+namespace EloquentObjects.RPC.Messages.OneWay
 {
-    internal sealed class ResponseMessage : Message
+    internal sealed class ResponseMessage : OneWayMessage
     {
         internal ResponseMessage(IHostAddress clientHostAddress, byte[] payload): base(clientHostAddress)
         {

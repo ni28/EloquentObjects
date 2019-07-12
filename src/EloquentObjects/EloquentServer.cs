@@ -78,13 +78,14 @@ namespace EloquentObjects
         /// <inheritdoc />
         public IObjectHost<T> Add<T>(string objectId, T obj, SynchronizationContext synchronizationContext = null) where T : class
         {
+            //TODO: check arguments
             var contractDescription = _contractDescriptionFactory.Create(typeof(T));
             
             var knownTypes = contractDescription.GetTypes();
             var serializer = _serializerFactory.Create(typeof(object), knownTypes);
 
             var objectHost = _objectsRepository.Add(objectId,
-                new ObjectAdapter(contractDescription, serializer, synchronizationContext, obj));
+                new ObjectAdapter(objectId, contractDescription, serializer, synchronizationContext, obj, _objectsRepository));
             return new ServerEloquentObject<T>(obj, objectId, null, objectHost);
         }
     }

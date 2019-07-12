@@ -3,7 +3,8 @@ using System.Collections.Concurrent;
 using EloquentObjects.Channels;
 using EloquentObjects.Logging;
 using EloquentObjects.RPC.Messages;
-using EloquentObjects.RPC.Messages.Session;
+using EloquentObjects.RPC.Messages.Acknowledged;
+using EloquentObjects.RPC.Messages.OneWay;
 
 namespace EloquentObjects.RPC.Server.Implementation
 {
@@ -28,7 +29,7 @@ namespace EloquentObjects.RPC.Server.Implementation
             _inputChannel.Start();
             
             _logger = Logger.Factory.Create(GetType());
-            _logger.Info(() => "Created)");
+            _logger.Info(() => "Created");
         }
 
         #region IDisposable
@@ -50,7 +51,7 @@ namespace EloquentObjects.RPC.Server.Implementation
 
             _sessions.Clear();
 
-            _logger.Info(() => "Disposed)");
+            _logger.Info(() => "Disposed");
         }
 
         #endregion
@@ -60,11 +61,8 @@ namespace EloquentObjects.RPC.Server.Implementation
             if (_disposed)
                 return;
 
-            var message = Message.Create(context.Frame);
+            var message = Message.Create(context.Frame, "Server");
 
-            if (_disposed)
-                return;
-    
             switch (message)
             {
                 case HelloMessage helloMessage:
@@ -81,15 +79,19 @@ namespace EloquentObjects.RPC.Server.Implementation
         {
             var clientHostAddress = helloMessage.ClientHostAddress;
 
-            var session = _sessions.GetOrAdd(clientHostAddress, address =>
+            _sessions.GetOrAdd(clientHostAddress, address =>
             {
-                var s = new Session(_binding, clientHostAddress, _objectsRepository);
+                var outputChannel = _binding.CreateOutputChannel(clientHostAddress);
 
+                var s = new Session(_binding, clientHostAddress, _objectsRepository, outputChannel);
+                
                 s.Terminated += SessionOnTerminated;
+                
+                var helloAck = new AckMessage(clientHostAddress);
+                context.Write(helloAck.ToFrame());
+                
                 return s;
             });
-
-            session.HandleMessage(helloMessage, context);
         }
 
         private void SessionOnTerminated(object sender, EventArgs e)

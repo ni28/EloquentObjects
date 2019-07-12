@@ -28,11 +28,12 @@ namespace EloquentObjectsBenchmark.EloquentObjects.Benchmarks
                 SendTimeout = 1000
             }))
             {
-                remoteObjectServer.Add<IBenchmarkObject>("endpoint1", new BenchmarkObject());
+                var benchmarkObject = new BenchmarkObject();
+                remoteObjectServer.Add<IBenchmarkObject>("endpoint1", benchmarkObject);
 
                 //Create Clients
                 var clients = new EloquentClient[_numberOfEventClients];
-                var connections = new IConnection<IBenchmarkObject>[_numberOfEventClients];
+                var connections = new IBenchmarkObject[_numberOfEventClients];
 
                 var autoResetEvent = new AutoResetEvent(false);
                 for (var i = 0; i < _numberOfEventClients; i++)
@@ -43,8 +44,8 @@ namespace EloquentObjectsBenchmark.EloquentObjects.Benchmarks
                         SendTimeout = 1000,
                         ReceiveTimeout = 10000
                     });
-                    connections[i] = clients[i].Connect<IBenchmarkObject>("endpoint1");
-                    connections[i].Object.EventOccurred += last =>
+                    connections[i] = clients[i].Get<IBenchmarkObject>("endpoint1");
+                    connections[i].EventOccurred += last =>
                     {
                         if (last)
                             autoResetEvent.Set();
@@ -53,7 +54,7 @@ namespace EloquentObjectsBenchmark.EloquentObjects.Benchmarks
 
                 var result = MeasurementResult.Measure($"EloquentObjects: Events with {_scheme}", () =>
                 {
-                    connections[0].Object.StartEvents(_iterations / _numberOfEventClients);
+                    benchmarkObject.StartEvents(_iterations / _numberOfEventClients);
 
                     autoResetEvent.WaitOne();
                 });
@@ -61,7 +62,6 @@ namespace EloquentObjectsBenchmark.EloquentObjects.Benchmarks
                 //Dispose clients
                 for (var i = 0; i < _numberOfEventClients; i++)
                 {
-                    connections[i].Dispose();
                     clients[i].Dispose();
                 }
 

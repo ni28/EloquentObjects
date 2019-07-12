@@ -1,45 +1,96 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
 using EloquentObjects.Channels;
 using EloquentObjects.Contracts;
-using EloquentObjects.RPC.Messages.Session;
+using EloquentObjects.RPC.Messages.Acknowledged;
+using EloquentObjects.RPC.Messages.OneWay;
 using EloquentObjects.Serialization;
 
 namespace EloquentObjects.RPC.Server.Implementation
 {
     internal sealed class ObjectAdapter : IObjectAdapter
     {
-        private readonly List<IConnection> _connections = new List<IConnection>();
         private readonly IContractDescription _contractDescription;
         private readonly ISerializer _serializer;
         private readonly List<HostedEvent> _hostedEvents = new List<HostedEvent>();
-        private readonly object _serviceInstance;
+        private IObjectsRepository _objectsRepository;
         private readonly SynchronizationContext _synchronizationContext;
+        private readonly Dictionary<string, SubscriptionRepository> _events = new Dictionary<string, SubscriptionRepository>();
         private bool _disposed;
 
-        public ObjectAdapter(IContractDescription contractDescription,
+        public ObjectAdapter(string objectId, IContractDescription contractDescription,
             ISerializer serializer,
             SynchronizationContext synchronizationContext,
-            object serviceInstance)
+            object objectToHost, IObjectsRepository objectsRepository)
         {
             _contractDescription = contractDescription;
             _serializer = serializer;
             _synchronizationContext = synchronizationContext;
-            _serviceInstance = serviceInstance;
+            Object = objectToHost;
+            _objectsRepository = objectsRepository;
 
             foreach (var eventDescription in _contractDescription.Events)
             {
                 var handler = CreateHandler(eventDescription.Event, args => SendEventToAllClients(eventDescription.Name, eventDescription.IsStandardEvent, args));
-                eventDescription.Event.AddEventHandler(serviceInstance, handler);
+                eventDescription.Event.AddEventHandler(objectToHost, handler);
                 _hostedEvents.Add(new HostedEvent(eventDescription.Event, handler));
+                _events.Add(eventDescription.Name, new SubscriptionRepository(objectId, eventDescription.Name, eventDescription.IsStandardEvent, serializer));
             }
         }
 
+        
+        #region Implementation of IObjectAdapter
+
+        public object Object { get; }
+
+        public void HandleCall(IInputContext context, RequestMessage requestMessage)
+        {
+            try
+            {
+                var callInfo = _serializer.DeserializeCall(requestMessage.Payload);
+                HandleRequest(requestMessage.ClientHostAddress, context, callInfo.OperationName, callInfo.Parameters);
+            }
+            catch (Exception e)
+            {
+                WriteException(context, e, requestMessage.ClientHostAddress);
+            }
+        }
+
+        public void HandleNotification(NotificationMessage notificationMessage)
+        {
+            try
+            {
+                var callInfo = _serializer.DeserializeCall(notificationMessage.Payload);
+                HandleEvent(callInfo.OperationName, callInfo.Parameters);
+            }
+            catch (Exception)
+            {
+                //Hide exception for one-way calls as client does not expect an answer
+            }
+        }
+
+        public void Subscribe(SubscribeEventMessage subscribeEventMessage, Action<EventMessage> sendEventToClient)
+        {
+            lock (_events)
+            {
+                _events[subscribeEventMessage.EventName].Subscribe(sendEventToClient, subscribeEventMessage.ClientHostAddress);
+            }
+        }
+
+        public void Unsubscribe(UnsubscribeEventMessage unsubscribeEventMessage, Action<EventMessage> sendEventToClient)
+        {
+            lock (_events)
+            {
+                _events[unsubscribeEventMessage.EventName].Unsubscribe(sendEventToClient);
+            }
+        }
+
+        #endregion
+        
         private static Delegate CreateHandler(EventInfo evt, Action<object[]> d)
         {
             var handlerType = evt.EventHandlerType;
@@ -74,12 +125,6 @@ namespace EloquentObjects.RPC.Server.Implementation
         private void SendEventToAllClients(string eventName, bool isStandardEvent, params object[] parameters)
         {
             if (_disposed) throw new ObjectDisposedException(nameof(ObjectAdapter));
-            var connections = new List<IConnection>();
-
-            lock (_connections)
-            {
-                connections.AddRange(_connections);
-            }
 
             if (isStandardEvent)
             {
@@ -87,65 +132,13 @@ namespace EloquentObjects.RPC.Server.Implementation
                 parameters[0] = null;
             }
 
-            foreach (var callbackAgent in connections)
+            lock (_events)
             {
-                callbackAgent.Notify(eventName, parameters);
+                _events[eventName].Raise(parameters);
             }
         }
 
-        #region Implementation of IObjectAdapter
-
-        public IConnection Connect(string objectId,
-            IHostAddress clientHostAddress, int connectionId,
-            IOutputChannel outputChannel)
-        {
-            var connection = new Connection(objectId, clientHostAddress, connectionId, outputChannel, _serializer);
-
-            connection.RequestReceived += ConnectionOnRequestReceived;
-            connection.EventReceived += ConnectionOnEventReceived;
-            connection.Disconnected += ConnectionOnDisconnected;
-
-            lock (_connections)
-            {
-                _connections.Add(connection);
-            }
-            
-            return connection;
-        }
-
-        #endregion
-
-        private void ConnectionOnDisconnected(object sender, EventArgs e)
-        {
-            var connection = (IConnection) sender;
-            connection.RequestReceived -= ConnectionOnRequestReceived;
-            connection.EventReceived -= ConnectionOnEventReceived;
-            connection.Disconnected -= ConnectionOnDisconnected;
-
-            lock (_connections)
-            {
-                _connections.Remove(connection);
-            }
-        }
-
-        private void ConnectionOnRequestReceived(IInputContext context, IHostAddress clientHostAddress, CallInfo callInfo)
-        {
-            try
-            {
-                HandleRequest(clientHostAddress, context, callInfo.OperationName, callInfo.Parameters);
-            }
-            catch (Exception e)
-            {
-                WriteException(context, e, clientHostAddress);
-            }
-        }
-
-        private void ConnectionOnEventReceived(IHostAddress clientHostAddress, CallInfo callInfo)
-        {
-            HandleEvent(callInfo.OperationName, callInfo.Parameters);
-        }
-
-        public void HandleEvent(string eventName, object[] arguments)
+        private void HandleEvent(string eventName, object[] arguments)
         {
             if (_disposed)
                 throw new ObjectDisposedException(nameof(ObjectAdapter));
@@ -155,23 +148,16 @@ namespace EloquentObjects.RPC.Server.Implementation
             if (_synchronizationContext != null)
             {
                 _synchronizationContext.Post(
-                    s => { operationDescription.Method.Invoke(_serviceInstance, arguments); },
+                    s => { operationDescription.Method.Invoke(Object, arguments); },
                     null);
 
                 return;
             }
 
-            try
-            {
-                operationDescription.Method.Invoke(_serviceInstance, arguments);
-            }
-            catch (Exception)
-            {
-                //Hide exception for one-way calls as client does not expect an answer
-            }
+            operationDescription.Method.Invoke(Object, arguments);
         }
 
-        public void HandleRequest(IHostAddress clientHostAddress, IInputContext context, string methodName,
+        private void HandleRequest(IHostAddress clientHostAddress, IInputContext context, string methodName,
             object[] parameters)
         {
             if (_disposed) throw new ObjectDisposedException(nameof(ObjectAdapter));
@@ -183,7 +169,7 @@ namespace EloquentObjects.RPC.Server.Implementation
             {
                 result = _synchronizationContext != null
                     ? CallInSyncContext(operationDescription, parameters)
-                    : operationDescription.Method.Invoke(_serviceInstance, parameters.ToArray());
+                    : operationDescription.Method.Invoke(Object, parameters.ToArray());
             }
             catch (Exception e)
             {
@@ -192,10 +178,10 @@ namespace EloquentObjects.RPC.Server.Implementation
                 return;
             }
 
-            if (result is IEloquent eloquent)
+            if (_objectsRepository.TryGetObjectId(result, out var objectId))
             {
-                var payload = _serializer.Serialize(eloquent.Info);
-                var responseMessage = new EloquentObjectMessage(clientHostAddress, eloquent.ObjectId, payload);
+                var payload = _serializer.Serialize(objectId);
+                var responseMessage = new EloquentObjectMessage(clientHostAddress, objectId, payload);
                 context.Write(responseMessage.ToFrame());
             }
             else
@@ -217,7 +203,7 @@ namespace EloquentObjects.RPC.Server.Implementation
             {
                 try
                 {
-                    result = methodDescription.Method.Invoke(_serviceInstance, parameters);
+                    result = methodDescription.Method.Invoke(Object, parameters);
                 }
                 catch (Exception e)
                 {
@@ -243,7 +229,9 @@ namespace EloquentObjects.RPC.Server.Implementation
 
             _disposed = true;
             foreach (var hostedEvent in _hostedEvents)
-                hostedEvent.EventInfo.RemoveEventHandler(_serviceInstance, hostedEvent.Handler);
+                hostedEvent.EventInfo.RemoveEventHandler(Object, hostedEvent.Handler);
+
+            _objectsRepository = null;
         }
 
         #endregion
@@ -253,5 +241,6 @@ namespace EloquentObjects.RPC.Server.Implementation
             var exceptionMessage = new ExceptionMessage(clientHostAddress, FaultException.Create(exception));
             context.Write(exceptionMessage.ToFrame());
         }
+
     }
 }

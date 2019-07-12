@@ -18,22 +18,21 @@ namespace EloquentObjectsBenchmark.EloquentObjects.Proto.Benchmarks
         public MeasurementResult Measure()
         {
             using (var remoteObjectServer = new ProtoEloquentServer($"{_scheme}://127.0.0.1:50000"))
-            using (var remoteObjectClient = new ProtoEloquentClient($"{_scheme}://127.0.0.1:50000", $"{_scheme}://127.0.0.1:50001"))
+            using (var remoteObjectClient =
+                new ProtoEloquentClient($"{_scheme}://127.0.0.1:50000", $"{_scheme}://127.0.0.1:50001"))
             {
                 remoteObjectServer.Add<IBenchmarkObject>("endpoint1", new BenchmarkObject());
 
-                using (var session = remoteObjectClient.Connect<IBenchmarkObject>("endpoint1"))
-                {
-                    var benchmarkObj = session.Object;
+                var benchmarkObj = remoteObjectClient.Get<IBenchmarkObject>("endpoint1");
 
-                    return MeasurementResult.Measure($"EloquentObjects.Proto: Two-way calls with {_scheme}", () =>
+                return MeasurementResult.Measure($"EloquentObjects.Proto: Two-way calls with {_scheme}", () =>
+                {
+                    for (var i = 0; i < _iterations; i++)
                     {
-                        for (var i = 0; i < _iterations; i++)
-                        {
-                            benchmarkObj.TwoWayCall();
-                        }
-                    });
-                }
+                        benchmarkObj.TwoWayCall();
+                    }
+                });
+
             }
         }
 

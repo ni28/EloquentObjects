@@ -4,14 +4,20 @@ namespace EloquentObjects.RPC.Client.Implementation
 {
     internal struct RemoteEventSubscription
     {
-        public RemoteEventSubscription(string eventName, Delegate handler)
+        public RemoteEventSubscription(Delegate handler, object proxy)
         {
-            EventName = eventName;
+            ObjectId = null;
+            EventName = null;
             Handler = handler;
+            Proxy = proxy;
         }
 
+        //TODO: remove
+        public string ObjectId { get; }
         public string EventName { get; }
         
         public Delegate Handler { get; }
+        
+        public object Proxy { get; }
     }
 }

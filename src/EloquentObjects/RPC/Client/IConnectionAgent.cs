@@ -1,16 +1,11 @@
 using System;
 using EloquentObjects.Contracts;
-using EloquentObjects.RPC.Messages.Session;
+using EloquentObjects.RPC.Messages.OneWay;
 
 namespace EloquentObjects.RPC.Client
 {
     internal interface IConnectionAgent : IDisposable
     {
-        /// <summary>
-        /// Gets the connection ID (server also tracks this connection using the same ID).
-        /// </summary>
-        int ConnectionId { get; }
-        
         /// <summary>
         /// Send one-way message to the server.
         /// </summary>
@@ -28,6 +23,18 @@ namespace EloquentObjects.RPC.Client
         /// <returns></returns>
         object Call(IEloquentClient eloquentClient, IContractDescription contractDescription, string methodName,
             object[] parameters);
+
+        /// <summary>
+        /// Asks server to send notifications for event.
+        /// </summary>
+        /// <param name="eventName"></param>
+        void Subscribe(string eventName);
+
+        /// <summary>
+        /// Asks server to stop sending notifications for event.
+        /// </summary>
+        /// <param name="eventName"></param>
+        void Unsubscribe(string eventName);        
 
         /// <summary>
         /// Occurs when event is received from the server

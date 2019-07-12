@@ -1,8 +1,8 @@
 using EloquentObjects.Channels;
 
-namespace EloquentObjects.RPC.Messages.Session
+namespace EloquentObjects.RPC.Messages.OneWay
 {
-    internal sealed class TerminateMessage : Message
+    internal sealed class TerminateMessage : OneWayMessage
     {
         internal TerminateMessage(IHostAddress clientHostAddress) : base(clientHostAddress)
         {

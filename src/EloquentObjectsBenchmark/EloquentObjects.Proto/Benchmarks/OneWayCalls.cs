@@ -20,20 +20,18 @@ namespace EloquentObjectsBenchmark.EloquentObjects.Proto.Benchmarks
             using (var remoteObjectServer = new ProtoEloquentServer($"{_scheme}://127.0.0.1:50000"))
             using (var remoteObjectClient = new ProtoEloquentClient($"{_scheme}://127.0.0.1:50000", $"{_scheme}://127.0.0.1:50001"))
             {
-                remoteObjectServer.Add<EloquentObjects.IBenchmarkObject>("endpoint1", new EloquentObjects.BenchmarkObject());
+                remoteObjectServer.Add<EloquentObjects.IBenchmarkObject>("endpoint1",
+                    new EloquentObjects.BenchmarkObject());
 
-                using (var session = remoteObjectClient.Connect<EloquentObjects.IBenchmarkObject>("endpoint1"))
+                var benchmarkObj = remoteObjectClient.Get<EloquentObjects.IBenchmarkObject>("endpoint1");
+
+                return MeasurementResult.Measure($"EloquentObjects.Proto: One-way calls with {_scheme}", () =>
                 {
-                    var benchmarkObj = session.Object;
-
-                    return MeasurementResult.Measure($"EloquentObjects.Proto: One-way calls with {_scheme}", () =>
+                    for (var i = 0; i < _iterations; i++)
                     {
-                        for (var i = 0; i < _iterations; i++)
-                        {
-                            benchmarkObj.OneWayCall();
-                        }
-                    });
-                }
+                        benchmarkObj.OneWayCall();
+                    }
+                });
             }
         }
 

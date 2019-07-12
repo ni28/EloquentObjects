@@ -1,5 +1,5 @@
 ﻿using System;
-using EloquentObjects.RPC.Messages.Session;
+using EloquentObjects.RPC.Messages.OneWay;
 using EloquentObjects.Serialization;
 
 namespace EloquentObjects.RPC.Client
@@ -7,7 +7,5 @@ namespace EloquentObjects.RPC.Client
     internal interface ISessionAgent : IDisposable
     {
         IConnectionAgent Connect(string objectId, ISerializer serializer);
-
-        event EventHandler<EventMessage> EventReceived;
     }
 }

@@ -1,28 +1,25 @@
 using EloquentObjects.Channels;
 
-namespace EloquentObjects.RPC.Messages.Session
+namespace EloquentObjects.RPC.Messages.OneWay
 {
-    internal sealed class EventMessage : Message
+    internal sealed class NotificationMessage : OneWayMessage
     {
-        public EventMessage(IHostAddress clientHostAddress, string objectId, int connectionId, byte[] payload): base(clientHostAddress)
+        public NotificationMessage(IHostAddress clientHostAddress, string objectId, byte[] payload): base(clientHostAddress)
         {
             ObjectId = objectId;
-            ConnectionId = connectionId;
             Payload = payload;
         }
         
         public string ObjectId { get; }
-        public int ConnectionId { get; }
         public byte[] Payload { get; }
 
         #region Overrides of Message
 
-        public override MessageType MessageType => MessageType.Event;
+        public override MessageType MessageType => MessageType.Notification;
         
         protected override void WriteInternal(IFrameBuilder builder)
         {
             builder.WriteString(ObjectId);
-            builder.WriteInt(ConnectionId);
             builder.WriteBuffer(Payload);
         }
 
@@ -31,10 +28,9 @@ namespace EloquentObjects.RPC.Messages.Session
         public static Message ReadInternal(IHostAddress clientHostAddress, IFrame frame)
         {
             var objectId = frame.TakeString();
-            var connectionId = frame.TakeInt();
             var payload = frame.TakeBuffer();
 
-            return new EventMessage(clientHostAddress, objectId, connectionId, payload);
+            return new NotificationMessage(clientHostAddress, objectId, payload);
         }
     }
 }

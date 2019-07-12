@@ -41,7 +41,7 @@ namespace ConsoleApplication1.HostingModel
             });
         }
 
-        public IEloquent<IEloquentOperationsHistory> OperationsHistory => _clientHost.ObjectHost;
+        public IEloquentOperationsHistory OperationsHistory => _clientHost.ObjectHost.Object;
 
         public event EventHandler<OperationResult> ResultReady;
 

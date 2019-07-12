@@ -1,12 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using EloquentObjects.Channels;
+using JetBrains.Annotations;
 
 namespace EloquentObjects.RPC.Server
 {
     internal interface IObjectsRepository : IDisposable
     {
-        bool TryConnectObject(string objectId, IHostAddress clientHostAddress, int connectionId, IOutputChannel outputChannel, out IConnection connection);
         IDisposable Add(string objectId, IObjectAdapter objectAdapter);
+        bool TryGetObject(string objectId, [CanBeNull] out IObjectAdapter objectAdapter);
+        bool TryGetObjectId(object result, out string objectId);
     }
 }

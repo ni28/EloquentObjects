@@ -11,9 +11,8 @@ namespace Client
         public static void Main(string[] args)
         {
             using (var client = new EloquentClient("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001"))
-            using (var calcObjConnection = client.Connect<IEloquentCalculator>("calculator"))
             {
-                var calculator = calcObjConnection.Object;
+                var calculator = client.Get<IEloquentCalculator>("calculator");
 
                 //Property get
                 Console.WriteLine($"Calculator name: {calculator.Name}");
@@ -44,30 +43,24 @@ namespace Client
             var senderAsClient = (IEloquentCalculator) sender;
 
             //Get Last Operations
-            using (var connection = senderAsClient.OperationsHistory.Connect())
-            {
-                var history = connection.Object;
+            var history = senderAsClient.OperationsHistory;
 
-                Console.WriteLine("Last operations:");
-                foreach (var entry in history.OperationsHistory)
-                {
-                    Console.WriteLine($"\t{entry}");
-                }
-                
-                Console.WriteLine();
-                
-                history.Clear();
-                
-                Console.WriteLine("Last operations after clear:");
-                foreach (var entry in history.OperationsHistory)
-                {
-                    Console.WriteLine($"\t{entry}");
-                }
-                
+            Console.WriteLine("Last operations:");
+            foreach (var entry in history.OperationsHistory)
+            {
+                Console.WriteLine($"\t{entry}");
             }
 
+            Console.WriteLine();
 
-            
+            history.Clear();
+
+            Console.WriteLine("Last operations after clear:");
+            foreach (var entry in history.OperationsHistory)
+            {
+                Console.WriteLine($"\t{entry}");
+            }
+
             Console.WriteLine($"Sender name = {senderAsClient.Name}");
         }
     }

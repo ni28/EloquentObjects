@@ -1,76 +1,101 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using EloquentObjects.Contracts;
+using EloquentObjects.RPC.Messages.OneWay;
+using EloquentObjects.Serialization;
+using JetBrains.Annotations;
 
 namespace EloquentObjects.RPC.Client.Implementation
 {
     internal sealed class EventHandlersRepository : IEventHandlersRepository
     {
-        private readonly IContractDescription _contractDescription;
-
-        private readonly List<RemoteEventSubscription> _subscriptions = new List<RemoteEventSubscription>();
-        private bool _disposed;
-        private readonly object _outerProxy;
-
-        public EventHandlersRepository(IContractDescription contractDescription, object outerProxy)
+        private struct EventId
         {
-            _contractDescription = contractDescription;
-            _outerProxy = outerProxy;
+            [UsedImplicitly]
+            public string ObjectId;
+
+            [UsedImplicitly]
+            public string EventName;
         }
         
+        
+        private readonly Dictionary<EventId, SubscriptionRepository> _events = new Dictionary<EventId, SubscriptionRepository>();
+        private bool _disposed;
+
+
         #region Implementation of ICallback
 
-        public void Subscribe(string eventName, Delegate handler)
+        public void Subscribe(string objectId, IEventDescription eventDescription, ISerializer serializer,
+            Delegate handler, object proxy)
         {
             if (_disposed)
             {
                 throw new ObjectDisposedException(nameof(EventHandlersRepository));
             }
             
-            lock (_subscriptions)
+            var eventId = new EventId
             {
-                _subscriptions.Add(new RemoteEventSubscription(eventName, handler));
+                ObjectId = objectId,
+                EventName = eventDescription.Name
+            };
+
+            lock (_events)
+            {
+                if (!_events.TryGetValue(eventId, out var subscriptionRepository))
+                {
+                    subscriptionRepository = new SubscriptionRepository(eventDescription.IsStandardEvent, serializer);
+                    _events.Add(eventId, subscriptionRepository);
+                }
+                
+                subscriptionRepository.Subscribe(handler, proxy);
             }
         }
 
-        public void Unsubscribe(string eventName, Delegate handler)
+        public void Unsubscribe(string objectId, string eventName, Delegate handler)
         {
             if (_disposed)
             {
                 throw new ObjectDisposedException(nameof(EventHandlersRepository));
             }
 
-            lock (_subscriptions)
+            var eventId = new EventId
             {
-                var subscriptionToRemove = _subscriptions.First(s =>
-                    s.EventName == eventName && s.Handler == handler);
-                _subscriptions.Remove(subscriptionToRemove);
+                ObjectId = objectId,
+                EventName = eventName
+            };
+
+            lock (_events)
+            {
+                var subscriptionRepository = _events[eventId];
+                subscriptionRepository.Unsubscribe(handler);
+
+                if (subscriptionRepository.IsEmpty)
+                {
+                    _events.Remove(eventId);
+                }
             }
         }
 
-        public void HandleEvent(string eventName, object[] arguments)
+        public void HandleEvent(EventMessage eventMessage)
         {
             if (_disposed)
             {
                 throw new ObjectDisposedException(nameof(EventHandlersRepository));
             }
 
-            IEnumerable<RemoteEventSubscription> subscriptions;
+            var eventId = new EventId
+            {
+                ObjectId = eventMessage.ObjectId,
+                EventName = eventMessage.EventName
+            };
 
-            //Set the sender = proxy object for standard events
-            var eventDescription = _contractDescription.Events.First(e => e.Name == eventName);
-            if (eventDescription.IsStandardEvent)
+            SubscriptionRepository subscriptionRepository;
+            lock (_events)
             {
-                arguments[0] = _outerProxy;
+                subscriptionRepository = _events[eventId];
             }
             
-            lock (_subscriptions)
-            {
-                subscriptions = _subscriptions.Where(s => s.EventName == eventName).ToArray();
-            }
-            
-            foreach (var subscription in subscriptions) subscription.Handler.DynamicInvoke(arguments);
+            subscriptionRepository.Raise(eventMessage.Payload);
         }
 
         #endregion
@@ -80,7 +105,7 @@ namespace EloquentObjects.RPC.Client.Implementation
         public void Dispose()
         {
             _disposed = true;
-            _subscriptions.Clear();
+            _events.Clear();
         }
 
         #endregion

@@ -1,3 +1,5 @@
+using JetBrains.Annotations;
+
 namespace EloquentObjects.Channels
 {
     internal interface IFrameBuilder

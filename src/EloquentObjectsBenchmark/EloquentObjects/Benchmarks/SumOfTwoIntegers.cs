@@ -22,18 +22,15 @@ namespace EloquentObjectsBenchmark.EloquentObjects.Benchmarks
             {
                 remoteObjectServer.Add<IBenchmarkObject>("endpoint1", new BenchmarkObject());
 
-                using (var session = remoteObjectClient.Connect<IBenchmarkObject>("endpoint1"))
-                {
-                    var benchmarkObj = session.Object;
+                var benchmarkObj = remoteObjectClient.Get<IBenchmarkObject>("endpoint1");
 
-                    return MeasurementResult.Measure($"EloquentObjects: Sum of two integers with {_scheme}", () =>
+                return MeasurementResult.Measure($"EloquentObjects: Sum of two integers with {_scheme}", () =>
+                {
+                    for (var i = 0; i < _iterations; i++)
                     {
-                        for (var i = 0; i < _iterations; i++)
-                        {
-                            benchmarkObj.Sum(i, i);
-                        }
-                    });
-                }
+                        benchmarkObj.Sum(i, i);
+                    }
+                });
             }
         }
 

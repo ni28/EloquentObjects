@@ -1,8 +1,8 @@
 using EloquentObjects.Channels;
 
-namespace EloquentObjects.RPC.Messages.Session
+namespace EloquentObjects.RPC.Messages.OneWay
 {
-    internal sealed class ExceptionMessage : Message
+    internal sealed class ExceptionMessage : OneWayMessage
     {
         internal ExceptionMessage(IHostAddress clientHostAddress, FaultException exception) : base(
             clientHostAddress)

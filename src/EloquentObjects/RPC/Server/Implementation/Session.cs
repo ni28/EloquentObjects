@@ -1,36 +1,35 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.IO;
+using System.Collections.Generic;
 using System.Threading;
 using EloquentObjects.Channels;
 using EloquentObjects.Logging;
 using EloquentObjects.RPC.Messages;
-using EloquentObjects.RPC.Messages.Session;
+using EloquentObjects.RPC.Messages.Acknowledged;
+using EloquentObjects.RPC.Messages.OneWay;
 
 namespace EloquentObjects.RPC.Server.Implementation
 {
     internal sealed class Session : ISession
     {
-        private readonly ConcurrentDictionary<int, IConnection> _connections = new ConcurrentDictionary<int, IConnection>();
         private readonly IObjectsRepository _objectsRepository;
         private readonly int _maxHeartBeatLost;
-        private readonly IBinding _binding;
         private int _heartBeatLostCounter;
         private Timer _heartbeatTimer;
-        private IOutputChannel _outputChannel;
+        private readonly IOutputChannel _outputChannel;
         private readonly ILogger _logger;
         private bool _disposed;
 
-        public Session(IBinding binding, IHostAddress clientHostAddress, IObjectsRepository objectsRepository)
+        public Session(IBinding binding, IHostAddress clientHostAddress, IObjectsRepository objectsRepository,
+            IOutputChannel outputChannel)
         {
-            _binding = binding;
             _maxHeartBeatLost = binding.MaxHeartBeatLost;
             _objectsRepository = objectsRepository;
+            _outputChannel = outputChannel;
             ClientHostAddress = clientHostAddress;
 
             //When HeartBeatMs is 0 then no heart beats are listened.
-            if (_binding.HeartBeatMs != 0)
-                _heartbeatTimer = new Timer(Heartbeat, null, 0, _binding.HeartBeatMs);
+            if (binding.HeartBeatMs != 0)
+                _heartbeatTimer = new Timer(Heartbeat, null, 0, binding.HeartBeatMs);
             
             _logger = Logger.Factory.Create(GetType());
             _logger.Info(() => $"Created (clientHostAddress = {ClientHostAddress})");
@@ -44,11 +43,6 @@ namespace EloquentObjects.RPC.Server.Implementation
                 throw new ObjectDisposedException(GetType().FullName);
 
             _disposed = true;
-            foreach (var connection in _connections.Values)
-            {
-                connection.Dispose();
-            }
-            _connections.Clear();
 
             _heartbeatTimer?.Dispose();
             _heartbeatTimer = null;
@@ -81,11 +75,10 @@ namespace EloquentObjects.RPC.Server.Implementation
                 throw new ObjectDisposedException(GetType().FullName);
 
             //The message.ClientHostAddress should always match ClientHostAddress. We do not check it here for optimization purposes.
-            
             switch (message)
             {
-                case HelloMessage helloMessage:
-                    HandleHello(helloMessage, context);
+                case ConnectMessage connectObjectMessage:
+                    HandleConnect(connectObjectMessage, context);
                     break;
                 case HeartbeatMessage _:
                     HandleHeartbeat();
@@ -93,46 +86,35 @@ namespace EloquentObjects.RPC.Server.Implementation
                 case RequestMessage requestMessage:
                     HandleRequestMessage(requestMessage, context);
                     break;
-                case EventMessage eventMessage:
-                    HandleEventMessage(eventMessage);
+                case NotificationMessage notificationMessage:
+                    HandleNotificationMessage(notificationMessage);
                     break;
-                case DisconnectMessage disconnectMessage:
-                    HandleDisconnect(disconnectMessage);
+                case SubscribeEventMessage subscribeEventMessage:
+                    HandleSubscribeEventMessage(subscribeEventMessage, context);
+                    break;
+                case UnsubscribeEventMessage unsubscribeEventMessage:
+                    HandleUnsubscribeEventMessage(unsubscribeEventMessage, context);
                     break;
                 case TerminateMessage _:
                     HandleTerminate();
                     break;
                 default:
-                    throw new ArgumentException("Unexpected Session Message received");
+                    throw new ArgumentException($"Unexpected Message type received: {message.GetType()}");
             }
         }
 
         #endregion
 
-        /// <summary>
-        /// Creates a new connection
-        /// </summary>
-        private void HandleHello(HelloMessage helloMessage, IInputContext context)
+        private void HandleConnect(ConnectMessage connectMessage, IInputContext context)
         {
-            //Create a new connection or throw an exception if connection already exists
-            _connections.AddOrUpdate(helloMessage.ConnectionId, 
-                id =>
-                {
-                    try
-                    {
-                        return CreateConnection(helloMessage, context);
-                    }
-                    catch (Exception e)
-                    {
-                        WriteException(context, e);
-                        throw;
-                    }
-                },
-                (id, c) =>
-                {
-                    WriteException(context, new InvalidOperationException($"Connection with ID {helloMessage.ConnectionId} already exists."));
-                    return c;
-                });
+            if (!_objectsRepository.TryGetObject(connectMessage.ObjectId, out _))
+            {
+                WriteObjectNotFoundError(context, connectMessage.ObjectId);
+                return;
+            }
+
+            var ackMessage = new AckMessage(connectMessage.ClientHostAddress);
+            context.Write(ackMessage.ToFrame("Server"));
         }
 
         /// <summary>
@@ -144,84 +126,79 @@ namespace EloquentObjects.RPC.Server.Implementation
         }
 
         /// <summary>
-        /// Redirects handling of the request message to target connection.
+        /// Redirects handling of the request message to target object.
         /// </summary>
         /// <param name="requestMessage"></param>
         /// <param name="context"></param>
         private void HandleRequestMessage(RequestMessage requestMessage, IInputContext context)
         {
-            if (!_connections.TryGetValue(requestMessage.ConnectionId, out var connection))
+            if (!_objectsRepository.TryGetObject(requestMessage.ObjectId, out var objectAdapter))
             {
-                WriteException(context, new InvalidOperationException($"Connection with ID {requestMessage.ConnectionId} was not established."));
+                WriteObjectNotFoundError(context, requestMessage.ObjectId);
                 return;
             }
 
-            connection.HandleRequest(context, requestMessage);
+            objectAdapter?.HandleCall(context, requestMessage);
         }
 
         /// <summary>
-        /// Redirects handling of the event message to target connection.
+        /// Redirects handling of the event message to target object.
         /// </summary>
-        /// <param name="eventMessage"></param>
-        private void HandleEventMessage(EventMessage eventMessage)
+        /// <param name="notificationMessage"></param>
+        private void HandleNotificationMessage(NotificationMessage notificationMessage)
         {
-            if (!_connections.TryGetValue(eventMessage.ConnectionId, out var connection))
+            _objectsRepository.TryGetObject(notificationMessage.ObjectId, out var objectAdapter);
+            objectAdapter?.HandleNotification(notificationMessage);
+        }
+        
+        private void HandleSubscribeEventMessage(SubscribeEventMessage subscribeEventMessage, IInputContext context)
+        {
+            if (!_objectsRepository.TryGetObject(subscribeEventMessage.ObjectId, out var objectAdapter) || objectAdapter == null)
             {
-                //No exception as the client does not expect responses for events
+                WriteObjectNotFoundError(context, subscribeEventMessage.ObjectId);
                 return;
             }
 
-            connection.HandleEvent(eventMessage);
+            objectAdapter.Subscribe(subscribeEventMessage, SendEventToClient);
+
+            var ackMessage = new AckMessage(subscribeEventMessage.ClientHostAddress);
+            context.Write(ackMessage.ToFrame());
         }
 
-        /// <summary>
-        /// Disconnects the object.
-        /// </summary>
-        private void HandleDisconnect(DisconnectMessage disconnectMessage)
+
+        private void HandleUnsubscribeEventMessage(UnsubscribeEventMessage unsubscribeEventMessage,
+            IInputContext context)
         {
-            if (!_connections.TryRemove(disconnectMessage.ConnectionId, out var connection))
+            if (!_objectsRepository.TryGetObject(unsubscribeEventMessage.ObjectId, out var objectAdapter) || objectAdapter == null)
+            {
+                WriteObjectNotFoundError(context, unsubscribeEventMessage.ObjectId);
                 return;
-            
-            connection.Dispose();
+            }
+            objectAdapter.Unsubscribe(unsubscribeEventMessage, SendEventToClient);
+
+            var ackMessage = new AckMessage(unsubscribeEventMessage.ClientHostAddress);
+            context.Write(ackMessage.ToFrame());
         }
 
+        private void SendEventToClient(EventMessage eventMessage)
+        {
+            _outputChannel.Send(eventMessage);
+        }
+        
         /// <summary>
         /// Terminates the session.
         /// </summary>
         private void HandleTerminate()
         {
+         
+            //TODO: Unsubscribe
+            
             Terminated?.Invoke(this, EventArgs.Empty);
         }
        
-        
-        private IConnection CreateConnection(HelloMessage helloMessage,
-            IInputContext context)
+        private void WriteObjectNotFoundError(IInputContext context, string objectId)
         {
-            //All callback agents reuse the same output channel
-            if (_outputChannel == null)
-            {
-                try
-                {
-                    _outputChannel = _binding.CreateOutputChannel(ClientHostAddress);
-                }
-                catch (Exception e)
-                {
-                    throw new IOException("Connection failed. Client callback channel was not found.", e);
-                }
-
-            }
-            
-            var acknowledged = _objectsRepository.TryConnectObject(helloMessage.ObjectId, ClientHostAddress, helloMessage.ConnectionId, _outputChannel, out var connection);
-
-            var helloAck = helloMessage.CreateAck(acknowledged);
-            context.Write(helloAck.ToFrame());
-
-            return connection;
-        }
-
-        private void WriteException(IInputContext context, Exception exception)
-        {
-            var exceptionMessage = new ExceptionMessage(ClientHostAddress, FaultException.Create(exception));
+            var exceptionMessage = new ErrorMessage(ClientHostAddress, ErrorType.ObjectNotFound, $"Object with id '{objectId}' is not hosted on server.");
             context.Write(exceptionMessage.ToFrame());
         }
     }

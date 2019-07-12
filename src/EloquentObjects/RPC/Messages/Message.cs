@@ -1,7 +1,9 @@
+using System;
 using System.IO;
 using EloquentObjects.Channels;
 using EloquentObjects.Channels.Implementation;
-using EloquentObjects.RPC.Messages.Session;
+using EloquentObjects.RPC.Messages.Acknowledged;
+using EloquentObjects.RPC.Messages.OneWay;
 
 namespace EloquentObjects.RPC.Messages
 {
@@ -16,35 +18,41 @@ namespace EloquentObjects.RPC.Messages
         
         public IHostAddress ClientHostAddress { get; }
 
-        public IFrame ToFrame()
+        public IFrame ToFrame(string side="")
         {
             var builder = new FrameBuilder();
             builder.WriteByte((byte)MessageType);
             builder.WriteString(ClientHostAddress.IpAddress);
             builder.WriteInt(ClientHostAddress.Port);
             WriteInternal(builder);
+            
+            Console.WriteLine($"{side}: Sending {this}");
             return builder.ToFrame();
         }
         
         protected abstract void WriteInternal(IFrameBuilder frameBuilder);
-
-        public static Message Create(IFrame frame)
+        
+        public static Message Create(IFrame frame, string side="")
         {
             var messageType = (MessageType)frame.TakeByte();
             var clientHostAddress = HostAddress.Read(frame);
 
+            Console.WriteLine($"{side}: Received: {messageType}");
+            
             switch (messageType)
             {
                 case MessageType.Hello:
                     return HelloMessage.ReadInternal(clientHostAddress, frame);
-                case MessageType.HelloAck:
-                    return HelloAckMessage.ReadInternal(clientHostAddress, frame);
+                case MessageType.Ack:
+                    return AckMessage.ReadInternal(clientHostAddress, frame);
+                case MessageType.Connect:
+                    return ConnectMessage.ReadInternal(clientHostAddress, frame);
                 case MessageType.Heartbeat:
                     return HeartbeatMessage.ReadInternal(clientHostAddress);
-                case MessageType.Disconnect:
-                    return DisconnectMessage.ReadInternal(clientHostAddress, frame);
                 case MessageType.TerminateSession:
                     return TerminateMessage.ReadInternal(clientHostAddress);
+                case MessageType.ErrorMessage:
+                    return ErrorMessage.ReadInternal(clientHostAddress, frame);
                 case MessageType.Exception:
                     return ExceptionMessage.ReadInternal(clientHostAddress, frame);
                 case MessageType.Event:
@@ -55,6 +63,12 @@ namespace EloquentObjects.RPC.Messages
                     return ResponseMessage.ReadInternal(clientHostAddress, frame);
                 case MessageType.EloquentObject:
                     return EloquentObjectMessage.ReadInternal(clientHostAddress, frame);
+                case MessageType.SubscribeEvent:
+                    return SubscribeEventMessage.ReadInternal(clientHostAddress, frame);
+                case MessageType.UnsubscribeEvent:
+                    return UnsubscribeEventMessage.ReadInternal(clientHostAddress, frame);
+                case MessageType.Notification:
+                    return NotificationMessage.ReadInternal(clientHostAddress, frame);
                 default:
                     throw new IOException(
                         $"Unknown Message type {messageType} is received");

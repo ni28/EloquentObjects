@@ -1,6 +1,6 @@
 using System;
 using EloquentObjects.Channels;
-using EloquentObjects.RPC.Messages.Session;
+using EloquentObjects.RPC.Messages.OneWay;
 using EloquentObjects.Serialization;
 
 namespace EloquentObjects.RPC.Server

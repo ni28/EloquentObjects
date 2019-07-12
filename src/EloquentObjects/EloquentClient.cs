@@ -4,7 +4,10 @@ using Castle.DynamicProxy;
 using EloquentObjects.Channels;
 using EloquentObjects.Channels.Implementation;
 using EloquentObjects.Contracts.Implementation;
+using EloquentObjects.RPC;
+using EloquentObjects.RPC.Client;
 using EloquentObjects.RPC.Client.Implementation;
+using EloquentObjects.RPC.Messages.Acknowledged;
 using EloquentObjects.Serialization;
 using EloquentObjects.Serialization.Implementation;
 using JetBrains.Annotations;
@@ -22,6 +25,8 @@ namespace EloquentObjects
         private readonly IOutputChannel _outputChannel;
         private readonly ProxyGenerator _proxyGenerator;
         private readonly SessionAgent _sessionAgent;
+        private readonly IEventHandlersRepository _eventHandlersRepository;
+        private bool _disposed;
 
         /// <summary>
         /// Creates an EloquentObjects client with default settings and serializer (DataContractSerializer is used).
@@ -82,14 +87,26 @@ namespace EloquentObjects
             {
                 throw new IOException("Connection failed. Server not found.", e);
             }
-            _sessionAgent = new SessionAgent(binding, _inputChannel, _outputChannel, clientHostAddress);
+            
+            _eventHandlersRepository = new EventHandlersRepository();
+            _sessionAgent = new SessionAgent(binding, _inputChannel, _outputChannel, clientHostAddress, _eventHandlersRepository);
+
+            //Send HelloMessage to create a session
+            var helloMessage = new HelloMessage(clientHostAddress);
+            _outputChannel.SendWithAck(helloMessage);
         }
 
         #region Implementation of IDisposable
 
         public void Dispose()
         {
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(EloquentClient));
+
+            _disposed = true;
+            
             _sessionAgent.Dispose();
+            _eventHandlersRepository.Dispose();
             _outputChannel.Dispose();
             _inputChannel.Dispose();
         }
@@ -97,19 +114,26 @@ namespace EloquentObjects
         #endregion
 
         /// <inheritdoc />
-        public IConnection<T> Connect<T>(string objectId) where T : class
+        public T Get<T>(string objectId) where T : class
         {
-            var contractDescription = _contractDescriptionFactory.Create(typeof(T));
+            return (T)Get(typeof(T), objectId);
+        }
+
+        public object Get(Type type, string objectId)
+        {
+            var contractDescription = _contractDescriptionFactory.Create(type);
 
             var knownTypes = contractDescription.GetTypes();
             var serializer = _serializerFactory.Create(typeof(object), knownTypes);
 
-            var innerProxy = new ClientInterceptor(contractDescription);
-            var outerProxy = _proxyGenerator.CreateInterfaceProxyWithoutTarget<T>(innerProxy);
+            var interceptor = new ClientInterceptor(contractDescription);
 
-            var eventHandlersRepository = new EventHandlersRepository(contractDescription, outerProxy);
+            var proxy = _proxyGenerator.CreateInterfaceProxyWithoutTarget(type, interceptor);
+            var connection = new Connection(objectId, proxy, _sessionAgent, _eventHandlersRepository, contractDescription, serializer, this);
             
-            return new Connection<T>(objectId, innerProxy, outerProxy, eventHandlersRepository, _sessionAgent, serializer, contractDescription, this);
+            interceptor.Subscribe(connection);
+
+            return proxy;
         }
     }
 }

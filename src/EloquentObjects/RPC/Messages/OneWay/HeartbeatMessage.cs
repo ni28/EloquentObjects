@@ -1,8 +1,8 @@
 using EloquentObjects.Channels;
 
-namespace EloquentObjects.RPC.Messages.Session
+namespace EloquentObjects.RPC.Messages.OneWay
 {
-    internal sealed class HeartbeatMessage : Message
+    internal sealed class HeartbeatMessage : OneWayMessage
     {
         internal HeartbeatMessage(IHostAddress clientHostAddress) : base(clientHostAddress)
         {

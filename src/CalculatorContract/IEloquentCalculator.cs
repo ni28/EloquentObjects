@@ -16,7 +16,7 @@ namespace CalculatorContract
         void Sqrt(int a);
 
         [EloquentProperty]
-        IEloquent<IEloquentOperationsHistory> OperationsHistory { get; }
+        IEloquentOperationsHistory OperationsHistory { get; }
 
         [EloquentEvent]
         event EventHandler<OperationResult> ResultReady;

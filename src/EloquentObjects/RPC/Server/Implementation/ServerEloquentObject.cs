@@ -29,7 +29,7 @@ namespace EloquentObjects.RPC.Server.Implementation
         
         public object Info { get; }
         
-        public IConnection<T> Connect()
+        public T Connect()
         {
             throw new InvalidOperationException("The Connect method is intended to be called on client only");
         }

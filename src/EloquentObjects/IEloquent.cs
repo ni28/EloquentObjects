@@ -33,7 +33,7 @@ namespace EloquentObjects
         /// <typeparam name="T">Eloquent contract (an interface which attributed members can be accessed remotely)</typeparam>
         /// <returns>A connection object that provides an access to the remote object</returns>
         [NotNull]
-        IConnection<T> Connect();
+        T Connect();
     }
 
     /// <summary>

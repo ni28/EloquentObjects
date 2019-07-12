@@ -35,7 +35,7 @@ namespace EloquentObjects.Channels.Implementation
 
         public void WriteString(string str)
         {
-            var bytes = Encoding.UTF8.GetBytes(str);
+            var bytes = Encoding.UTF8.GetBytes(string.IsNullOrEmpty(str) ? "" : str);
             WriteInt(bytes.Length);
             WriteBytes(bytes);
         }

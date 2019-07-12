@@ -1,7 +1,7 @@
 using System;
 using EloquentObjects.Channels;
 using EloquentObjects.Logging;
-using EloquentObjects.RPC.Messages.Session;
+using EloquentObjects.RPC.Messages.OneWay;
 using EloquentObjects.Serialization;
 
 namespace EloquentObjects.RPC.Server.Implementation
@@ -51,7 +51,7 @@ namespace EloquentObjects.RPC.Server.Implementation
                 throw new ObjectDisposedException(nameof(Connection));
 
             var payload = _serializer.SerializeCall(new CallInfo(eventName, arguments));
-            var eventMessage = new EventMessage(_clientHostAddress, _objectId, _connectionId, payload);
+            var eventMessage = new EventMessage(_clientHostAddress, _objectId, eventName, payload);
             _outputChannel.Write(eventMessage.ToFrame());
         }
 

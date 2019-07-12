@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using EloquentObjects.Channels;
+using System.Linq;
 
 namespace EloquentObjects.RPC.Server.Implementation
 {
@@ -25,23 +25,6 @@ namespace EloquentObjects.RPC.Server.Implementation
 
         #region Implementation of IObjectsRepository
 
-        public bool TryConnectObject(string objectId, IHostAddress clientHostAddress, int connectionId,
-            IOutputChannel outputChannel, out IConnection connection)
-        {
-            if (_disposed) throw new ObjectDisposedException(nameof(ObjectsRepository));
-
-            connection = null;
-            IObjectAdapter objectAdapter;
-            lock (_objects)
-            {
-                if (!_objects.TryGetValue(objectId, out objectAdapter))
-                    return false;
-            }
-            
-            connection = objectAdapter.Connect(objectId, clientHostAddress, connectionId, outputChannel);
-            return true;
-        }
-
         public IDisposable Add(string objectId, IObjectAdapter objectAdapter)
         {
             if (_disposed) throw new ObjectDisposedException(nameof(ObjectsRepository));
@@ -52,6 +35,30 @@ namespace EloquentObjects.RPC.Server.Implementation
             }
             
             return new Disposable(() => Remove(objectId));
+        }
+
+        public bool TryGetObject(string objectId, out IObjectAdapter objectAdapter)
+        {
+            lock (_objects)
+            {
+                return _objects.TryGetValue(objectId, out objectAdapter);
+            }
+        }
+
+        public bool TryGetObjectId(object result, out string objectId)
+        {
+            lock (_objects)
+            {
+                var obj = _objects.FirstOrDefault(o => ReferenceEquals(o.Value.Object, result));
+                if (string.IsNullOrEmpty(obj.Key))
+                {
+                    objectId = string.Empty;
+                    return false;
+                }
+
+                objectId = obj.Key;
+                return true;
+            }
         }
 
         #endregion

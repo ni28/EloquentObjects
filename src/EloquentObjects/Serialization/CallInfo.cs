@@ -10,6 +10,8 @@ namespace EloquentObjects.Serialization
             OperationName = operationName;
             Parameters = parameters;
         }
+        
+        //TODO: Should Operation name be in message?
 
         /// <summary>
         /// Called operation name.

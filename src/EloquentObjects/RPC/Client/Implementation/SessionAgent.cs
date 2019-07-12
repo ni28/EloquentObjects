@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using EloquentObjects.Channels;
 using EloquentObjects.Logging;
 using EloquentObjects.RPC.Messages;
-using EloquentObjects.RPC.Messages.Session;
+using EloquentObjects.RPC.Messages.Acknowledged;
+using EloquentObjects.RPC.Messages.OneWay;
 using EloquentObjects.Serialization;
 
 namespace EloquentObjects.RPC.Client.Implementation
@@ -14,22 +14,23 @@ namespace EloquentObjects.RPC.Client.Implementation
     {
         private readonly IBinding _binding;
         private readonly IHostAddress _clientHostAddress;
+        private readonly IEventHandlersRepository _eventHandlersRepository;
 
         private readonly object _heartbeatTimerLock = new object();
         private readonly IInputChannel _inputChannel;
         private readonly IOutputChannel _outputChannel;
         private bool _disposed;
         private Timer _heartbeatTimer;
-        private int _lastConnectionId;
         private readonly ILogger _logger;
 
         public SessionAgent(IBinding binding, IInputChannel inputChannel, IOutputChannel outputChannel,
-            IHostAddress clientHostAddress)
+            IHostAddress clientHostAddress, IEventHandlersRepository eventHandlersRepository)
         {
             _binding = binding;
             _inputChannel = inputChannel;
             _outputChannel = outputChannel;
             _clientHostAddress = clientHostAddress;
+            _eventHandlersRepository = eventHandlersRepository;
 
             _inputChannel.FrameReceived += InputChannelOnFrameReceived;
             _inputChannel.Start();
@@ -40,40 +41,10 @@ namespace EloquentObjects.RPC.Client.Implementation
 
         public IConnectionAgent Connect(string objectId, ISerializer serializer)
         {
-            var connectionId = Interlocked.Increment(ref _lastConnectionId);
+            //Send ConnectObjectMessage to ensure that object is hosted
+            var connectObjectMessage = new ConnectMessage(_clientHostAddress, objectId);
+            _outputChannel.SendWithAck(connectObjectMessage);
 
-            //Send hello to ensure that object is hosted
-            var helloMessage = new HelloMessage(_clientHostAddress, objectId, connectionId);
-
-            Message response;
-
-            try
-            {
-                _outputChannel.Write(helloMessage.ToFrame());
-                response = Message.Create(_outputChannel.Read());
-            }
-            catch (Exception e)
-            {
-                throw new IOException("Connection failed. Check that server is still alive", e);
-            }
-
-            switch (response)
-            {
-                case ExceptionMessage exceptionMessage:
-                    throw exceptionMessage.Exception;
-                case HelloAckMessage helloAckMessage:
-                    if (!helloAckMessage.Acknowledged)
-                        throw new KeyNotFoundException($"No objects with ID {objectId} are hosted on server");
-                    return CreateConnectionAgent(connectionId, objectId, serializer);
-                default:
-                    throw new IOException("Unexpected failure. Connection is not acknowledged by the server.");
-            }
-        }
-
-        public event EventHandler<EventMessage> EventReceived;
-
-        private IConnectionAgent CreateConnectionAgent(int connectionId, string objectId, ISerializer serializer)
-        {
             //Start sending heartbeats if not started yet
             //When HeartBeatMs is 0 then no heart beats are sent.
             lock (_heartbeatTimerLock)
@@ -82,7 +53,7 @@ namespace EloquentObjects.RPC.Client.Implementation
                     _heartbeatTimer = new Timer(Heartbeat, null, 0, _binding.HeartBeatMs);
             }
 
-            return new ConnectionAgent(connectionId, objectId, _outputChannel, _clientHostAddress, serializer);
+            return new ConnectionAgent(objectId, _outputChannel, _clientHostAddress, serializer);
         }
 
         #region IDisposable
@@ -115,7 +86,7 @@ namespace EloquentObjects.RPC.Client.Implementation
             switch (message)
             {
                 case EventMessage eventMessage:
-                    EventReceived?.Invoke(this, eventMessage);
+                    _eventHandlersRepository.HandleEvent(eventMessage);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -131,7 +102,7 @@ namespace EloquentObjects.RPC.Client.Implementation
             }
 
             var heartbeatMessage = new HeartbeatMessage(_clientHostAddress);
-            _outputChannel.Write(heartbeatMessage.ToFrame());
+            _outputChannel.Send(heartbeatMessage, "Client");
         }
 
         private void Terminate()
@@ -139,7 +110,7 @@ namespace EloquentObjects.RPC.Client.Implementation
             try
             {
                 var terminateMessage = new TerminateMessage(_clientHostAddress);
-                _outputChannel.Write(terminateMessage.ToFrame());
+                _outputChannel.Send(terminateMessage);
             }
             catch (IOException)
             {
