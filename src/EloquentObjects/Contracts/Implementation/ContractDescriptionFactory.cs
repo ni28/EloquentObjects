@@ -94,7 +94,6 @@ namespace EloquentObjects.Contracts.Implementation
         private IEnumerable<EventInfo> GetEvents(Type contractType)
         {
             return GetEventsRecursive(contractType)
-                .Where(eventInfo => Attribute.IsDefined(eventInfo, typeof(EloquentEventAttribute)))
                 .ToArray();
         }
 

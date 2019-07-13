@@ -8,23 +8,17 @@ namespace IntegrationTests
     [TestFixture]
     public sealed class TwoWayMethodTests
     {
-        [EloquentContract]
         public interface IContract
         {
-            [EloquentMethod]
             void CallTwoWay();
 
-            [EloquentMethod]
             void CallTwoWayWithParameters(int a, bool b, string s, double d, ComplexParameter p, int[] iArr,
                 bool[] bArr, string[] sArr, double[] dArr, ComplexParameter[] pArr);
 
-            [EloquentMethod]
             void CallTwoWayWithException(string message);
 
-            [EloquentMethod]
             ComplexParameter CallTwoWayWithReturnValue(int i, bool b, string s, double d);
 
-            [EloquentMethod]
             void CallTwoWayWithDefaultParameter(int i = 5);
         }
 

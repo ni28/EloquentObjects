@@ -13,7 +13,6 @@ namespace IntegrationTests
         {
         }
 
-        [EloquentContract]
         public interface IContract
         {
             [OneWay]

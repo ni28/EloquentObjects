@@ -7,17 +7,13 @@ namespace IntegrationTests
     [TestFixture]
     public sealed class ChildEloquentObjectsTests
     {
-        [EloquentContract]
         public interface IContract
         {
-            [EloquentMethod]
             IChildContract GetChild();
         }
 
-        [EloquentContract]
         public interface IChildContract
         {
-            [EloquentProperty]
             string Name { get; }
         }
         

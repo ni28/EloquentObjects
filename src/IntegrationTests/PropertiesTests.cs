@@ -13,25 +13,20 @@ namespace IntegrationTests
         {
         }
 
-        [EloquentContract]
         public interface IContract
         {
-            [EloquentProperty]
             int Get { get; }
             
-            [EloquentProperty]
             int Set { set; }
 
             [OneWay]
             int OneWaySet { set; }
 
-            [EloquentProperty]
             int GetSet { get; set; }
 
             [OneWay]
             int OneWayGetSet { get; set; }
             
-            [EloquentProperty]
             ComplexParameter ComplexGetSet { get; set; }            
         }
 

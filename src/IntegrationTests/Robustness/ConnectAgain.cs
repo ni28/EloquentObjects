@@ -6,10 +6,8 @@ namespace IntegrationTests.Robustness
     [TestFixture]
     public sealed class ConnectAgain
     {
-        [EloquentContract]
         public interface IContract
         {
-            [EloquentProperty]
             int Value { get; set; }
         }
         

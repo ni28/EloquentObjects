@@ -7,13 +7,10 @@ namespace IntegrationTests.Robustness
     [TestFixture]
     public sealed class MemoryLeaks
     {
-        [EloquentContract]
         public interface IContract
         {
-            [EloquentProperty]
             int Value { get; set; }
 
-            [EloquentEvent]
             event EventHandler ValueChanged;
         }
         

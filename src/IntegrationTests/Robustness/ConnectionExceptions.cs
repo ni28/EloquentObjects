@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using EloquentObjects;
 using NUnit.Framework;
@@ -9,10 +8,8 @@ namespace IntegrationTests.Robustness
     [TestFixture]
     public sealed class ConnectionExceptions
     {
-        [EloquentContract]
         public interface IContract
         {
-            [EloquentProperty]
             int Value { get; set; }
         }
 

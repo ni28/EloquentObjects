@@ -9,16 +9,12 @@ namespace IntegrationTests
     [TestFixture]
     public sealed class EventTests
     {
-        [EloquentContract]
         public interface IContract
         {
-            [EloquentEvent]
             event EventHandler<ComplexParameter> RegularEvent;
 
-            [EloquentEvent]
             event Action NoParameterEvent;
 
-            [EloquentEvent]
             event Action<int, bool, string, double, ComplexParameter, int[], bool[], string[], double[], ComplexParameter[]> EventWithParameters;
         }
 
