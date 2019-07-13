@@ -117,12 +117,13 @@ namespace EloquentObjects
         #endregion
 
         /// <inheritdoc />
-        public T Get<T>(string objectId) where T : class
+        public T Connect<T>(string objectId) where T : class
         {
-            return (T)Get(typeof(T), objectId);
+            return (T)Connect(typeof(T), objectId);
         }
 
-        public object Get(Type type, string objectId)
+        /// <inheritdoc />
+        public object Connect(Type type, string objectId)
         {
             var contractDescription = _contractDescriptionFactory.Create(type);
 

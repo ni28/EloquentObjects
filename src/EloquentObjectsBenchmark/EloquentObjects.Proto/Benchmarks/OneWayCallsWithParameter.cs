@@ -22,7 +22,7 @@ namespace EloquentObjectsBenchmark.EloquentObjects.Proto.Benchmarks
             {
                 remoteObjectServer.Add<IBenchmarkObject>("endpoint1", new BenchmarkObject());
 
-                var benchmarkObj = remoteObjectClient.Get<IBenchmarkObject>("endpoint1");
+                var benchmarkObj = remoteObjectClient.Connect<IBenchmarkObject>("endpoint1");
 
                 var parameter = new Parameter
                 {

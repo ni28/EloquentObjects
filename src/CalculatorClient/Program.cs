@@ -12,7 +12,7 @@ namespace Client
         {
             using (var client = new EloquentClient("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001"))
             {
-                var calculator = client.Get<IEloquentCalculator>("calculator");
+                var calculator = client.Connect<IEloquentCalculator>("calculator");
 
                 //Property get
                 Console.WriteLine($"Calculator name: {calculator.Name}");

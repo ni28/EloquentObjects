@@ -44,7 +44,7 @@ namespace IntegrationTests.Robustness
 
                 using (var client = new EloquentClient(serverAddress, clientAddress))
                 {
-                    var remoteObject = client.Get<IContract>(objectId);
+                    var remoteObject = client.Connect<IContract>(objectId);
                     remoteObject.Value = 5;
                     Assert.AreEqual(5, remoteObject.Value);
 
@@ -82,7 +82,7 @@ namespace IntegrationTests.Robustness
 
                 using (var client = new EloquentClient(serverAddress, clientAddress))
                 {
-                    var parentRemoteObject = client.Get<IContract>(parentObjectId);
+                    var parentRemoteObject = client.Connect<IContract>(parentObjectId);
 
                     var childRemoteObject = parentRemoteObject.Child;
                     childRemoteObject.Value = 5;
@@ -134,7 +134,7 @@ namespace IntegrationTests.Robustness
                 
                 using (var client = new EloquentClient(serverAddress, clientAddress))
                 {
-                    var remoteObject = client.Get<IContract>(objectId);
+                    var remoteObject = client.Connect<IContract>(objectId);
                     remoteObject.ValueChanged += RemoteObjectOnValueChanged;
 
                     weakRef = new WeakReference(remoteObject);
@@ -172,7 +172,7 @@ namespace IntegrationTests.Robustness
 
                 using (var client = new EloquentClient(serverAddress, clientAddress))
                 {
-                    var remoteObject = client.Get<IContract>(objectId);
+                    var remoteObject = client.Connect<IContract>(objectId);
                     remoteObject.ValueChanged += RemoteObjectOnValueChanged;
 
                     remoteObject.ValueChanged -= RemoteObjectOnValueChanged;

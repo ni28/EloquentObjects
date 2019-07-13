@@ -18,14 +18,14 @@ namespace EloquentObjects.Proto
         
         #region Implementation of IEloquentClient
 
-        public T Get<T>(string objectId) where T : class
+        public T Connect<T>(string objectId) where T : class
         {
-            return _eloquentClient.Get<T>(objectId);
+            return _eloquentClient.Connect<T>(objectId);
         }
 
-        public object Get(Type type, string objectId)
+        public object Connect(Type type, string objectId)
         {
-            return _eloquentClient.Get(type, objectId);
+            return _eloquentClient.Connect(type, objectId);
         }
 
         #endregion

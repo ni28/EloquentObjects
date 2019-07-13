@@ -52,7 +52,7 @@ namespace IntegrationTests.Robustness
                 server.Dispose();
             
                 //Act
-                var exception = Assert.Catch<Exception>(() => { client.Get<IContract>("objectId"); });
+                var exception = Assert.Catch<Exception>(() => { client.Connect<IContract>("objectId"); });
 
                 //Assert
                 if (exception is FaultException)
@@ -74,7 +74,7 @@ namespace IntegrationTests.Robustness
             using (var client = new EloquentClient(serverAddress, client1Address))
             {
                 //Act
-                var exception = Assert.Catch<Exception>(() => { client.Get<IContract>("objectId"); });
+                var exception = Assert.Catch<Exception>(() => { client.Connect<IContract>("objectId"); });
 
                 //Assert
                 Assert.AreEqual("Object with id 'objectId' is not hosted on server.", exception.Message);
@@ -92,7 +92,7 @@ namespace IntegrationTests.Robustness
             {
                 var objectHost = server.Add<IContract>("objectId", new HostedObject());
 
-                var remoteObject = client.Get<IContract>("objectId");
+                var remoteObject = client.Connect<IContract>("objectId");
                 objectHost.Dispose();
 
                 //Act

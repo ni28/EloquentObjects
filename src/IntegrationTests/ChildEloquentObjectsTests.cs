@@ -84,7 +84,7 @@ namespace IntegrationTests
             using (var client = new EloquentClient(serverAddress, clientAddress))
             {
                 //Arrange
-                var remoteParent = client.Get<IContract>("parent");
+                var remoteParent = client.Connect<IContract>("parent");
 
                 //Act
                 var remoteChild = remoteParent.GetChild();

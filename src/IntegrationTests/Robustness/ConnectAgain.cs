@@ -36,7 +36,7 @@ namespace IntegrationTests.Robustness
 
                 using (var client = new EloquentClient(serverAddress, clientAddress))
                 {
-                    var remoteObject = client.Get<IContract>(objectId);
+                    var remoteObject = client.Connect<IContract>(objectId);
 
                     //Act
                     remoteObject.Value = 5;
@@ -47,7 +47,7 @@ namespace IntegrationTests.Robustness
 
                 using (var client = new EloquentClient(serverAddress, clientAddress))
                 {
-                    var remoteObject = client.Get<IContract>(objectId);
+                    var remoteObject = client.Connect<IContract>(objectId);
 
                     //Assert
                     Assert.AreEqual(5, remoteObject.Value);
@@ -78,7 +78,7 @@ namespace IntegrationTests.Robustness
 
                 using (var client = new EloquentClient(serverAddress, clientAddress))
                 {
-                    var remoteObject = client.Get<IContract>(objectId);
+                    var remoteObject = client.Connect<IContract>(objectId);
 
                     //Act
                     remoteObject.Value = 5;
@@ -94,7 +94,7 @@ namespace IntegrationTests.Robustness
 
                 using (var client = new EloquentClient(serverAddress, clientAddress))
                 {
-                    var remoteObject = client.Get<IContract>(objectId);
+                    var remoteObject = client.Connect<IContract>(objectId);
 
                     //Assert
                     Assert.AreEqual(5, remoteObject.Value);

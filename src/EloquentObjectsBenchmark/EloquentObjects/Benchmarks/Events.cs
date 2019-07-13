@@ -44,7 +44,7 @@ namespace EloquentObjectsBenchmark.EloquentObjects.Benchmarks
                         SendTimeout = 1000,
                         ReceiveTimeout = 10000
                     });
-                    connections[i] = clients[i].Get<IBenchmarkObject>("endpoint1");
+                    connections[i] = clients[i].Connect<IBenchmarkObject>("endpoint1");
                     connections[i].EventOccurred += last =>
                     {
                         if (last)

@@ -78,9 +78,9 @@ namespace IntegrationTests
             {
                 server.Add<IContract>(objectId, hostedObject);
 
-                var remoteObject1 = client1.Get<IContract>(objectId);
-                var remoteObject2 = client2.Get<IContract>(objectId);
-                var remoteObject3 = client2.Get<IContract>(objectId);
+                var remoteObject1 = client1.Connect<IContract>(objectId);
+                var remoteObject2 = client2.Connect<IContract>(objectId);
+                var remoteObject3 = client2.Connect<IContract>(objectId);
                 Assert.AreNotSame(remoteObject1, remoteObject2);
                 Assert.AreNotSame(remoteObject2, remoteObject3);
 
@@ -176,8 +176,8 @@ namespace IntegrationTests
             {
                 server.Add<IContract>(objectId, hostedObject);
 
-                var remoteObject1 = client1.Get<IContract>(objectId);
-                var remoteObject2 = client2.Get<IContract>(objectId);
+                var remoteObject1 = client1.Connect<IContract>(objectId);
+                var remoteObject2 = client2.Connect<IContract>(objectId);
 
                 var noParameterEvent1Called = false;
                 var noParameterEvent2Called = false;
@@ -227,8 +227,8 @@ namespace IntegrationTests
             {
                 server.Add<IContract>(objectId, hostedObject);
                 
-                var remoteObject1 = client1.Get<IContract>(objectId);
-                var remoteObject2 = client2.Get<IContract>(objectId);
+                var remoteObject1 = client1.Connect<IContract>(objectId);
+                var remoteObject2 = client2.Connect<IContract>(objectId);
 
                 object[] parameters1 = null;
                 object[] parameters2 = null;
@@ -353,9 +353,9 @@ namespace IntegrationTests
             {
                 server.Add<IContract>(objectId, hostedObject);
 
-                var remoteObject1 = client1.Get<IContract>(objectId);
-                var remoteObject2 = client1.Get<IContract>(objectId);
-                var remoteObject3 = client2.Get<IContract>(objectId);
+                var remoteObject1 = client1.Connect<IContract>(objectId);
+                var remoteObject2 = client1.Connect<IContract>(objectId);
+                var remoteObject3 = client2.Connect<IContract>(objectId);
                 Assert.AreNotSame(remoteObject1, remoteObject2);
                 Assert.AreNotSame(remoteObject1, remoteObject3);
                 Assert.AreNotSame(remoteObject2, remoteObject3);

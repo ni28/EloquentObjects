@@ -22,7 +22,7 @@ namespace EloquentObjectsBenchmark.EloquentObjects.Benchmarks
             {
                 remoteObjectServer.Add<IBenchmarkObject>("endpoint1", new BenchmarkObject());
 
-                var benchmarkObj = remoteObjectClient.Get<IBenchmarkObject>("endpoint1");
+                var benchmarkObj = remoteObjectClient.Connect<IBenchmarkObject>("endpoint1");
 
                 return MeasurementResult.Measure($"EloquentObjects: One-way calls with {_scheme}", () =>
                 {

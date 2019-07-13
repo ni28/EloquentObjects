@@ -100,7 +100,7 @@ namespace IntegrationTests
             {
                 server.Add<IContract>(objectId, hostedObject);
 
-                var remoteObject = client.Get<IContract>(objectId);
+                var remoteObject = client.Connect<IContract>(objectId);
 
                 Assert.IsFalse(hostedObject.TwoWayCalled);
 
@@ -127,7 +127,7 @@ namespace IntegrationTests
             {
                 server.Add<IContract>(objectId, hostedObject);
 
-                var remoteObject = client.Get<IContract>(objectId);
+                var remoteObject = client.Connect<IContract>(objectId);
 
                 Assert.IsFalse(hostedObject.TwoWayCalled);
 
@@ -162,7 +162,7 @@ namespace IntegrationTests
             {
                 server.Add<IContract>(objectId, hostedObject);
 
-                var remoteObject = client.Get<IContract>(objectId);
+                var remoteObject = client.Connect<IContract>(objectId);
 
                 Assert.IsFalse(hostedObject.TwoWayWithExceptionCalled);
 
@@ -192,7 +192,7 @@ namespace IntegrationTests
             {
                 server.Add<IContract>(objectId, hostedObject);
 
-                var remoteObject = client.Get<IContract>(objectId);
+                var remoteObject = client.Connect<IContract>(objectId);
 
                 Assert.IsFalse(hostedObject.TwoWayWithParameterCalled);
 
@@ -301,7 +301,7 @@ namespace IntegrationTests
             {
                 server.Add<IContract>(objectId, hostedObject);
 
-                var remoteObject = client.Get<IContract>(objectId);
+                var remoteObject = client.Connect<IContract>(objectId);
 
                 Assert.IsFalse(hostedObject.TwoWayCalled);
 

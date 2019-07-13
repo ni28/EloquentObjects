@@ -151,7 +151,7 @@ namespace IntegrationTests
             {
                 server.Add<IContract>(objectId, hostedObject);
 
-                var remoteObject = client.Get<IContract>(objectId);
+                var remoteObject = client.Connect<IContract>(objectId);
 
                 //Act
                 hostedObject.Value = 5;
@@ -215,7 +215,7 @@ namespace IntegrationTests
             {
                 server.Add<IContract>(objectId, hostedObject);
 
-                var remoteObject = client.Get<IContract>(objectId);
+                var remoteObject = client.Connect<IContract>(objectId);
 
                 var complexParameter = new ComplexParameter
                 {
@@ -280,7 +280,7 @@ namespace IntegrationTests
             {
                 server.Add<IContract>(objectId, hostedObject);
 
-                var remoteObject = client.Get<IContract>(objectId);
+                var remoteObject = client.Connect<IContract>(objectId);
                 hostedObject.Value = 5;
                 hostedObject.Action = () => throw new InvalidOperationException("qwerty");
 
@@ -331,7 +331,7 @@ namespace IntegrationTests
             {
                 server.Add<IContract>(objectId, hostedObject);
 
-                var remoteObject = client.Get<IContract>(objectId);
+                var remoteObject = client.Connect<IContract>(objectId);
                 hostedObject.Value = 0;
                 hostedObject.Action = () => throw new InvalidOperationException("qwerty");
 
@@ -384,7 +384,7 @@ namespace IntegrationTests
             {
                 server.Add<IContract>(objectId, hostedObject);
 
-                var remoteObject = client.Get<IContract>(objectId);
+                var remoteObject = client.Connect<IContract>(objectId);
                 hostedObject.Value = 0;
                 hostedObject.Action = () => throw new InvalidOperationException("qwerty");
 

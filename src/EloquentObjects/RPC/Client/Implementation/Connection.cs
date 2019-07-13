@@ -64,7 +64,7 @@ namespace EloquentObjects.RPC.Client.Implementation
                     throw exceptionMessage.Exception;
                 case EloquentObjectMessage eloquentObjectMessage:
                     var objectType = _contractDescription.GetOperationDescription(methodName, parameters).Method.ReturnType;
-                    return _eloquentClient.Get(objectType, eloquentObjectMessage.ObjectId);
+                    return _eloquentClient.Connect(objectType, eloquentObjectMessage.ObjectId);
                 case ResponseMessage responseMessage:
                     return _serializer.Deserialize<object>(responseMessage.Payload);
                 default:
