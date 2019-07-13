@@ -1,6 +1,10 @@
 using System;
+using System.IO;
 using System.Linq;
+using EloquentObjects.Channels;
 using EloquentObjects.Contracts;
+using EloquentObjects.RPC.Messages;
+using EloquentObjects.RPC.Messages.OneWay;
 using EloquentObjects.Serialization;
 
 namespace EloquentObjects.RPC.Client.Implementation
@@ -12,16 +16,18 @@ namespace EloquentObjects.RPC.Client.Implementation
         private readonly IEventHandlersRepository _eventHandlersRepository;
         private readonly IContractDescription _contractDescription;
         private readonly ISerializer _serializer;
-        private readonly EloquentClient _eloquentClient;
-        private readonly IConnectionAgent _connectionAgent;
+        private readonly IEloquentClient _eloquentClient;
+        private readonly IOutputChannel _outputChannel;
+        private readonly IHostAddress _clientHostAddress;
 
         public Connection(string objectId,
             object outerProxy,
-            ISessionAgent sessionAgent,
             IEventHandlersRepository eventHandlersRepository,
             IContractDescription contractDescription,
             ISerializer serializer,
-            EloquentClient eloquentClient)
+            IEloquentClient eloquentClient,
+            IOutputChannel outputChannel,
+            IHostAddress clientHostAddress)
         {
             _objectId = objectId;
             _outerProxy = outerProxy;
@@ -29,19 +35,41 @@ namespace EloquentObjects.RPC.Client.Implementation
             _contractDescription = contractDescription;
             _serializer = serializer;
             _eloquentClient = eloquentClient;
-            _connectionAgent = sessionAgent.Connect(objectId, serializer);
+            _outputChannel = outputChannel;
+            _clientHostAddress = clientHostAddress;
         }
 
         #region Implementation of IConnection
 
         public void Notify(string eventName, object[] parameters)
         {
-            _connectionAgent.Notify(eventName, parameters);
+            var payload = _serializer.SerializeCall(new CallInfo(eventName, parameters));
+            var eventMessage = new NotificationMessage(_clientHostAddress, _objectId, payload);
+            _outputChannel.Send(eventMessage);
         }
 
         public object Call(string methodName, object[] parameters)
         {
-            return _connectionAgent.Call(_eloquentClient, _contractDescription, methodName, parameters);
+            var payload = _serializer.SerializeCall(new CallInfo(methodName, parameters));
+            var requestMessage = new RequestMessage(_clientHostAddress, _objectId, payload);
+            _outputChannel.Send(requestMessage);
+            
+            //TODO: move to RequestMessage?
+            var result = Message.Create(_outputChannel.Read());
+            switch (result)
+            {
+                case ErrorMessage errorMessage:
+                    throw errorMessage.ToException();
+                case ExceptionMessage exceptionMessage:
+                    throw exceptionMessage.Exception;
+                case EloquentObjectMessage eloquentObjectMessage:
+                    var objectType = _contractDescription.GetOperationDescription(methodName, parameters).Method.ReturnType;
+                    return _eloquentClient.Get(objectType, eloquentObjectMessage.ObjectId);
+                case ResponseMessage responseMessage:
+                    return _serializer.Deserialize<object>(responseMessage.Payload);
+                default:
+                    throw new IOException($"Unexpected session message type: {result.MessageType}");
+            }
         }
 
         public void Subscribe(string eventName, Delegate handler)

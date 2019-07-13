@@ -27,6 +27,7 @@ namespace EloquentObjects
         private readonly SessionAgent _sessionAgent;
         private readonly IEventHandlersRepository _eventHandlersRepository;
         private bool _disposed;
+        private readonly IHostAddress _clientHostAddress;
 
         /// <summary>
         /// Creates an EloquentObjects client with default settings and serializer (DataContractSerializer is used).
@@ -64,7 +65,7 @@ namespace EloquentObjects
             var binding = new BindingFactory().Create(serverScheme, settings);
 
             var serverHostAddress = HostAddress.CreateFromUri(serverUri);
-            var clientHostAddress = HostAddress.CreateFromUri(clientUri);
+            _clientHostAddress = HostAddress.CreateFromUri(clientUri);
 
             _contractDescriptionFactory = new CachedContractDescriptionFactory(new ContractDescriptionFactory());
 
@@ -72,7 +73,7 @@ namespace EloquentObjects
 
             try
             {
-                _inputChannel = binding.CreateInputChannel(clientHostAddress);
+                _inputChannel = binding.CreateInputChannel(_clientHostAddress);
             }
             catch (Exception e)
             {
@@ -88,12 +89,14 @@ namespace EloquentObjects
                 throw new IOException("Connection failed. Server not found.", e);
             }
             
-            _eventHandlersRepository = new EventHandlersRepository(_outputChannel, clientHostAddress);
-            _sessionAgent = new SessionAgent(binding, _inputChannel, _outputChannel, clientHostAddress, _eventHandlersRepository);
+            _inputChannel.Start();
 
             //Send HelloMessage to create a session
-            var helloMessage = new HelloMessage(clientHostAddress);
+            var helloMessage = new HelloMessage(_clientHostAddress);
             _outputChannel.SendWithAck(helloMessage);
+            
+            _eventHandlersRepository = new EventHandlersRepository(_outputChannel, _clientHostAddress);
+            _sessionAgent = new SessionAgent(binding, _inputChannel, _outputChannel, _clientHostAddress, _eventHandlersRepository);
         }
 
         #region Implementation of IDisposable
@@ -123,13 +126,17 @@ namespace EloquentObjects
         {
             var contractDescription = _contractDescriptionFactory.Create(type);
 
+            //Send ConnectObjectMessage to ensure that object is hosted
+            var connectObjectMessage = new ConnectMessage(_clientHostAddress, objectId);
+            _outputChannel.SendWithAck(connectObjectMessage);
+
             var knownTypes = contractDescription.GetTypes();
             var serializer = _serializerFactory.Create(typeof(object), knownTypes);
 
             var interceptor = new ClientInterceptor(contractDescription);
-
             var proxy = _proxyGenerator.CreateInterfaceProxyWithoutTarget(type, interceptor);
-            var connection = new Connection(objectId, proxy, _sessionAgent, _eventHandlersRepository, contractDescription, serializer, this);
+            
+            var connection = new Connection(objectId, proxy, _eventHandlersRepository, contractDescription, serializer, this, _outputChannel, _clientHostAddress);
             
             interceptor.Subscribe(connection);
 
