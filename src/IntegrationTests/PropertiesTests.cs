@@ -9,6 +9,10 @@ namespace IntegrationTests
     [TestFixture]
     public sealed class PropertiesTests
     {
+        private sealed class OneWayAttribute : Attribute
+        {
+        }
+
         [EloquentContract]
         public interface IContract
         {
@@ -18,13 +22,13 @@ namespace IntegrationTests
             [EloquentProperty]
             int Set { set; }
 
-            [EloquentProperty(IsOneWay = true)]
+            [OneWay]
             int OneWaySet { set; }
 
             [EloquentProperty]
             int GetSet { get; set; }
 
-            [EloquentProperty(IsOneWay = true)]
+            [OneWay]
             int OneWayGetSet { get; set; }
             
             [EloquentProperty]

@@ -6,9 +6,6 @@ using NUnit.Framework;
 
 namespace IntegrationTests
 {
-    //TODO: test unsubscribe
-    //TODO: test EventHadnler
-    
     [TestFixture]
     public sealed class EventTests
     {

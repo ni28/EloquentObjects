@@ -9,16 +9,20 @@ namespace IntegrationTests
     [TestFixture]
     public sealed class OneWayMethodTests
     {
+        private sealed class OneWayAttribute : Attribute
+        {
+        }
+
         [EloquentContract]
         public interface IContract
         {
-            [EloquentMethod(IsOneWay = true)]
+            [OneWay]
             void CallOneWay();
 
-            [EloquentMethod(IsOneWay = true)]
+            [OneWay]
             void CallOneWayWithParameters(int a, bool b, string s, double d, ComplexParameter p, int[] iArr, bool[] bArr, string[] sArr, double[] dArr, ComplexParameter[] pArr );
 
-            [EloquentMethod(IsOneWay = true)]
+            [OneWay]
             void CallOneWayWithException();
         }
 
@@ -251,4 +255,5 @@ namespace IntegrationTests
             Assert.AreEqual(expected.S, actual.S);
         }
     }
+
 }

@@ -6,15 +6,9 @@ namespace EloquentObjects.RPC.Client.Implementation
     {
         public RemoteEventSubscription(Delegate handler, object proxy)
         {
-            ObjectId = null;
-            EventName = null;
             Handler = handler;
             Proxy = proxy;
         }
-
-        //TODO: remove
-        public string ObjectId { get; }
-        public string EventName { get; }
         
         public Delegate Handler { get; }
         

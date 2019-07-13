@@ -14,19 +14,13 @@ namespace EloquentObjects.Contracts.Implementation
         {
             if (contractType == null)
                 throw new ArgumentNullException(nameof(contractType));
-
-            var attribute = contractType.GetCustomAttribute<EloquentContractAttribute>();
-
-            if (attribute == null)
-                throw new InvalidOperationException(
-                    $"The provided type does not contain a {nameof(EloquentContractAttribute)} attribute: {contractType}");
-
+            
             var contract = new ContractDescription(contractType);
 
             foreach (var methodDescription in GetMethods(contractType))
                 contract.AddOperationDescription(methodDescription);
-            foreach (var propertyDescription in GetProperties(contractType))
-                contract.AddOperationDescription(propertyDescription);
+            foreach (var methodDescription in GetProperties(contractType))
+                contract.AddOperationDescription(methodDescription);
             foreach (var eventInfo in GetEvents(contractType))
                 contract.AddEventDescription(new EventDescription(eventInfo.Name, eventInfo));
 
@@ -42,8 +36,14 @@ namespace EloquentObjects.Contracts.Implementation
             [NotNull] Type contractType)
         {
             return GetMethodsRecursive(contractType)
-                .Where(methodInfo => Attribute.IsDefined(methodInfo, typeof(EloquentMethodAttribute)))
-                .Select(info => new MethodDescription(info.Name, info, info.GetCustomAttribute<EloquentMethodAttribute>().IsOneWay))
+                .Select(info =>
+                {
+                    if (info.IsSpecialName)
+                        return null;
+                    var isOneWay = info.GetCustomAttributes().Any(a => a.GetType().Name.Contains("OneWay"));
+                    return new MethodDescription(info.Name, info, isOneWay);
+                })
+                .Where(i => i != null)
                 .ToArray();
         }
 
@@ -66,19 +66,17 @@ namespace EloquentObjects.Contracts.Implementation
             [NotNull] Type contractType)
         {
             return GetPropertiesRecursive(contractType)
-                .Where(info => Attribute.IsDefined(info, typeof(EloquentPropertyAttribute)))
                 .Select(info =>
                 {
-                    var propertyAttribute = info.GetCustomAttribute<EloquentPropertyAttribute>();
-                    
-                    var getMethodDescription = info.GetMethod == null ? null : new MethodDescription(info.GetMethod.Name, info.GetMethod, propertyAttribute.IsOneWay);
-                    var setMethodDescription = info.SetMethod == null ? null : new MethodDescription(info.SetMethod.Name, info.SetMethod, propertyAttribute.IsOneWay);
+                    var isOneWay = info.GetCustomAttributes().Any(a => a.GetType().Name.Contains("OneWay"));
+                    var getMethodDescription = info.GetMethod == null ? null : new MethodDescription(info.GetMethod.Name, info.GetMethod, isOneWay);
+                    var setMethodDescription = info.SetMethod == null ? null : new MethodDescription(info.SetMethod.Name, info.SetMethod, isOneWay);
                     return new IMethodDescription[] {getMethodDescription, setMethodDescription}.Where(md => md != null).ToArray();
                 })
                 .SelectMany(md => md)
                 .ToArray();
         }
-        
+
         private PropertyInfo[] GetPropertiesRecursive(Type contractType)
         {
             var contractTypePropertyInfos = contractType.GetProperties();
