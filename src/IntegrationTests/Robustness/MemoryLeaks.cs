@@ -12,6 +12,8 @@ namespace IntegrationTests.Robustness
             int Value { get; set; }
 
             event EventHandler ValueChanged;
+            
+            IContract Child { get; set; }
         }
         
         private sealed class HostedObject : IContract
@@ -20,6 +22,8 @@ namespace IntegrationTests.Robustness
 
             public int Value { get; set; }
             public event EventHandler ValueChanged;
+            
+            public IContract Child { get; set; }
 
             #endregion
         }
@@ -52,8 +56,62 @@ namespace IntegrationTests.Robustness
                     remoteObject = null;
                     GC.Collect();
                     
+                    //Assert
                     Assert.IsNull(remoteObject);
                     Assert.IsFalse(weakRef.IsAlive);
+                }
+            }
+        }
+                
+        [Test]
+        [TestCase("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001")]
+        //[TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
+        public void ShallReleaseParentIfNotUsed(string serverAddress, string clientAddress)
+        {
+            //Arrange
+            var parentObjectId = "1";
+            var childObjectId = "2";
+
+            var parent = new HostedObject();
+            parent.Child = new HostedObject();
+
+            using (var server = new EloquentServer(serverAddress))
+            {
+                server.Add<IContract>(parentObjectId, parent);
+                server.Add(childObjectId, parent.Child);
+
+                using (var client = new EloquentClient(serverAddress, clientAddress))
+                {
+                    var parentRemoteObject = client.Get<IContract>(parentObjectId);
+
+                    var childRemoteObject = parentRemoteObject.Child;
+                    childRemoteObject.Value = 5;
+                    Assert.AreEqual(5, childRemoteObject.Value);
+
+                    var parentWeakRef = new WeakReference(parentRemoteObject);
+                    var childWeakRef = new WeakReference(childRemoteObject);
+                    
+                    Assert.IsTrue(parentWeakRef.IsAlive);
+                    Assert.IsTrue(childWeakRef.IsAlive);
+                    
+                    //Act
+                    parentRemoteObject = null;
+                    GC.Collect();
+                    
+                    //Assert
+                    Assert.AreEqual(5, childRemoteObject.Value);
+                    Assert.IsNull(parentRemoteObject);
+                    Assert.IsFalse(parentWeakRef.IsAlive);
+                    Assert.IsTrue(childWeakRef.IsAlive);
+                    
+                    //Act
+                    childRemoteObject = null;
+                    GC.Collect();
+                    
+                    //Assert
+                    Assert.IsNull(childRemoteObject);
+                    Assert.IsFalse(parentWeakRef.IsAlive);
+                    Assert.IsFalse(childWeakRef.IsAlive);
                 }
             }
         }
