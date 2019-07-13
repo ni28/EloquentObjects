@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using EloquentObjects.Channels;
 using EloquentObjects.Logging;
@@ -18,6 +19,7 @@ namespace EloquentObjects.RPC.Server.Implementation
         private readonly IOutputChannel _outputChannel;
         private readonly ILogger _logger;
         private bool _disposed;
+        private readonly Dictionary<IEvent, ISubscription> _subscriptions = new Dictionary<IEvent, ISubscription>();
 
         public Session(IBinding binding, IHostAddress clientHostAddress, IObjectsRepository objectsRepository,
             IOutputChannel outputChannel)
@@ -26,6 +28,8 @@ namespace EloquentObjects.RPC.Server.Implementation
             _objectsRepository = objectsRepository;
             _outputChannel = outputChannel;
             ClientHostAddress = clientHostAddress;
+            
+            _objectsRepository.ObjectRemoved += ObjectsRepositoryOnObjectRemoved;
 
             //When HeartBeatMs is 0 then no heart beats are listened.
             if (binding.HeartBeatMs != 0)
@@ -34,7 +38,7 @@ namespace EloquentObjects.RPC.Server.Implementation
             _logger = Logger.Factory.Create(GetType());
             _logger.Info(() => $"Created (clientHostAddress = {ClientHostAddress})");
         }
-
+        
         #region Implementation of IDisposable
 
         public void Dispose()
@@ -46,6 +50,17 @@ namespace EloquentObjects.RPC.Server.Implementation
 
             _heartbeatTimer?.Dispose();
             _heartbeatTimer = null;
+            
+            IEnumerable<ISubscription> subscriptions;
+            lock (_subscriptions)
+            {
+                subscriptions = _subscriptions.Values.ToArray();
+            }
+            foreach (var subscription in subscriptions)
+            {
+                subscription.Dispose();
+            }
+
             _outputChannel?.Dispose();
 
             _logger.Info(() => $"Disposed (clientHostAddress = {ClientHostAddress})");
@@ -159,7 +174,24 @@ namespace EloquentObjects.RPC.Server.Implementation
                 return;
             }
 
-            objectAdapter.Subscribe(subscribeEventMessage, SendEventToClient);
+            if (!objectAdapter.Events.TryGetValue(subscribeEventMessage.EventName, out var ev))
+            {
+                WriteEventNotFoundError(context, subscribeEventMessage.ObjectId, subscribeEventMessage.EventName);
+                return;
+            }
+            
+            var subscription = new Subscription(subscribeEventMessage.EventName,
+                subscribeEventMessage.ClientHostAddress, _outputChannel, ev);
+
+            lock (_subscriptions)
+            {
+                if (_subscriptions.ContainsKey(ev))
+                {
+                    WriteEventAlreadySubscribedError(context, subscribeEventMessage.ObjectId, subscribeEventMessage.EventName);
+                    return;
+                }
+                _subscriptions.Add(ev, subscription);
+            }
 
             var ackMessage = new AckMessage(subscribeEventMessage.ClientHostAddress);
             context.Write(ackMessage.ToFrame());
@@ -174,25 +206,37 @@ namespace EloquentObjects.RPC.Server.Implementation
                 WriteObjectNotFoundError(context, unsubscribeEventMessage.ObjectId);
                 return;
             }
-            objectAdapter.Unsubscribe(unsubscribeEventMessage, SendEventToClient);
+            
+            if (!objectAdapter.Events.TryGetValue(unsubscribeEventMessage.EventName, out var ev))
+            {
+                WriteEventNotFoundError(context, unsubscribeEventMessage.ObjectId, unsubscribeEventMessage.EventName);
+                return;
+            }
 
+            ISubscription subscription;
+            lock (_subscriptions)
+            {
+                if (!_subscriptions.TryGetValue(ev, out subscription))
+                {
+                    //No exception or error is needed (same as for standard c# events when unsubscribed from a delegate that was not subscribed before).
+                    return;
+                }
+
+                _subscriptions.Remove(ev);
+            }
+            
+            subscription.Dispose();
+            
             var ackMessage = new AckMessage(unsubscribeEventMessage.ClientHostAddress);
             context.Write(ackMessage.ToFrame());
         }
 
-        private void SendEventToClient(EventMessage eventMessage)
-        {
-            _outputChannel.Send(eventMessage);
-        }
         
         /// <summary>
         /// Terminates the session.
         /// </summary>
         private void HandleTerminate()
         {
-         
-            //TODO: Unsubscribe
-            
             Terminated?.Invoke(this, EventArgs.Empty);
         }
        
@@ -200,6 +244,24 @@ namespace EloquentObjects.RPC.Server.Implementation
         {
             var exceptionMessage = new ErrorMessage(ClientHostAddress, ErrorType.ObjectNotFound, $"Object with id '{objectId}' is not hosted on server.");
             context.Write(exceptionMessage.ToFrame());
+        }
+       
+        private void WriteEventNotFoundError(IInputContext context, string objectId, string eventName)
+        {
+            var exceptionMessage = new ErrorMessage(ClientHostAddress, ErrorType.EventNotFound, $"Event with name {eventName} was not found for object with id '{objectId}'.");
+            context.Write(exceptionMessage.ToFrame());
+        }
+       
+        private void WriteEventAlreadySubscribedError(IInputContext context, string objectId, string eventName)
+        {
+            var exceptionMessage = new ErrorMessage(ClientHostAddress, ErrorType.EventAlreadySubscribed, $"Event with name {eventName} for object with id '{objectId}' is already subscribed.");
+            context.Write(exceptionMessage.ToFrame());
+        }
+        
+        private void ObjectsRepositoryOnObjectRemoved(object sender, string e)
+        {
+            //TODO: Unsubscribe
+            
         }
     }
 }

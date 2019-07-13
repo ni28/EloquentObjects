@@ -8,5 +8,7 @@ namespace EloquentObjects.RPC.Server
         IDisposable Add(string objectId, IObjectAdapter objectAdapter);
         bool TryGetObject(string objectId, [CanBeNull] out IObjectAdapter objectAdapter);
         bool TryGetObjectId(object result, out string objectId);
+
+        event EventHandler<string> ObjectRemoved;
     }
 }

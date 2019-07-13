@@ -46,8 +46,6 @@ namespace EloquentObjects.RPC.Client.Implementation
 
         public void Subscribe(string eventName, Delegate handler)
         {
-            _connectionAgent.Subscribe(eventName);
-
             var eventDescription = _contractDescription.Events.First(e => e.Name == eventName);
 
             _eventHandlersRepository.Subscribe(_objectId, eventDescription, _serializer, handler, _outerProxy);
@@ -55,7 +53,6 @@ namespace EloquentObjects.RPC.Client.Implementation
 
         public void Unsubscribe(string eventName, Delegate handler)
         {
-            _connectionAgent.Unsubscribe(eventName);
             _eventHandlersRepository.Unsubscribe(_objectId, eventName, handler);
         }
 

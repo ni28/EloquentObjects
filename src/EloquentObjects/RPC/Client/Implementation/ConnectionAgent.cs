@@ -74,26 +74,6 @@ namespace EloquentObjects.RPC.Client.Implementation
             }
         }
 
-        public void Subscribe(string eventName)
-        {
-            var subscribeMessage = new SubscribeEventMessage(_clientHostAddress, _objectId, eventName);
-            _outputChannel.SendWithAck(subscribeMessage);
-        }
-
-        public void Unsubscribe(string eventName)
-        {
-            var unsubscribeMessage = new UnsubscribeEventMessage(_clientHostAddress, _objectId, eventName);
-            _outputChannel.SendWithAck(unsubscribeMessage);
-        }
-
-        public event EventHandler<NotifyEventArgs> EventReceived;
-        
-        public void HandleEvent(EventMessage eventMessage)
-        {
-            var callInfo = _serializer.DeserializeCall(eventMessage.Payload);
-            EventReceived?.Invoke(this, new NotifyEventArgs(callInfo.OperationName, callInfo.Parameters));
-        }
-
         #endregion
 
     }

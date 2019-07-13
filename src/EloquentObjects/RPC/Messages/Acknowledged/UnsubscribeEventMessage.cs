@@ -30,7 +30,7 @@ namespace EloquentObjects.RPC.Messages.Acknowledged
             var objectId = frame.TakeString();
             var eventName = frame.TakeString();
 
-            return new SubscribeEventMessage(clientHostAddress, objectId, eventName);
+            return new UnsubscribeEventMessage(clientHostAddress, objectId, eventName);
         }
     }
 }

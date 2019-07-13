@@ -61,6 +61,8 @@ namespace EloquentObjects.RPC.Server.Implementation
             }
         }
 
+        public event EventHandler<string> ObjectRemoved;
+
         #endregion
 
         private void Remove(string objectId)
@@ -69,6 +71,7 @@ namespace EloquentObjects.RPC.Server.Implementation
             {
                 _objects.Remove(objectId);
             }
+            ObjectRemoved?.Invoke(this, objectId);
         }
     }
 }

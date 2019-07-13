@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
 using EloquentObjects.Channels;
 using EloquentObjects.Contracts;
-using EloquentObjects.RPC.Messages.Acknowledged;
 using EloquentObjects.RPC.Messages.OneWay;
 using EloquentObjects.Serialization;
 
@@ -19,7 +19,6 @@ namespace EloquentObjects.RPC.Server.Implementation
         private readonly List<HostedEvent> _hostedEvents = new List<HostedEvent>();
         private IObjectsRepository _objectsRepository;
         private readonly SynchronizationContext _synchronizationContext;
-        private readonly Dictionary<string, SubscriptionRepository> _events = new Dictionary<string, SubscriptionRepository>();
         private bool _disposed;
 
         public ObjectAdapter(string objectId, IContractDescription contractDescription,
@@ -33,13 +32,17 @@ namespace EloquentObjects.RPC.Server.Implementation
             Object = objectToHost;
             _objectsRepository = objectsRepository;
 
+            var events = new Dictionary<string, IEvent>();
+            
             foreach (var eventDescription in _contractDescription.Events)
             {
                 var handler = CreateHandler(eventDescription.Event, args => SendEventToAllClients(eventDescription.Name, eventDescription.IsStandardEvent, args));
                 eventDescription.Event.AddEventHandler(objectToHost, handler);
                 _hostedEvents.Add(new HostedEvent(eventDescription.Event, handler));
-                _events.Add(eventDescription.Name, new SubscriptionRepository(objectId, eventDescription.Name, eventDescription.IsStandardEvent, serializer));
+                events.Add(eventDescription.Name, new Event(objectId, eventDescription.Name, eventDescription.IsStandardEvent, serializer));
             }
+            
+            Events = new ReadOnlyDictionary<string, IEvent>(events);
         }
 
         
@@ -73,21 +76,7 @@ namespace EloquentObjects.RPC.Server.Implementation
             }
         }
 
-        public void Subscribe(SubscribeEventMessage subscribeEventMessage, Action<EventMessage> sendEventToClient)
-        {
-            lock (_events)
-            {
-                _events[subscribeEventMessage.EventName].Subscribe(sendEventToClient, subscribeEventMessage.ClientHostAddress);
-            }
-        }
-
-        public void Unsubscribe(UnsubscribeEventMessage unsubscribeEventMessage, Action<EventMessage> sendEventToClient)
-        {
-            lock (_events)
-            {
-                _events[unsubscribeEventMessage.EventName].Unsubscribe(sendEventToClient);
-            }
-        }
+        public IReadOnlyDictionary<string, IEvent> Events { get; }
 
         #endregion
         
@@ -131,11 +120,8 @@ namespace EloquentObjects.RPC.Server.Implementation
                 //Do not need to serialize the sender for standard events (that have EventHandler and EventHandler<T> types);
                 parameters[0] = null;
             }
-
-            lock (_events)
-            {
-                _events[eventName].Raise(parameters);
-            }
+            
+            Events[eventName].Raise(parameters);
         }
 
         private void HandleEvent(string eventName, object[] arguments)

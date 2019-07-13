@@ -42,6 +42,10 @@ namespace EloquentObjects.RPC.Messages.OneWay
             {
                 case ErrorType.ObjectNotFound:
                     throw new KeyNotFoundException(_message);
+                case ErrorType.EventNotFound:
+                    throw new KeyNotFoundException(_message);
+                case ErrorType.EventAlreadySubscribed:
+                    throw new InvalidOperationException(_message);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(_errorType));
             }

@@ -1,42 +1,30 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using EloquentObjects.Channels;
 using EloquentObjects.RPC.Messages.OneWay;
 using EloquentObjects.Serialization;
 
 namespace EloquentObjects.RPC.Server.Implementation
 {
-    internal sealed class SubscriptionRepository
+    internal sealed class Event : IEvent
     {
         private readonly string _objectId;
         private readonly string _eventName;
         private readonly bool _hasSender;
         private readonly ISerializer _serializer;
-        private readonly Dictionary<RemoteEventSubscription, int> _subscriptions = new Dictionary<RemoteEventSubscription, int>();
+        private readonly Dictionary<ISubscription, int> _subscriptions = new Dictionary<ISubscription, int>();
             
-        public SubscriptionRepository(string objectId, string eventName, bool hasSender, ISerializer serializer)
+        public Event(string objectId, string eventName, bool hasSender, ISerializer serializer)
         {
             _objectId = objectId;
             _eventName = eventName;
             _hasSender = hasSender;
             _serializer = serializer;
         }
-
-        public bool IsEmpty
-        {
-            get
-            {
-                lock (_subscriptions)
-                {
-                    return _subscriptions.Count == 0;
-                }
-            }
-        }
-
+        
         public void Raise(object[] arguments)
         {
-            IEnumerable<RemoteEventSubscription> subscriptions;
+            IEnumerable<ISubscription> subscriptions;
             lock (_subscriptions)
             {
                 subscriptions = _subscriptions.Keys.ToArray();
@@ -60,10 +48,8 @@ namespace EloquentObjects.RPC.Server.Implementation
             }
         }
 
-        public void Subscribe(Action<EventMessage> handler, IHostAddress clientHostAddress)
+        public void Add(ISubscription subscription)
         {
-            var subscription = new RemoteEventSubscription(handler, clientHostAddress);
-            
             lock (_subscriptions)
             {
                 if (_subscriptions.TryGetValue(subscription, out var numOfSubscriptions))
@@ -77,7 +63,7 @@ namespace EloquentObjects.RPC.Server.Implementation
             }
         }
             
-        public void Unsubscribe(Action<EventMessage> handler)
+        public void UnsubscribeHandler(Action<EventMessage> handler)
         {
             lock (_subscriptions)
             {

@@ -88,7 +88,7 @@ namespace EloquentObjects
                 throw new IOException("Connection failed. Server not found.", e);
             }
             
-            _eventHandlersRepository = new EventHandlersRepository();
+            _eventHandlersRepository = new EventHandlersRepository(_outputChannel, clientHostAddress);
             _sessionAgent = new SessionAgent(binding, _inputChannel, _outputChannel, clientHostAddress, _eventHandlersRepository);
 
             //Send HelloMessage to create a session

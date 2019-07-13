@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using EloquentObjects.Channels;
 using EloquentObjects.Contracts;
+using EloquentObjects.RPC.Messages.Acknowledged;
 using EloquentObjects.RPC.Messages.OneWay;
 using EloquentObjects.Serialization;
 using JetBrains.Annotations;
@@ -19,8 +21,17 @@ namespace EloquentObjects.RPC.Client.Implementation
         }
         
         
+        private readonly IOutputChannel _outputChannel;
+        private readonly IHostAddress _clientHostAddress;
+
         private readonly Dictionary<EventId, SubscriptionRepository> _events = new Dictionary<EventId, SubscriptionRepository>();
         private bool _disposed;
+
+        public EventHandlersRepository(IOutputChannel outputChannel, IHostAddress clientHostAddress)
+        {
+            _outputChannel = outputChannel;
+            _clientHostAddress = clientHostAddress;
+        }
 
 
         #region Implementation of ICallback
@@ -43,6 +54,9 @@ namespace EloquentObjects.RPC.Client.Implementation
             {
                 if (!_events.TryGetValue(eventId, out var subscriptionRepository))
                 {
+                    var subscribeMessage = new SubscribeEventMessage(_clientHostAddress, objectId, eventDescription.Name);
+                    _outputChannel.SendWithAck(subscribeMessage);
+
                     subscriptionRepository = new SubscriptionRepository(eventDescription.IsStandardEvent, serializer);
                     _events.Add(eventId, subscriptionRepository);
                 }
@@ -57,7 +71,7 @@ namespace EloquentObjects.RPC.Client.Implementation
             {
                 throw new ObjectDisposedException(nameof(EventHandlersRepository));
             }
-
+            
             var eventId = new EventId
             {
                 ObjectId = objectId,
@@ -71,6 +85,9 @@ namespace EloquentObjects.RPC.Client.Implementation
 
                 if (subscriptionRepository.IsEmpty)
                 {
+                    var unsubscribeMessage = new UnsubscribeEventMessage(_clientHostAddress, objectId, eventName);
+                    _outputChannel.SendWithAck(unsubscribeMessage);
+
                     _events.Remove(eventId);
                 }
             }
