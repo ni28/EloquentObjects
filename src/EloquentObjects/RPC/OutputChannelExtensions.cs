@@ -10,7 +10,7 @@ namespace EloquentObjects.RPC
     {
         public static void Send(this IOutputChannel outputChannel, OneWayMessage message, string side="")
         {
-            outputChannel.Write(message.ToFrame(side));
+            outputChannel.Write(message.ToFrame());
         }
         
         public static void SendWithAck(this IOutputChannel outputChannel, AcknowledgedMessage message)

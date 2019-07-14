@@ -18,7 +18,7 @@ namespace EloquentObjects.RPC.Messages
         
         public IHostAddress ClientHostAddress { get; }
 
-        public IFrame ToFrame(string side="")
+        public IFrame ToFrame()
         {
             var builder = new FrameBuilder();
             builder.WriteByte((byte)MessageType);
@@ -26,7 +26,6 @@ namespace EloquentObjects.RPC.Messages
             builder.WriteInt(ClientHostAddress.Port);
             WriteInternal(builder);
             
-            Console.WriteLine($"{side}: Sending {this}");
             return builder.ToFrame();
         }
         
@@ -37,8 +36,6 @@ namespace EloquentObjects.RPC.Messages
             var messageType = (MessageType)frame.TakeByte();
             var clientHostAddress = HostAddress.Read(frame);
 
-            Console.WriteLine($"{side}: Received: {messageType}");
-            
             switch (messageType)
             {
                 case MessageType.Hello:

@@ -129,7 +129,7 @@ namespace EloquentObjects.RPC.Server.Implementation
             }
 
             var ackMessage = new AckMessage(connectMessage.ClientHostAddress);
-            context.Write(ackMessage.ToFrame("Server"));
+            context.Write(ackMessage.ToFrame());
         }
 
         /// <summary>

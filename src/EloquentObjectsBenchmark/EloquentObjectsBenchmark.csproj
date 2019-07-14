@@ -89,6 +89,7 @@
     <Compile Include="EloquentObjects\Parameter.cs" />
     <Compile Include="IBenchmark.cs" />
     <Compile Include="MeasurementResult.cs" />
+    <Compile Include="OneWayAttribute.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Wcf\BenchmarkCallback.cs" />

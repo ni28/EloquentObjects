@@ -57,7 +57,6 @@ namespace IntegrationTests.Robustness
                 //Assert
                 if (exception is FaultException)
                 {
-                    Console.WriteLine(exception);
                     Assert.IsInstanceOf<IOException>(exception);
                 }
                 Assert.AreEqual("Connection failed. Check that server is still alive", exception.Message);

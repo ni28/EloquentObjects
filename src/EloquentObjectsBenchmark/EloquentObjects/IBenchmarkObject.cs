@@ -6,8 +6,10 @@ namespace EloquentObjectsBenchmark.EloquentObjects
     {
         void TwoWayCall();
 
+        [OneWay]
         void OneWayCall();
 
+        [OneWay]
         void OneWayCallWithParameter(Parameter parameter);
 
         int Sum(int x, int y);
