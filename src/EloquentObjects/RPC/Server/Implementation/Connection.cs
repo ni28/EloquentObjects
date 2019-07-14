@@ -52,7 +52,7 @@ namespace EloquentObjects.RPC.Server.Implementation
 
             var payload = _serializer.SerializeCall(new CallInfo(eventName, arguments));
             var eventMessage = new EventMessage(_clientHostAddress, _objectId, eventName, payload);
-            _outputChannel.Write(eventMessage.ToFrame());
+            _outputChannel.SendOneWay(eventMessage);
         }
 
         public void HandleRequest(IInputContext context, RequestMessage requestMessage)

@@ -9,11 +9,10 @@ namespace EloquentObjects.Channels.Implementation.NamedPipes
     internal sealed class OutputChannel : IOutputChannel
     {
         private readonly string _pipeName;
-        private readonly AutoResetEvent _resetEvent = new AutoResetEvent(true);
+        private readonly AutoResetEvent _contextCanBeTaken = new AutoResetEvent(true);
         private readonly ILogger _logger;
         private bool _disposed;
         private readonly BufferedStream _bufferedStream;
-        private readonly NamedPipeClientStream _stream;
 
         public OutputChannel(string pipeName, int sendTimeout)
         {
@@ -23,9 +22,9 @@ namespace EloquentObjects.Channels.Implementation.NamedPipes
             _logger.Info(() => $"Created (pipeName = {_pipeName})");
 
             //TODO: what is server name?
-            _stream = new NamedPipeClientStream(".", _pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
-            _stream.Connect(sendTimeout);
-            _bufferedStream = new BufferedStream(_stream);
+            var stream = new NamedPipeClientStream(".", _pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
+            stream.Connect(sendTimeout);
+            _bufferedStream = new BufferedStream(stream);
         }
 
         #region IDisposable
@@ -46,39 +45,23 @@ namespace EloquentObjects.Channels.Implementation.NamedPipes
                 //Hide exceptions when disposing a broken stream (e.g. when server dead).
             }
 
-            _resetEvent.Set();
-            _resetEvent.Dispose();
+            _contextCanBeTaken.Set();
+            _contextCanBeTaken.Dispose();
 
             _logger.Info(() => $"Disposed (pipeName = {_pipeName})");
         }
 
         #endregion
 
+
         #region Implementation of IOutputChannel
 
-        public void Write(IFrame frame)
+        public IOutputChannelContext BeginReadWrite()
         {
-            if (_disposed)
-                throw new ObjectDisposedException(GetType().Name);
+            _contextCanBeTaken.WaitOne();
+            return new OutputChannelContext(_bufferedStream, _contextCanBeTaken);
+        }
 
-            _resetEvent.WaitOne();
-            try
-            {
-                _bufferedStream.WriteBuffer(frame.ToArray());
-                _bufferedStream.Flush();
-            }
-            finally
-            {
-                _resetEvent.Set();
-            }
-        }
-        
-        public IFrame Read()
-        {
-            var bytes = _bufferedStream.TakeBuffer();
-            return new Frame(bytes);
-        }
-       
         #endregion
 
     }

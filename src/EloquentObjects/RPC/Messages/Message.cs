@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using EloquentObjects.Channels;
 using EloquentObjects.Channels.Implementation;
@@ -35,7 +34,7 @@ namespace EloquentObjects.RPC.Messages
         {
             var messageType = (MessageType)frame.TakeByte();
             var clientHostAddress = HostAddress.Read(frame);
-
+            
             switch (messageType)
             {
                 case MessageType.Hello:

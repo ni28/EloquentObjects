@@ -6,8 +6,8 @@ namespace EloquentObjects.RPC.Messages.OneWay
 {
     internal sealed class ErrorMessage : OneWayMessage
     {
-        private ErrorType _errorType;
-        private string _message;
+        private readonly ErrorType _errorType;
+        private readonly string _message;
 
         public ErrorMessage(IHostAddress clientHostAddress, ErrorType errorType, string message) : base(
             clientHostAddress)

@@ -138,7 +138,7 @@ namespace IntegrationTests
         
         [Test]
         [TestCase("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001")]
-        //[TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
+        [TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
         public void ShallGetValuesForProperties(string serverAddress, string clientAddress)
         {
             //Arrange
@@ -202,7 +202,7 @@ namespace IntegrationTests
         
         [Test]
         [TestCase("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001")]
-        //[TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
+        [TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
         public void ShallSetValuesForProperties(string serverAddress, string clientAddress)
         {
             //Arrange
@@ -267,7 +267,7 @@ namespace IntegrationTests
 
         [Test]
         [TestCase("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001")]
-        //[TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
+        [TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
         public void ShallRaiseExceptionForGetters(string serverAddress, string clientAddress)
         {
             //Arrange
@@ -318,7 +318,7 @@ namespace IntegrationTests
 
         [Test]
         [TestCase("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001")]
-        //[TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
+        [TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
         public void ShallRaiseExceptionForTwoWaySetters(string serverAddress, string clientAddress)
         {
             //Arrange
@@ -371,7 +371,7 @@ namespace IntegrationTests
 
         [Test]
         [TestCase("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001")]
-        //[TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
+        [TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
         public void ShallHideExceptionForOneWaySetters(string serverAddress, string clientAddress)
         {
             //Arrange

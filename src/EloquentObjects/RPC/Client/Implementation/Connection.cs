@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using EloquentObjects.Channels;
 using EloquentObjects.Contracts;
-using EloquentObjects.RPC.Messages;
 using EloquentObjects.RPC.Messages.OneWay;
 using EloquentObjects.Serialization;
 
@@ -45,17 +44,15 @@ namespace EloquentObjects.RPC.Client.Implementation
         {
             var payload = _serializer.SerializeCall(new CallInfo(eventName, parameters));
             var eventMessage = new NotificationMessage(_clientHostAddress, _objectId, payload);
-            _outputChannel.Send(eventMessage);
+            _outputChannel.SendOneWay(eventMessage);
         }
 
         public object Call(string methodName, object[] parameters)
         {
             var payload = _serializer.SerializeCall(new CallInfo(methodName, parameters));
             var requestMessage = new RequestMessage(_clientHostAddress, _objectId, payload);
-            _outputChannel.Send(requestMessage);
-            
-            //TODO: move to RequestMessage?
-            var result = Message.Create(_outputChannel.Read());
+
+            var result = _outputChannel.SendAndReceive(requestMessage);
             switch (result)
             {
                 case ErrorMessage errorMessage:

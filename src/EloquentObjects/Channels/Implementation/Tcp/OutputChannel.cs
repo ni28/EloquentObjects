@@ -12,7 +12,7 @@ namespace EloquentObjects.Channels.Implementation.Tcp
         private readonly IPAddress _ipAddress;
         private readonly int _port;
         private readonly TcpClient _client;
-        private readonly AutoResetEvent _resetEvent = new AutoResetEvent(true);
+        private readonly AutoResetEvent _contextCanBeTaken = new AutoResetEvent(true);
         private readonly ILogger _logger;
         private readonly BufferedStream _bufferedStream;
         private bool _disposed;
@@ -64,8 +64,8 @@ namespace EloquentObjects.Channels.Implementation.Tcp
                 //Hide exceptions when disposing a broken stream (e.g. when server dead).
             }
 
-            _resetEvent.Set();
-            _resetEvent.Dispose();
+            _contextCanBeTaken.Set();
+            _contextCanBeTaken.Dispose();
 
             _logger.Info(() => $"Disposed (ipAddress = {_ipAddress}, port = {_port})");
         }
@@ -74,28 +74,11 @@ namespace EloquentObjects.Channels.Implementation.Tcp
 
 
         #region Implementation of IOutputChannel
-        
-        public void Write(IFrame frame)
-        {
-            if (_disposed)
-                throw new ObjectDisposedException(GetType().Name);
 
-            _resetEvent.WaitOne();
-            try
-            {
-                _bufferedStream.WriteBuffer(frame.ToArray());
-                _bufferedStream.Flush();
-            }
-            finally
-            {
-                _resetEvent.Set();
-            }
-        }
-
-        public IFrame Read()
+        public IOutputChannelContext BeginReadWrite()
         {
-            var bytes = _bufferedStream.TakeBuffer();
-            return new Frame(bytes);
+            _contextCanBeTaken.WaitOne();
+            return new OutputChannelContext(_bufferedStream, _contextCanBeTaken);
         }
 
         #endregion

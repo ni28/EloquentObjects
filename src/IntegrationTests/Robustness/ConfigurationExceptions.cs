@@ -10,7 +10,7 @@ namespace IntegrationTests.Robustness
 
         [Test]
         [TestCase("tcp://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
-        //[TestCase("pipe://127.0.0.1:50000", "tcp://127.0.0.1:50001")]
+        [TestCase("pipe://127.0.0.1:50000", "tcp://127.0.0.1:50001")]
         public void ShallThrowWhenSchemesAreDifferent(string serverAddress, string client1Address)
         {
             //Act

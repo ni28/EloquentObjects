@@ -63,7 +63,7 @@ namespace IntegrationTests
 
         [Test]
         [TestCase("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001", "tcp://127.0.0.1:50002")]
-        //[TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001", "pipe://127.0.0.1:50002")]
+        [TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001", "pipe://127.0.0.1:50002")]
         public void ShallRaiseRegularEventWithClientAsSender(string serverAddress, string client1Address,
             string client2Address)
         {
@@ -162,7 +162,7 @@ namespace IntegrationTests
 
         [Test]
         [TestCase("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001", "tcp://127.0.0.1:50002")]
-        //[TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001", "pipe://127.0.0.1:50002")]
+        [TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001", "pipe://127.0.0.1:50002")]
         public void ShallRaiseEventWithoutParameters(string serverAddress, string client1Address, string client2Address)
         {
             //Arrange
@@ -206,6 +206,8 @@ namespace IntegrationTests
 
                 //Assert
                 Assert.IsTrue(noParameterEvent1Called);
+                
+                //TODO: Failed during long run
                 Assert.IsTrue(noParameterEvent2Called);
             }
         }
@@ -213,7 +215,7 @@ namespace IntegrationTests
 
         [Test]
         [TestCase("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001", "tcp://127.0.0.1:50002")]
-        //[TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001", "pipe://127.0.0.1:50002")]
+        [TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001", "pipe://127.0.0.1:50002")]
         public void ShallRaiseEventWithParameters(string serverAddress, string client1Address, string client2Address)
         {
             //Arrange
@@ -338,7 +340,7 @@ namespace IntegrationTests
         
         [Test]
         [TestCase("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001", "tcp://127.0.0.1:50002")]
-        //[TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001", "pipe://127.0.0.1:50002")]
+        [TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001", "pipe://127.0.0.1:50002")]
         public void ShallUnsubscribe(string serverAddress, string client1Address,
             string client2Address)
         {

@@ -30,7 +30,7 @@ namespace IntegrationTests.Robustness
         
         [Test]
         [TestCase("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001")]
-        //[TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
+        [TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
         public void ShallReleaseIfNotUsed(string serverAddress, string clientAddress)
         {
             //Arrange
@@ -65,7 +65,7 @@ namespace IntegrationTests.Robustness
                 
         [Test]
         [TestCase("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001")]
-        //[TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
+        [TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
         public void ShallReleaseParentIfNotUsed(string serverAddress, string clientAddress)
         {
             //Arrange
@@ -118,7 +118,7 @@ namespace IntegrationTests.Robustness
                 
         [Test]
         [TestCase("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001")]
-        //[TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
+        [TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
         public void ShallKeepReferenceIfSubscribed(string serverAddress, string clientAddress)
         {
             //Arrange
@@ -158,7 +158,7 @@ namespace IntegrationTests.Robustness
                 
         [Test]
         [TestCase("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001")]
-        //[TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
+        [TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
         public void ShallReleaseIfUnsubscribed(string serverAddress, string clientAddress)
         {
             //Arrange

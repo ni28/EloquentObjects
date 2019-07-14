@@ -8,14 +8,9 @@ namespace EloquentObjects.Channels
     internal interface IOutputChannel : IDisposable
     {
         /// <summary>
-        /// Writes the frame to the channel.
+        /// Starts a new atomic write/read operation.
         /// </summary>
-        void Write(IFrame frame);
-
-        /// <summary>
-        /// Read a response.
-        /// </summary>
-        /// <returns>A received frame object</returns>
-        IFrame Read();
+        /// <returns>Returns a context object that can perform multiple read/write operations as a single transaction (all other calls to BeginWrite are blocked until the active context is disposed)</returns>
+        IOutputChannelContext BeginReadWrite();
     }
 }

@@ -48,7 +48,17 @@ namespace EloquentObjects.RPC.Client.Implementation
                 {
                     args[0] = subscription.Proxy;
                 }
-                subscription.Handler.DynamicInvoke(args);
+
+                //TODO: test
+                //Execute in a try-catch so that if there is an exception then other subscriptions are still handled
+                try
+                {
+                    subscription.Handler.DynamicInvoke(args);
+                }
+                catch (Exception)
+                {
+                    //Hide exception
+                }
             }
         }
 

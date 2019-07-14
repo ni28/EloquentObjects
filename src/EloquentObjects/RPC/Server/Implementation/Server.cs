@@ -43,13 +43,17 @@ namespace EloquentObjects.RPC.Server.Implementation
             
             _inputChannel.FrameReceived -= InputChannelOnFrameReceived;
 
-            foreach (var session in _sessions.Values)
+            lock (_sessions)
             {
-                session.Terminated -= SessionOnTerminated;
-                session.Dispose();
-            }
+                foreach (var session in _sessions.Values)
+                {
+                    session.Terminated -= SessionOnTerminated;
+                    //TODO: Session can be disposed twice
+                    session.Dispose();
+                }
 
-            _sessions.Clear();
+                _sessions.Clear();
+            }
 
             _logger.Info(() => "Disposed");
         }
@@ -79,30 +83,36 @@ namespace EloquentObjects.RPC.Server.Implementation
         {
             var clientHostAddress = helloMessage.ClientHostAddress;
 
-            _sessions.GetOrAdd(clientHostAddress, address =>
+            lock (_sessions)
             {
-                var outputChannel = _binding.CreateOutputChannel(clientHostAddress);
+                _sessions.GetOrAdd(clientHostAddress, address =>
+                {
+                    var outputChannel = _binding.CreateOutputChannel(clientHostAddress);
 
-                var s = new Session(_binding, clientHostAddress, _objectsRepository, outputChannel);
+                    var s = new Session(_binding, clientHostAddress, _objectsRepository, outputChannel);
                 
-                s.Terminated += SessionOnTerminated;
+                    s.Terminated += SessionOnTerminated;
                 
-                var helloAck = new AckMessage(clientHostAddress);
-                context.Write(helloAck.ToFrame());
+                    var helloAck = new AckMessage(clientHostAddress);
+                    context.Write(helloAck.ToFrame());
                 
-                return s;
-            });
+                    return s;
+                });
+            }
         }
 
         private void SessionOnTerminated(object sender, EventArgs e)
         {
-            var session = (ISession) sender;
-            if (!_sessions.TryRemove(session.ClientHostAddress, out _))
+            lock (_sessions)
             {
-                return;
+                var session = (ISession) sender;
+                if (!_sessions.TryRemove(session.ClientHostAddress, out _))
+                {
+                    return;
+                }
+                session.Terminated -= SessionOnTerminated;
+                session.Dispose();
             }
-            session.Terminated -= SessionOnTerminated;
-            session.Dispose();
         }
     }
 }

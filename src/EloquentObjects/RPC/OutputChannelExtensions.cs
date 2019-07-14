@@ -6,28 +6,55 @@ using EloquentObjects.RPC.Messages.OneWay;
 
 namespace EloquentObjects.RPC
 {
+    //TODO: Move to channels?
     internal static class OutputChannelExtensions
     {
-        public static void Send(this IOutputChannel outputChannel, OneWayMessage message, string side="")
+        public static void SendOneWay(this IOutputChannel outputChannel, OneWayMessage message)
         {
-            outputChannel.Write(message.ToFrame());
+            using (var context = outputChannel.BeginReadWrite())
+            {
+                context.Write(message.ToFrame());
+            }
         }
-        
-        public static void SendWithAck(this IOutputChannel outputChannel, AcknowledgedMessage message)
-        {
-            Message response;
 
+        public static Message SendAndReceive(this IOutputChannel outputChannel, OneWayMessage message)
+        {
             try
             {
-                outputChannel.Write(message.ToFrame());
-                response = Message.Create(outputChannel.Read());
+                IFrame response;
+                using (var context = outputChannel.BeginReadWrite())
+                {
+                    context.Write(message.ToFrame());
+                    response = context.Read();
+                }
+
+                return Message.Create(response);
             }
             catch (Exception e)
             {
                 throw new IOException("Connection failed. Check that server is still alive", e);
             }
+        }
 
-            switch (response)
+        public static void SendWithAck(this IOutputChannel outputChannel, AcknowledgedMessage message)
+        {
+            IFrame response;
+            try
+            {
+                using (var context = outputChannel.BeginReadWrite())
+                {
+                    context.Write(message.ToFrame());
+                    response = context.Read();
+                }
+            }
+            catch (Exception e)
+            {
+                throw new IOException("Connection failed. Check that server is still alive", e);
+            }
+            
+            var responseMessage = Message.Create(response);
+            
+            switch (responseMessage)
             {
                 case ErrorMessage errorMessage:
                     throw errorMessage.ToException();
@@ -36,7 +63,7 @@ namespace EloquentObjects.RPC
                 case AckMessage _:
                     return;
                 default:
-                    throw new IOException($"Unexpected session message type: {response.MessageType}");
+                    throw new IOException($"Unexpected message type: {responseMessage.MessageType}");
             }
         }
     }

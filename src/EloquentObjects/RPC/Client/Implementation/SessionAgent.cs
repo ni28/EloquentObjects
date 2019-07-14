@@ -87,7 +87,7 @@ namespace EloquentObjects.RPC.Client.Implementation
             }
 
             var heartbeatMessage = new HeartbeatMessage(_clientHostAddress);
-            _outputChannel.Send(heartbeatMessage, "Client");
+            _outputChannel.SendOneWay(heartbeatMessage);
         }
 
         private void Terminate()
@@ -95,7 +95,7 @@ namespace EloquentObjects.RPC.Client.Implementation
             try
             {
                 var terminateMessage = new TerminateMessage(_clientHostAddress);
-                _outputChannel.Send(terminateMessage);
+                _outputChannel.SendOneWay(terminateMessage);
             }
             catch (IOException)
             {

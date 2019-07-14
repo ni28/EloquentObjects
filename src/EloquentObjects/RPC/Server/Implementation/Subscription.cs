@@ -27,7 +27,7 @@ namespace EloquentObjects.RPC.Server.Implementation
         
         private void SendEventToClient(EventMessage eventMessage)
         {
-            _outputChannel.Send(eventMessage);
+            _outputChannel.SendOneWay(eventMessage);
         }
 
         #region IDisposable

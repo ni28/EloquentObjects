@@ -1,4 +1,5 @@
-﻿using EloquentObjects;
+﻿using System.Threading;
+using EloquentObjects;
 using NUnit.Framework;
 
 namespace IntegrationTests.Robustness
@@ -22,7 +23,7 @@ namespace IntegrationTests.Robustness
         
         [Test]
         [TestCase("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001")]
-        //[TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
+        [TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
         public void ShallConnectAgain(string serverAddress, string clientAddress)
         {
             //Arrange
@@ -64,7 +65,7 @@ namespace IntegrationTests.Robustness
         
         [Test]
         [TestCase("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001")]
-        //[TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
+        [TestCase("pipe://127.0.0.1:50000", "pipe://127.0.0.1:50001")]
         public void ShallHostAgain(string serverAddress, string clientAddress)
         {
             //Arrange
