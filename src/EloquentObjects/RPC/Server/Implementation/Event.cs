@@ -41,7 +41,7 @@ namespace EloquentObjects.RPC.Server.Implementation
                     args[0] = null;
                 }
 
-                var bytes = _serializer.SerializeCall(new CallInfo(_eventName, args));
+                var bytes = _serializer.Serialize(args);
 
                 var eventMessage = new EventMessage(subscription.ClientHostAddress, _objectId, _eventName, bytes);
                 subscription.Handler.DynamicInvoke(eventMessage);

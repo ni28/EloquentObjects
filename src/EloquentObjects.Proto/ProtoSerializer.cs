@@ -8,25 +8,14 @@ namespace EloquentObjects.Proto
     {
         #region Implementation of ISerializer
 
-        public void WriteObject(Stream stream, object obj)
+        public void WriteObjects(Stream stream, object[] objects)
         {
-            Serializer.Serialize(stream, obj);
+            Serializer.Serialize(stream, new Envelope(objects));
         }
 
-        public object ReadObject(Stream stream)
+        public object[] ReadObjects(Stream stream)
         {
-            return Serializer.Deserialize<object>(stream);
-        }
-
-        public void WriteCall(Stream stream, CallInfo callInfo)
-        {
-            Serializer.Serialize(stream, new CallEnvelope(callInfo.OperationName, callInfo.Parameters));
-        }
-
-        public CallInfo ReadCall(Stream stream)
-        {
-            var envelope = Serializer.Deserialize<CallEnvelope>(stream);
-            return new CallInfo(envelope.OperationName, envelope.Parameters);
+            return Serializer.Deserialize<Envelope>(stream).Parameters;
         }
 
         #endregion

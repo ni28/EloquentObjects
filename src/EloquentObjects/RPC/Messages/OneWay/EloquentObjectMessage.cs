@@ -4,14 +4,12 @@ namespace EloquentObjects.RPC.Messages.OneWay
 {
     internal sealed class EloquentObjectMessage : OneWayMessage
     {
-        internal EloquentObjectMessage(IHostAddress clientHostAddress, string objectId, byte[] payload): base(clientHostAddress)
+        internal EloquentObjectMessage(IHostAddress clientHostAddress, string objectId): base(clientHostAddress)
         {
             ObjectId = objectId;
-            Payload = payload;
         }
 
         public string ObjectId { get; }
-        public byte[] Payload { get; }
         
         #region Overrides of Message
 
@@ -19,7 +17,6 @@ namespace EloquentObjects.RPC.Messages.OneWay
         protected override void WriteInternal(IFrameBuilder builder)
         {
             builder.WriteString(ObjectId);
-            builder.WriteBuffer(Payload);
         }
 
         #endregion
@@ -27,8 +24,7 @@ namespace EloquentObjects.RPC.Messages.OneWay
         public static Message ReadInternal(IHostAddress clientHostAddress, IFrame frame)
         {
             var objectId = frame.TakeString();
-            var payload = frame.TakeBuffer();
-            return new EloquentObjectMessage(clientHostAddress, objectId, payload);
+            return new EloquentObjectMessage(clientHostAddress, objectId);
         }
     }
 }

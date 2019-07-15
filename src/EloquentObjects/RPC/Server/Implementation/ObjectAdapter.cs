@@ -54,8 +54,8 @@ namespace EloquentObjects.RPC.Server.Implementation
         {
             try
             {
-                var callInfo = _serializer.DeserializeCall(requestMessage.Payload);
-                HandleRequest(requestMessage.ClientHostAddress, context, callInfo.OperationName, callInfo.Parameters);
+                var parameters = _serializer.Deserialize(requestMessage.Payload);
+                HandleRequest(requestMessage.ClientHostAddress, context, requestMessage.MethodName, parameters);
             }
             catch (Exception e)
             {
@@ -67,8 +67,8 @@ namespace EloquentObjects.RPC.Server.Implementation
         {
             try
             {
-                var callInfo = _serializer.DeserializeCall(notificationMessage.Payload);
-                HandleEvent(callInfo.OperationName, callInfo.Parameters);
+                var parameters = _serializer.Deserialize(notificationMessage.Payload);
+                HandleEvent(notificationMessage.MethodName, parameters);
             }
             catch (Exception)
             {
@@ -166,8 +166,7 @@ namespace EloquentObjects.RPC.Server.Implementation
 
             if (_objectsRepository.TryGetObjectId(result, out var objectId))
             {
-                var payload = _serializer.Serialize(objectId);
-                var responseMessage = new EloquentObjectMessage(clientHostAddress, objectId, payload);
+                var responseMessage = new EloquentObjectMessage(clientHostAddress, objectId);
                 context.Write(responseMessage.ToFrame());
             }
             else

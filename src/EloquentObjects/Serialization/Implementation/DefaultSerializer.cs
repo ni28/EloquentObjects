@@ -13,32 +13,21 @@ namespace EloquentObjects.Serialization.Implementation
         public DefaultSerializer(Type type, IEnumerable<Type> knownTypes)
         {
             var types = knownTypes.ToList();
-            types.Add(typeof(CallEnvelope));
+            types.Add(typeof(Envelope));
 
             _serializer = new DataContractSerializer(type, types);
         }
 
         #region Implementation of ISerializer<T>
 
-        public void WriteObject(Stream stream, object obj)
+        public void WriteObjects(Stream stream, object[] objects)
         {
-            _serializer.WriteObject(stream, obj);
+            _serializer.WriteObject(stream, new Envelope(objects));
         }
 
-        public object ReadObject(Stream stream)
+        public object[] ReadObjects(Stream stream)
         {
-            return _serializer.ReadObject(stream);
-        }
-
-        public void WriteCall(Stream stream, CallInfo callInfo)
-        {
-            _serializer.WriteObject(stream, new CallEnvelope(callInfo.OperationName, callInfo.Parameters));
-        }
-
-        public CallInfo ReadCall(Stream stream)
-        {
-            var envelope = (CallEnvelope)_serializer.ReadObject(stream);
-            return new CallInfo(envelope.OperationName, envelope.Parameters);
+            return ((Envelope)_serializer.ReadObject(stream)).Parameters;
         }
 
         #endregion

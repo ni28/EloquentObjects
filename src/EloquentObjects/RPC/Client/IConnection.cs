@@ -4,7 +4,7 @@ namespace EloquentObjects.RPC.Client
 {
     internal interface IConnection
     {
-        void Notify(string eventName, object[] parameters);
+        void Notify(string methodName, object[] parameters);
         
         object Call(string methodName, object[] parameters);
         

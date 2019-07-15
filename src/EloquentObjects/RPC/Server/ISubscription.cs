@@ -13,12 +13,7 @@ namespace EloquentObjects.RPC.Server
         /// Gets objectId of the remote object that owns event.
         /// </summary>
         string ObjectId { get; }
-        
-        /// <summary>
-        /// Gets the subscribed event name.
-        /// </summary>
-        string EventName { get; }
-        
+
         /// <summary>
         /// Gets the event handler.
         /// </summary>

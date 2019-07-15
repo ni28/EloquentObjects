@@ -8,13 +8,11 @@ namespace EloquentObjects.Serialization
     public interface ISerializer
     {
         /// <summary>
-        /// Writes a serialized object to the stream.
+        /// Writes a serialized objects array to the stream.
         /// </summary>
-        /// <param name="stream">Stre</param>
-        /// <param name="obj"></param>
-        void WriteObject(Stream stream, object obj);
-        object ReadObject(Stream stream);
-        void WriteCall(Stream stream, CallInfo callInfo);
-        CallInfo ReadCall(Stream stream);
+        /// <param name="stream">Stream that will accept serialized objects</param>
+        /// <param name="objects">Array that needs to be serialized</param>
+        void WriteObjects(Stream stream, object[] objects);
+        object[] ReadObjects(Stream stream);
     }
 }

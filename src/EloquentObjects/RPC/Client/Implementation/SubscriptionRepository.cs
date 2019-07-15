@@ -36,12 +36,12 @@ namespace EloquentObjects.RPC.Client.Implementation
                 subscriptions = _subscriptions.ToArray();
             }
 
-            var callInfo = _serializer.DeserializeCall(eventData);
+            var parameters = _serializer.Deserialize(eventData);
             
             foreach (var subscription in subscriptions)
             {
                 //Create a copy to avoid dependency between handlers
-                var args = callInfo.Parameters.ToArray();
+                var args = parameters.ToArray();
                 
                 //Set the sender = proxy object for standard events
                 if (_hasSender)

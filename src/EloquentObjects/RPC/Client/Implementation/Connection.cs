@@ -40,17 +40,17 @@ namespace EloquentObjects.RPC.Client.Implementation
 
         #region Implementation of IConnection
 
-        public void Notify(string eventName, object[] parameters)
+        public void Notify(string methodName, object[] parameters)
         {
-            var payload = _serializer.SerializeCall(new CallInfo(eventName, parameters));
-            var eventMessage = new NotificationMessage(_clientHostAddress, _objectId, payload);
+            var payload = _serializer.Serialize(parameters);
+            var eventMessage = new NotificationMessage(_clientHostAddress, _objectId, methodName, payload);
             _outputChannel.SendOneWay(eventMessage);
         }
 
         public object Call(string methodName, object[] parameters)
         {
-            var payload = _serializer.SerializeCall(new CallInfo(methodName, parameters));
-            var requestMessage = new RequestMessage(_clientHostAddress, _objectId, payload);
+            var payload = _serializer.Serialize(parameters);
+            var requestMessage = new RequestMessage(_clientHostAddress, _objectId, methodName, payload);
 
             var result = _outputChannel.SendAndReceive(requestMessage);
             switch (result)
@@ -63,7 +63,7 @@ namespace EloquentObjects.RPC.Client.Implementation
                     var objectType = _contractDescription.GetOperationDescription(methodName, parameters).Method.ReturnType;
                     return _eloquentClient.Connect(objectType, eloquentObjectMessage.ObjectId);
                 case ResponseMessage responseMessage:
-                    return _serializer.Deserialize<object>(responseMessage.Payload);
+                    return _serializer.Deserialize(responseMessage.Payload).Single();
                 default:
                     throw new IOException($"Unexpected session message type: {result.MessageType}");
             }

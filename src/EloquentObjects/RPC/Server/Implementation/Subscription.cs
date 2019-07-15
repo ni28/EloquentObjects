@@ -15,14 +15,12 @@ namespace EloquentObjects.RPC.Server.Implementation
             _outputChannel = outputChannel;
             _event = @event;
             ObjectId = objectId;
-            EventName = eventName;
             ClientHostAddress = clientHostAddress;
             
             _event.Add(this);
         }
 
         public string ObjectId { get; }
-        public string EventName { get; }
         public Action<EventMessage> Handler => SendEventToClient;
         
         public IHostAddress ClientHostAddress { get; }
