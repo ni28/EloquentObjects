@@ -180,7 +180,7 @@ namespace EloquentObjects.RPC.Server.Implementation
                 return;
             }
             
-            var subscription = new Subscription(subscribeEventMessage.EventName,
+            var subscription = new Subscription(subscribeEventMessage.ObjectId, subscribeEventMessage.EventName,
                 subscribeEventMessage.ClientHostAddress, _outputChannel, ev);
 
             lock (_subscriptions)
@@ -258,9 +258,21 @@ namespace EloquentObjects.RPC.Server.Implementation
             context.Write(exceptionMessage.ToFrame());
         }
         
-        private void ObjectsRepositoryOnObjectRemoved(object sender, string e)
+        private void ObjectsRepositoryOnObjectRemoved(object sender, string objectId)
         {
-            //TODO: Unsubscribe
+            lock (_subscriptions)
+            {
+                //TODO: Test
+                foreach (var pair in _subscriptions.ToArray())
+                {
+                    var subscription = pair.Value;
+                    if (subscription.ObjectId == objectId)
+                    {
+                        subscription.Dispose();
+                        _subscriptions.Remove(pair.Key);
+                    }
+                }
+            }
             
         }
     }

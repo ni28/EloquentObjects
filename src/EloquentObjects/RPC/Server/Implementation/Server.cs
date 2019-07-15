@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 using EloquentObjects.Channels;
 using EloquentObjects.Logging;
 using EloquentObjects.RPC.Messages;
@@ -14,7 +14,7 @@ namespace EloquentObjects.RPC.Server.Implementation
         private readonly IObjectsRepository _objectsRepository;
         private readonly IInputChannel _inputChannel;
 
-        private readonly ConcurrentDictionary<IHostAddress, ISession> _sessions = new ConcurrentDictionary<IHostAddress, ISession>();
+        private readonly Dictionary<IHostAddress, ISession> _sessions = new Dictionary<IHostAddress, ISession>();
         private bool _disposed;
         private readonly ILogger _logger;
 
@@ -48,7 +48,6 @@ namespace EloquentObjects.RPC.Server.Implementation
                 foreach (var session in _sessions.Values)
                 {
                     session.Terminated -= SessionOnTerminated;
-                    //TODO: Session can be disposed twice
                     session.Dispose();
                 }
 
@@ -85,19 +84,19 @@ namespace EloquentObjects.RPC.Server.Implementation
 
             lock (_sessions)
             {
-                _sessions.GetOrAdd(clientHostAddress, address =>
-                {
-                    var outputChannel = _binding.CreateOutputChannel(clientHostAddress);
+                if (_sessions.ContainsKey(clientHostAddress))
+                    return;
+                
+                var outputChannel = _binding.CreateOutputChannel(clientHostAddress);
 
-                    var s = new Session(_binding, clientHostAddress, _objectsRepository, outputChannel);
+                var session = new Session(_binding, clientHostAddress, _objectsRepository, outputChannel);
                 
-                    s.Terminated += SessionOnTerminated;
+                session.Terminated += SessionOnTerminated;
                 
-                    var helloAck = new AckMessage(clientHostAddress);
-                    context.Write(helloAck.ToFrame());
+                var helloAck = new AckMessage(clientHostAddress);
+                context.Write(helloAck.ToFrame());
                 
-                    return s;
-                });
+                _sessions.Add(clientHostAddress, session);
             }
         }
 
@@ -106,7 +105,7 @@ namespace EloquentObjects.RPC.Server.Implementation
             lock (_sessions)
             {
                 var session = (ISession) sender;
-                if (!_sessions.TryRemove(session.ClientHostAddress, out _))
+                if (!_sessions.Remove(session.ClientHostAddress))
                 {
                     return;
                 }

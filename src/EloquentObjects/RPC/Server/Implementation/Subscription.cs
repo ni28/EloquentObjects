@@ -9,17 +9,19 @@ namespace EloquentObjects.RPC.Server.Implementation
         private readonly IOutputChannel _outputChannel;
         private readonly IEvent _event;
 
-        public Subscription(string eventName, IHostAddress clientHostAddress,
+        public Subscription(string objectId, string eventName, IHostAddress clientHostAddress,
             IOutputChannel outputChannel, IEvent @event)
         {
             _outputChannel = outputChannel;
             _event = @event;
+            ObjectId = objectId;
             EventName = eventName;
             ClientHostAddress = clientHostAddress;
             
             _event.Add(this);
         }
-        
+
+        public string ObjectId { get; }
         public string EventName { get; }
         public Action<EventMessage> Handler => SendEventToClient;
         
