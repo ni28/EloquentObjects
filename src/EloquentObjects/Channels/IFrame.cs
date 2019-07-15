@@ -43,10 +43,25 @@ namespace EloquentObjects.Channels
         byte[] TakeBuffer();
         
         /// <summary>
+        /// Extracts an array of boolean values from the frame.
+        /// </summary>
+        /// <returns>An array of bytes.</returns>
+        /// <exception cref="InvalidOperationException">End of frame reached</exception>
+        bool[] TakeBoolArray();
+          
+        /// <summary>
+        /// Extracts an array of string values from the frame.
+        /// </summary>
+        /// <returns>An array of strings.</returns>
+        /// <exception cref="InvalidOperationException">End of frame reached</exception>
+        string[] TakeStringArray();
+        
+        /// <summary>
         /// Converts the whole frame to bytes array.
         /// </summary>
         /// <returns>An array of bytes that contains the whole frame.</returns>
         /// <exception cref="InvalidOperationException">End of frame reached</exception>
         byte[] ToArray();
+
     }
 }

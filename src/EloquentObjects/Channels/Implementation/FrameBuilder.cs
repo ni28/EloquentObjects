@@ -45,6 +45,24 @@ namespace EloquentObjects.Channels.Implementation
             WriteInt(value.Length);
             WriteBytes(value);
         }
+        
+        public void WriteBoolArray(bool[] values)
+        {
+            WriteInt(values.Length);
+            foreach (var value in values)
+            {
+                WriteBool(value);
+            }
+        }
+
+        public void WriteStringArray(string[] values)
+        {
+            WriteInt(values.Length);
+            foreach (var value in values)
+            {
+                WriteString(value);
+            }
+        }
 
         public IFrame ToFrame()
         {

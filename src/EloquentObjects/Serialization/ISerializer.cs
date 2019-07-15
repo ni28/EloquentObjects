@@ -13,6 +13,12 @@ namespace EloquentObjects.Serialization
         /// <param name="stream">Stream that will accept serialized objects</param>
         /// <param name="objects">Array that needs to be serialized</param>
         void WriteObjects(Stream stream, object[] objects);
+        
+        /// <summary>
+        /// Reads and deserializes and array of objects from the stream.
+        /// </summary>
+        /// <param name="stream">Stream that will provide an array of serialized objects</param>
+        /// <returns>Array of deserialized objects</returns>
         object[] ReadObjects(Stream stream);
     }
 }

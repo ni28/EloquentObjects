@@ -28,6 +28,11 @@ namespace EloquentObjects.Proto
             return _eloquentClient.Connect(type, objectId);
         }
 
+        public bool TryGetObjectId(object remoteObject, out string objectId)
+        {
+            return _eloquentClient.TryGetObjectId(remoteObject, out objectId);
+        }
+
         #endregion
         
         #region Implementation of IDisposable

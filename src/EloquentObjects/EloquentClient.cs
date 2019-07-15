@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Castle.DynamicProxy;
 using EloquentObjects.Channels;
 using EloquentObjects.Channels.Implementation;
@@ -28,6 +30,7 @@ namespace EloquentObjects
         private readonly IEventHandlersRepository _eventHandlersRepository;
         private bool _disposed;
         private readonly IHostAddress _clientHostAddress;
+        private readonly List<Tuple<string, WeakReference>> _objectIds = new List<Tuple<string,WeakReference>>();
 
         /// <summary>
         /// Creates an EloquentObjects client with default settings and serializer (DataContractSerializer is used).
@@ -141,7 +144,39 @@ namespace EloquentObjects
             
             interceptor.Subscribe(connection);
 
+            lock (_objectIds)
+            {
+                RemoveDeadObjectIds();
+                _objectIds.Add(new Tuple<string, WeakReference>(objectId, new WeakReference(proxy)));
+            }
             return proxy;
+        }
+
+        private void RemoveDeadObjectIds()
+        {
+            foreach (var tuple in _objectIds.ToArray())
+            {
+                if (!tuple.Item2.IsAlive)
+                    _objectIds.Remove(tuple);
+            }
+        }
+
+        public bool TryGetObjectId(object remoteObject, out string objectId)
+        {
+            lock (_objectIds)
+            {
+                RemoveDeadObjectIds();
+
+                var result = _objectIds.FirstOrDefault(t => ReferenceEquals(t.Item2.Target, remoteObject));
+                if (result == null)
+                {
+                    objectId = string.Empty;
+                    return false;
+                }
+
+                objectId = result.Item1;
+                return true;
+            }
         }
     }
 }

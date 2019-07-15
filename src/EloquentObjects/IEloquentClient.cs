@@ -23,5 +23,12 @@ namespace EloquentObjects
         /// <param name="objectId">Object identifier for which a connection will be created</param>
         /// <returns>A connection object that provides an access to the remote object</returns>
         object Connect(Type type, [NotNull] string objectId);
+
+        /// <summary>
+        /// Gets an object ID for the given remote object. Returns false if the given object is not a remote object.
+        /// </summary>
+        /// <param name="remoteObject">Remote object that is asked about ID</param>
+        /// <returns>True if the object ID was fetched. False otherwise.</returns>
+        bool TryGetObjectId(object remoteObject, out string objectId);
     }
 }

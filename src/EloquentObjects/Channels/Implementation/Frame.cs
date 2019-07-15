@@ -49,6 +49,30 @@ namespace EloquentObjects.Channels.Implementation
             return bytes;
         }
 
+        public bool[] TakeBoolArray()
+        {
+            var length = TakeInt();
+            var values = new bool[length];
+            for (var i = 0; i < length; i++)
+            {
+                values[i] = TakeBool();
+            }
+
+            return values;
+        }
+
+        public string[] TakeStringArray()
+        {
+            var length = TakeInt();
+            var values = new string[length];
+            for (var i = 0; i < length; i++)
+            {
+                values[i] = TakeString();
+            }
+
+            return values;
+        }
+
         public byte[] ToArray()
         {
             return _bytes;

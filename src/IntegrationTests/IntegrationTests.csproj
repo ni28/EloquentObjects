@@ -52,6 +52,7 @@
     <Compile Include="OneWayMethodTests.cs" />
     <Compile Include="PropertiesTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RemoteObjectParameter.cs" />
     <Compile Include="Robustness\ConfigurationExceptions.cs" />
     <Compile Include="Robustness\ConnectAgain.cs" />
     <Compile Include="Robustness\ConnectionExceptions.cs" />

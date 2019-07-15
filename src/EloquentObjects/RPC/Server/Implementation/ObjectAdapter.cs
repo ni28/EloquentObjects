@@ -54,7 +54,8 @@ namespace EloquentObjects.RPC.Server.Implementation
         {
             try
             {
-                var parameters = _serializer.Deserialize(requestMessage.Payload);
+                var parameters = CombineParameters(requestMessage.Payload, requestMessage.Selector, requestMessage.ObjectIds);
+
                 HandleRequest(requestMessage.ClientHostAddress, context, requestMessage.MethodName, parameters);
             }
             catch (Exception e)
@@ -67,7 +68,7 @@ namespace EloquentObjects.RPC.Server.Implementation
         {
             try
             {
-                var parameters = _serializer.Deserialize(notificationMessage.Payload);
+                var parameters = CombineParameters(notificationMessage.Payload, notificationMessage.Selector, notificationMessage.ObjectIds);
                 HandleEvent(notificationMessage.MethodName, parameters);
             }
             catch (Exception)
@@ -79,7 +80,43 @@ namespace EloquentObjects.RPC.Server.Implementation
         public IReadOnlyDictionary<string, IEvent> Events { get; }
 
         #endregion
+
         
+        private object[] CombineParameters(byte[] payload, bool[] selector, string[] objectIds)
+        {
+            var serializedParameters = _serializer.Deserialize(payload).GetEnumerator();
+            var objectIdsEnumerator = objectIds.GetEnumerator();
+            serializedParameters.MoveNext();
+            objectIdsEnumerator.MoveNext();
+
+            //TODO: check consistency
+
+            var parameters = new List<object>(selector.Length);
+
+            foreach (var isRemoteObject in selector)
+            {
+                if (isRemoteObject)
+                {
+                    var objectId = (string) objectIdsEnumerator.Current;
+                    if (!_objectsRepository.TryGetObject(objectId, out var objectAdapter) || objectAdapter == null)
+                    {
+                        throw new ArgumentException($"Object with ID '{objectId}' is not hosted");
+                    }
+
+                    parameters.Add(objectAdapter.Object);
+
+                    objectIdsEnumerator.MoveNext();
+                }
+                else
+                {
+                    parameters.Add(serializedParameters.Current);
+                    serializedParameters.MoveNext();
+                }
+            }
+
+            return parameters.ToArray();
+        }
+
         private static Delegate CreateHandler(EventInfo evt, Action<object[]> d)
         {
             var handlerType = evt.EventHandlerType;

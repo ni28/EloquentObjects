@@ -38,6 +38,18 @@ namespace EloquentObjects.Channels
         void WriteBuffer(byte[] value);
 
         /// <summary>
+        /// Writes an array of boolean values to the pending frame.
+        /// </summary>
+        /// <param name="values">An array of boolean values that will be added to the pending frame</param>
+        void WriteBoolArray(bool[] values);
+
+        /// <summary>
+        /// Writes an array of strings to the pending frame.
+        /// </summary>
+        /// <param name="values">An array of strings that will be added to the pending frame</param>
+        void WriteStringArray(string[] values);
+        
+        /// <summary>
         /// Creates the frame based on added values to the pending frame.
         /// </summary>
         /// <returns>A created frame.</returns>
