@@ -57,8 +57,6 @@ namespace EloquentObjects.RPC.Messages
                     return RequestMessage.ReadInternal(clientHostAddress, frame);
                 case MessageType.Response:
                     return ResponseMessage.ReadInternal(clientHostAddress, frame);
-                case MessageType.EloquentObject:
-                    return EloquentObjectMessage.ReadInternal(clientHostAddress, frame);
                 case MessageType.SubscribeEvent:
                     return SubscribeEventMessage.ReadInternal(clientHostAddress, frame);
                 case MessageType.UnsubscribeEvent:

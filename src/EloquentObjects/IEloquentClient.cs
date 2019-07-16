@@ -13,7 +13,7 @@ namespace EloquentObjects
         /// </summary>
         /// <param name="objectId">Object identifier for which a connection will be created</param>
         /// <typeparam name="T">Eloquent contract (an interface which attributed members can be accessed remotely)</typeparam>
-        /// <returns>A connection object that provides an access to the remote object</returns>
+        /// <returns>A proxy object that provides an access to the remote object</returns>
         T Connect<T>([NotNull] string objectId) where T : class;
 
         /// <summary>
@@ -25,10 +25,11 @@ namespace EloquentObjects
         object Connect(Type type, [NotNull] string objectId);
 
         /// <summary>
-        /// Gets an object ID for the given remote object. Returns false if the given object is not a remote object.
+        /// Gets an object ID for the given proxy object. Returns false if the given object is not a remote object.
         /// </summary>
-        /// <param name="remoteObject">Remote object that is asked about ID</param>
+        /// <param name="proxyObject">Proxy object that is asked about ID</param>
+        /// <param name="objectId">Object ID that is used to host given object</param>
         /// <returns>True if the object ID was fetched. False otherwise.</returns>
-        bool TryGetObjectId(object remoteObject, out string objectId);
+        bool TryGetObjectId(object proxyObject, out string objectId);
     }
 }

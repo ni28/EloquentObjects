@@ -23,14 +23,17 @@ namespace EloquentObjects.RPC.Client.Implementation
         
         private readonly IOutputChannel _outputChannel;
         private readonly IHostAddress _clientHostAddress;
+        private readonly EloquentClient _eloquentClient;
 
         private readonly Dictionary<EventId, SubscriptionRepository> _events = new Dictionary<EventId, SubscriptionRepository>();
         private bool _disposed;
 
-        public EventHandlersRepository(IOutputChannel outputChannel, IHostAddress clientHostAddress)
+        public EventHandlersRepository(IOutputChannel outputChannel, IHostAddress clientHostAddress,
+            EloquentClient eloquentClient)
         {
             _outputChannel = outputChannel;
             _clientHostAddress = clientHostAddress;
+            _eloquentClient = eloquentClient;
         }
 
 
@@ -57,7 +60,7 @@ namespace EloquentObjects.RPC.Client.Implementation
                     var subscribeMessage = new SubscribeEventMessage(_clientHostAddress, objectId, eventDescription.Name);
                     _outputChannel.SendWithAck(subscribeMessage);
 
-                    subscriptionRepository = new SubscriptionRepository(eventDescription.IsStandardEvent, serializer);
+                    subscriptionRepository = new SubscriptionRepository(eventDescription, serializer, _eloquentClient);
                     _events.Add(eventId, subscriptionRepository);
                 }
                 
@@ -112,7 +115,7 @@ namespace EloquentObjects.RPC.Client.Implementation
                 subscriptionRepository = _events[eventId];
             }
             
-            subscriptionRepository.Raise(eventMessage.Payload);
+            subscriptionRepository.Raise(eventMessage);
         }
 
         #endregion

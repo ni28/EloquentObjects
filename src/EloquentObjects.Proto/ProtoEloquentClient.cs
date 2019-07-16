@@ -28,9 +28,9 @@ namespace EloquentObjects.Proto
             return _eloquentClient.Connect(type, objectId);
         }
 
-        public bool TryGetObjectId(object remoteObject, out string objectId)
+        public bool TryGetObjectId(object proxyObject, out string objectId)
         {
-            return _eloquentClient.TryGetObjectId(remoteObject, out objectId);
+            return _eloquentClient.TryGetObjectId(proxyObject, out objectId);
         }
 
         #endregion

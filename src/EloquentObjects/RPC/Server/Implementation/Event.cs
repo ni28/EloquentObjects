@@ -10,16 +10,17 @@ namespace EloquentObjects.RPC.Server.Implementation
     {
         private readonly string _objectId;
         private readonly string _eventName;
-        private readonly bool _hasSender;
         private readonly ISerializer _serializer;
+        private readonly IObjectsRepository _objectsRepository;
         private readonly Dictionary<ISubscription, int> _subscriptions = new Dictionary<ISubscription, int>();
             
-        public Event(string objectId, string eventName, bool hasSender, ISerializer serializer)
+        public Event(string objectId, string eventName, ISerializer serializer,
+            IObjectsRepository objectsRepository)
         {
             _objectId = objectId;
             _eventName = eventName;
-            _hasSender = hasSender;
             _serializer = serializer;
+            _objectsRepository = objectsRepository;
         }
         
         public void Raise(object[] arguments)
@@ -30,20 +31,12 @@ namespace EloquentObjects.RPC.Server.Implementation
                 subscriptions = _subscriptions.Keys.ToArray();
             }
                 
+            var payload = Payload.Create(arguments, o => _objectsRepository.TryGetObjectId(o, out var objectId) ? objectId : null);
+
             foreach (var subscription in subscriptions)
             {
-                //Create a copy to avoid dependency between handlers
-                var args = arguments.ToArray();
-                
-                //Set the sender = proxy object for standard events
-                if (_hasSender)
-                {
-                    args[0] = null;
-                }
-
-                var bytes = _serializer.Serialize(args);
-
-                var eventMessage = new EventMessage(subscription.ClientHostAddress, _objectId, _eventName, bytes);
+                //TODO: optimization is needed to avoid serialization for each subscriber
+                var eventMessage = payload.CreateEventMessage(_serializer, subscription.ClientHostAddress, _objectId, _eventName);
                 subscription.Handler.DynamicInvoke(eventMessage);
             }
         }

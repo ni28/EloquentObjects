@@ -98,7 +98,7 @@ namespace EloquentObjects
             var helloMessage = new HelloMessage(_clientHostAddress);
             _outputChannel.SendWithAck(helloMessage);
             
-            _eventHandlersRepository = new EventHandlersRepository(_outputChannel, _clientHostAddress);
+            _eventHandlersRepository = new EventHandlersRepository(_outputChannel, _clientHostAddress, this);
             _sessionAgent = new SessionAgent(binding, _inputChannel, _outputChannel, _clientHostAddress, _eventHandlersRepository);
         }
 
@@ -161,13 +161,13 @@ namespace EloquentObjects
             }
         }
 
-        public bool TryGetObjectId(object remoteObject, out string objectId)
+        public bool TryGetObjectId(object proxyObject, out string objectId)
         {
             lock (_objectIds)
             {
                 RemoveDeadObjectIds();
 
-                var result = _objectIds.FirstOrDefault(t => ReferenceEquals(t.Item2.Target, remoteObject));
+                var result = _objectIds.FirstOrDefault(t => ReferenceEquals(t.Item2.Target, proxyObject));
                 if (result == null)
                 {
                     objectId = string.Empty;

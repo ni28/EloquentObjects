@@ -4,19 +4,19 @@ namespace EloquentObjects.RPC.Messages.OneWay
 {
     internal sealed class NotificationMessage : OneWayMessage
     {
-        public NotificationMessage(IHostAddress clientHostAddress, string objectId, string methodName, byte[] payload,
+        public NotificationMessage(IHostAddress clientHostAddress, string objectId, string methodName, byte[] serializedParameters,
             bool[] selector, string[] objectIds): base(clientHostAddress)
         {
             ObjectId = objectId;
             MethodName = methodName;
-            Payload = payload;
+            SerializedParameters = serializedParameters;
             Selector = selector;
             ObjectIds = objectIds;
         }
         
         public string ObjectId { get; }
         public string MethodName { get; }
-        public byte[] Payload { get; }
+        public byte[] SerializedParameters { get; }
         public bool[] Selector { get; }
         public string[] ObjectIds { get; }
 
@@ -28,7 +28,7 @@ namespace EloquentObjects.RPC.Messages.OneWay
         {
             builder.WriteString(ObjectId);
             builder.WriteString(MethodName);
-            builder.WriteBuffer(Payload);
+            builder.WriteBuffer(SerializedParameters);
             builder.WriteBoolArray(Selector);
             builder.WriteStringArray(ObjectIds);
         }

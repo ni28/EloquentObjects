@@ -10,11 +10,10 @@ namespace EloquentObjects.RPC.Messages
         Event = 6,
         Request = 7,
         Response = 8,
-        EloquentObject = 9,
+        ErrorMessage = 9,
         SubscribeEvent = 10,
         UnsubscribeEvent = 11,
         Connect = 12,
         Notification = 13,
-        ErrorMessage = 14
     }
 }

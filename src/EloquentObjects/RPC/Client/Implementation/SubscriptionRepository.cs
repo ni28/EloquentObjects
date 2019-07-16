@@ -1,20 +1,24 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using EloquentObjects.Contracts;
+using EloquentObjects.RPC.Messages.OneWay;
 using EloquentObjects.Serialization;
 
 namespace EloquentObjects.RPC.Client.Implementation
 {
     internal sealed class SubscriptionRepository
     {
-        private readonly bool _hasSender;
+        private readonly IEventDescription _eventDescription;
         private readonly ISerializer _serializer;
+        private readonly EloquentClient _eloquentClient;
         private readonly List<RemoteEventSubscription> _subscriptions = new List<RemoteEventSubscription>();
             
-        public SubscriptionRepository(bool hasSender, ISerializer serializer)
+        public SubscriptionRepository(IEventDescription eventDescription, ISerializer serializer, EloquentClient eloquentClient)
         {
-            _hasSender = hasSender;
+            _eventDescription = eventDescription;
             _serializer = serializer;
+            _eloquentClient = eloquentClient;
         }
 
         public bool IsEmpty
@@ -28,7 +32,7 @@ namespace EloquentObjects.RPC.Client.Implementation
             }
         }
 
-        public void Raise(byte[] eventData)
+        public void Raise(EventMessage eventMessage)
         {
             IEnumerable<RemoteEventSubscription> subscriptions;
             lock (_subscriptions)
@@ -36,19 +40,36 @@ namespace EloquentObjects.RPC.Client.Implementation
                 subscriptions = _subscriptions.ToArray();
             }
 
-            var parameters = _serializer.Deserialize(eventData);
+            var serializedParameters = _serializer.Deserialize(eventMessage.SerializedParameters);
+            var payload = new Payload(serializedParameters, eventMessage.ObjectIds, eventMessage.Selector);
             
+            //TODO: Refactoring is needed
+            //TODO: add null and range checks
+            var invokeMethod = _eventDescription.Event.EventHandlerType.GetMethod("Invoke");
+            var invokeMethodParameters = invokeMethod.GetParameters();
+            var eventParameters = invokeMethodParameters.Select(p => p.ParameterType).ToArray();
+            
+            var parameters = payload.ToParametersNoCheck((objectId, paramIndex) =>
+            {
+                if (_eventDescription.IsStandardEvent && paramIndex == 0)
+                {
+                    return null;
+                }
+                var type = eventParameters[paramIndex];
+                return _eloquentClient.Connect(type, objectId);
+            });
+
             foreach (var subscription in subscriptions)
             {
                 //Create a copy to avoid dependency between handlers
                 var args = parameters.ToArray();
-                
+                                
                 //Set the sender = proxy object for standard events
-                if (_hasSender)
+                if (_eventDescription.IsStandardEvent)
                 {
                     args[0] = subscription.Proxy;
                 }
-
+                
                 //TODO: test
                 //Execute in a try-catch so that if there is an exception then other subscriptions are still handled
                 try

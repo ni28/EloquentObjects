@@ -45,11 +45,11 @@ namespace EloquentObjects.RPC.Server.Implementation
             }
         }
 
-        public bool TryGetObjectId(object result, out string objectId)
+        public bool TryGetObjectId(object @object, out string objectId)
         {
             lock (_objects)
             {
-                var obj = _objects.FirstOrDefault(o => ReferenceEquals(o.Value.Object, result));
+                var obj = _objects.FirstOrDefault(o => ReferenceEquals(o.Value.Object, @object));
                 if (string.IsNullOrEmpty(obj.Key))
                 {
                     objectId = string.Empty;

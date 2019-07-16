@@ -39,7 +39,7 @@ namespace EloquentObjects.RPC.Server.Implementation
                 var handler = CreateHandler(eventDescription.Event, args => SendEventToAllClients(eventDescription.Name, eventDescription.IsStandardEvent, args));
                 eventDescription.Event.AddEventHandler(objectToHost, handler);
                 _hostedEvents.Add(new HostedEvent(eventDescription.Event, handler));
-                events.Add(eventDescription.Name, new Event(objectId, eventDescription.Name, eventDescription.IsStandardEvent, serializer));
+                events.Add(eventDescription.Name, new Event(objectId, eventDescription.Name, serializer, objectsRepository));
             }
             
             Events = new ReadOnlyDictionary<string, IEvent>(events);
@@ -54,8 +54,10 @@ namespace EloquentObjects.RPC.Server.Implementation
         {
             try
             {
-                var parameters = CombineParameters(requestMessage.Payload, requestMessage.Selector, requestMessage.ObjectIds);
+                var serializedParameters = _serializer.Deserialize(requestMessage.SerializedParameters);
+                var payload = new Payload(serializedParameters, requestMessage.ObjectIds, requestMessage.Selector);
 
+                var parameters = payload.ToParameters((objectId, paramIndex) => _objectsRepository.TryGetObject(objectId, out var obj) ? obj?.Object : null);
                 HandleRequest(requestMessage.ClientHostAddress, context, requestMessage.MethodName, parameters);
             }
             catch (Exception e)
@@ -68,7 +70,10 @@ namespace EloquentObjects.RPC.Server.Implementation
         {
             try
             {
-                var parameters = CombineParameters(notificationMessage.Payload, notificationMessage.Selector, notificationMessage.ObjectIds);
+                var serializedParameters = _serializer.Deserialize(notificationMessage.SerializedParameters);
+                var payload = new Payload(serializedParameters, notificationMessage.ObjectIds, notificationMessage.Selector);
+                
+                var parameters = payload.ToParameters((objectId, paramIndex) => _objectsRepository.TryGetObject(objectId, out var obj) ? obj?.Object : null);
                 HandleEvent(notificationMessage.MethodName, parameters);
             }
             catch (Exception)
@@ -81,41 +86,6 @@ namespace EloquentObjects.RPC.Server.Implementation
 
         #endregion
 
-        
-        private object[] CombineParameters(byte[] payload, bool[] selector, string[] objectIds)
-        {
-            var serializedParameters = _serializer.Deserialize(payload).GetEnumerator();
-            var objectIdsEnumerator = objectIds.GetEnumerator();
-            serializedParameters.MoveNext();
-            objectIdsEnumerator.MoveNext();
-
-            //TODO: check consistency
-
-            var parameters = new List<object>(selector.Length);
-
-            foreach (var isRemoteObject in selector)
-            {
-                if (isRemoteObject)
-                {
-                    var objectId = (string) objectIdsEnumerator.Current;
-                    if (!_objectsRepository.TryGetObject(objectId, out var objectAdapter) || objectAdapter == null)
-                    {
-                        throw new ArgumentException($"Object with ID '{objectId}' is not hosted");
-                    }
-
-                    parameters.Add(objectAdapter.Object);
-
-                    objectIdsEnumerator.MoveNext();
-                }
-                else
-                {
-                    parameters.Add(serializedParameters.Current);
-                    serializedParameters.MoveNext();
-                }
-            }
-
-            return parameters.ToArray();
-        }
 
         private static Delegate CreateHandler(EventInfo evt, Action<object[]> d)
         {
@@ -152,12 +122,6 @@ namespace EloquentObjects.RPC.Server.Implementation
         {
             if (_disposed) throw new ObjectDisposedException(nameof(ObjectAdapter));
 
-            if (isStandardEvent)
-            {
-                //Do not need to serialize the sender for standard events (that have EventHandler and EventHandler<T> types);
-                parameters[0] = null;
-            }
-            
             Events[eventName].Raise(parameters);
         }
 
@@ -203,13 +167,13 @@ namespace EloquentObjects.RPC.Server.Implementation
 
             if (_objectsRepository.TryGetObjectId(result, out var objectId))
             {
-                var responseMessage = new EloquentObjectMessage(clientHostAddress, objectId);
+                var responseMessage = new ResponseMessage(clientHostAddress, new byte[] { }, new []{ true }, new[] { objectId });
                 context.Write(responseMessage.ToFrame());
             }
             else
             {
                 var payload = _serializer.Serialize(result);
-                var responseMessage = new ResponseMessage(clientHostAddress, payload);
+                var responseMessage = new ResponseMessage(clientHostAddress, payload, new []{ false }, new string[] { });
                 context.Write(responseMessage.ToFrame());
             }
         }

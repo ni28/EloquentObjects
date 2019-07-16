@@ -4,16 +4,20 @@ namespace EloquentObjects.RPC.Messages.OneWay
 {
     internal sealed class EventMessage : OneWayMessage
     {
-        public EventMessage(IHostAddress clientHostAddress, string objectId, string eventName, byte[] payload): base(clientHostAddress)
+        public EventMessage(IHostAddress clientHostAddress, string objectId, string eventName, byte[] serializedParameters, bool[] selector, string[] objectIds): base(clientHostAddress)
         {
             ObjectId = objectId;
             EventName = eventName;
-            Payload = payload;
+            SerializedParameters = serializedParameters;
+            Selector = selector;
+            ObjectIds = objectIds;
         }
         
         public string ObjectId { get; }
         public string EventName { get; }
-        public byte[] Payload { get; }
+        public byte[] SerializedParameters { get; }
+        public bool[] Selector { get; }
+        public string[] ObjectIds { get; }
 
         #region Overrides of Message
 
@@ -23,7 +27,9 @@ namespace EloquentObjects.RPC.Messages.OneWay
         {
             builder.WriteString(ObjectId);
             builder.WriteString(EventName);
-            builder.WriteBuffer(Payload);
+            builder.WriteBuffer(SerializedParameters);
+            builder.WriteBoolArray(Selector);
+            builder.WriteStringArray(ObjectIds);
         }
 
         #endregion
@@ -33,8 +39,10 @@ namespace EloquentObjects.RPC.Messages.OneWay
             var objectId = frame.TakeString();
             var eventName = frame.TakeString();
             var payload = frame.TakeBuffer();
+            var selector = frame.TakeBoolArray();
+            var objectsIds = frame.TakeStringArray();
 
-            return new EventMessage(clientHostAddress, objectId, eventName, payload);
+            return new EventMessage(clientHostAddress, objectId, eventName, payload, selector, objectsIds);
         }
     }
 }

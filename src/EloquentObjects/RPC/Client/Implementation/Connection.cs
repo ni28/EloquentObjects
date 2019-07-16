@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using EloquentObjects.Channels;
@@ -43,20 +42,15 @@ namespace EloquentObjects.RPC.Client.Implementation
 
         public void Notify(string methodName, object[] parameters)
         {
-            SplitParameters(parameters, out var serializedParameters, out var objectIds, out var selector);
-
-            var payload = _serializer.Serialize(serializedParameters);
-            var eventMessage = new NotificationMessage(_clientHostAddress, _objectId, methodName, payload, selector, objectIds);
-            _outputChannel.SendOneWay(eventMessage);
+            var payload = Payload.Create(parameters, o => _eloquentClient.TryGetObjectId(o, out var id) ? id : null);
+            var notificationMessage = payload.CreateNotificationMessage(_serializer, _clientHostAddress, _objectId, methodName);
+            _outputChannel.SendOneWay(notificationMessage);
         }
 
         public object Call(string methodName, object[] parameters)
         {
-            SplitParameters(parameters, out var serializedParameters, out var objectIds, out var selector);
-
-            var payload = _serializer.Serialize(serializedParameters);
-
-            var requestMessage = new RequestMessage(_clientHostAddress, _objectId, methodName, payload, selector, objectIds);
+            var payload = Payload.Create(parameters, o => _eloquentClient.TryGetObjectId(o, out var id) ? id : null);
+            var requestMessage = payload.CreateRequestMessage(_serializer, _clientHostAddress, _objectId, methodName);
 
             var result = _outputChannel.SendAndReceive(requestMessage);
             switch (result)
@@ -65,41 +59,20 @@ namespace EloquentObjects.RPC.Client.Implementation
                     throw errorMessage.ToException();
                 case ExceptionMessage exceptionMessage:
                     throw exceptionMessage.Exception;
-                case EloquentObjectMessage eloquentObjectMessage:
-                    var objectType = _contractDescription.GetOperationDescription(methodName, parameters).Method.ReturnType;
-                    return _eloquentClient.Connect(objectType, eloquentObjectMessage.ObjectId);
                 case ResponseMessage responseMessage:
-                    return _serializer.Deserialize(responseMessage.Payload).Single();
+                    if (responseMessage.Selector[0])
+                    {
+                        var objectType = _contractDescription.GetOperationDescription(methodName, parameters).Method.ReturnType;
+                        return _eloquentClient.Connect(objectType, responseMessage.ObjectIds[0]);
+                    }
+                    else
+                    {
+                        return _serializer.Deserialize(responseMessage.SerializedParameters).Single();
+                    }
+
                 default:
                     throw new IOException($"Unexpected session message type: {result.MessageType}");
             }
-        }
-
-        private void SplitParameters(IReadOnlyCollection<object> parameters, out object[] serializedParameters, out string[] objectIds, out bool[] selector)
-        {
-            var selectorList = new List<bool>(parameters.Count);
-            var serializedParametersList = new List<object>(parameters.Count);
-            var objectIdsList = new List<string>(parameters.Count);
-
-            //Split parameters to two groups - remote objects and serializable objects.
-            //Use selector to store a flag that indicates if a parameter is a remote object.
-            foreach (var parameter in parameters)
-            {
-                if (_eloquentClient.TryGetObjectId(parameter, out var objectId))
-                {
-                    objectIdsList.Add(objectId);
-                    selectorList.Add(true);
-                }
-                else
-                {
-                    serializedParametersList.Add(parameter);
-                    selectorList.Add(false);
-                }
-            }
-
-            serializedParameters = serializedParametersList.ToArray();
-            objectIds = objectIdsList.ToArray();
-            selector = selectorList.ToArray();
         }
 
         public void Subscribe(string eventName, Delegate handler)
