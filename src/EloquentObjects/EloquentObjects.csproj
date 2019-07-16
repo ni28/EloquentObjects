@@ -2,11 +2,11 @@
 
     <PropertyGroup>
         <RootNamespace>EloquentObjects</RootNamespace>
-        <PackageVersion>1.0.3</PackageVersion>
-        <FileVersion>1.0.2.0</FileVersion>
+        <PackageVersion>2.0.0</PackageVersion>
+        <FileVersion>2.0.0.0</FileVersion>
         <Title>EloquentObjects</Title>
         <Authors>ni28</Authors>
-        <Description>.NET object-oriented Inter-Process Communication (IPC) and Remote-Procedure Call (RPC) framework that allows clients to work with hosted objects remotelly (call methods, get or set properties, subscribe to events, etc.).</Description>
+        <Description>.NET fast and lightweight IPC framework that allows clients to work with hosted objects remotelly (call methods, get or set properties, subscribe to events, etc.). Can be used as an object-oriented replacement to traditional RPC (Remote Procedure Call) mechanisms.</Description>
         <PackageProjectUrl>https://github.com/ni28/EloquentObjects</PackageProjectUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <RepositoryUrl>https://github.com/ni28/EloquentObjects</RepositoryUrl>

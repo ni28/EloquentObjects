@@ -1,5 +1,5 @@
 # EloquentObjects
-EloquentObjects is a .NET object-oriented Inter-Process Communication (IPC) and Remote-Procedure Call (RPC) framework that allows clients to work with hosted objects remotelly (call methods, get or set properties, subscribe to events, etc.).
+EloquentObjects is a .NET fast and lightweight IPC framework that allows clients to work with hosted objects remotelly (call methods, get or set properties, subscribe to events, etc.). Can be used as an object-oriented replacement to traditional RPC (Remote Procedure Call) mechanisms.
 
 ## Target Frameworks
 - .NET Framework 4.5+
@@ -47,14 +47,9 @@ When object is hosted you can connect to remote object:
 //One client can connect to multiple objects (distinguished by object ID which can be any string)
 using (var client = new EloquentClient("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001"))
 {
-	//Connect to a specific object.
-	//Connection object will keep all resources needed to communicate with specific remote object until it is disposed.
-	using (var connection = client.Connect<IYourContractHere>("<Your Object ID here>"))
-	{
-		//Use the object
-		var yourObject = connection.Object;
-		...
-	}
+	//Connect and use the object.
+	//The 'yourObject' will have IYourContractHere type below:
+	var yourObject = client.Connect<IYourContractHere>("<Your Object ID here>");
 }
 ```    
 
@@ -64,19 +59,14 @@ using (var client = new EloquentClient("tcp://127.0.0.1:50000", "tcp://127.0.0.1
 2. Define an attributed contract in a Contract assembly that is available both for server and client:
 
 ```csharp 
-[EloquentContract]
 public interface IEloquentCalculator
 {
-	[EloquentProperty]
 	string Name { get; set; }
 
-	[EloquentMethod]
 	int Add(int a, int b);
 	
-	[EloquentMethod]
 	void Sqrt(int a);
 
-	[EloquentEvent]
 	event EventHandler<OperationResult> ResultReady;
 }
     
@@ -104,7 +94,6 @@ internal sealed class EloquentCalculator: IEloquentCalculator
 	...
 	#endregion
 }
-}
 ```
 
 4. Create a server and start an object hosting in a Server assembly:
@@ -131,18 +120,16 @@ using (var remoteObjectServer = new EloquentServer("tcp://127.0.0.1:50000"))
 using (var client = new EloquentClient("tcp://127.0.0.1:50000", "tcp://127.0.0.1:50001"))
 {
 	//Use the same Object ID - Calculator1
-	using (var calculatorConnection = client.Connect<IEloquentCalculator>("Calculator1"))
-	{
-		var calculator = calculatorConnection.Object;
+	var calculator = client.Connect<IEloquentCalculator>("Calculator1");
 		
-		//Work with calculator remotelly
-		var res1 = calculator.Add(1, 1);
-		calculator.ResultReady += (s, r) => {...}
-	}
+	//Work with calculator remotelly
+	var res1 = calculator.Add(1, 1);
+	calculator.ResultReady += (s, r) => {...}
 }
 ```    
+
 ## Bindings
-EloquentObjects support two communication mechanisms:
+EloquentObjects support twos communication mechanisms:
 * TCP binding (RPC)
 * Named pipes binding (IPC)
 
@@ -174,28 +161,29 @@ using (var client = new EloquentClient("pipe://127.0.0.1:50000", "pipe://127.0.0
 }    
 ```
 
+## Patterns
+[TBD]
+Use following patterns with EloquentObject to get best results:
+1. Events handling
+2. Accessing child objects
+3. Hosting model layer
+4. Interface inheritance
 
 ## Events handling
-
 Eloquent object can have events of following types:
 * EventHandler
 * EventHandler<T>
 * Action (with any number of arguments)
 
 ```csharp
-[EloquentInterface]
 public interface IContract
 {
-	[EloquentEvent]
 	event EventHandler RegularEvent;
 
-	[EloquentEvent]
 	event EventHandler<CustomEventArgs> RegularEventWithArgs;
 
-	[EloquentEvent]
 	event Action NoParameterEvent;
 
-	[EloquentEvent]
 	event Action<int> EventWithIntParameter;
 }
 ```
@@ -211,47 +199,50 @@ void OnRegularEvent(object sender, EventArgs args)
 {
     //Here object will be remoteObject1 when event occured in remoteObject1 and will be remoteObject2 when event occured in remoteObject2.
     var object = (IContract)sender;
-    
 }
 ```
 
 # Modification history
-[!] - Breaking API change
-[+] - New feature
-[B] - Bug fix
+[!] - Breaking API change<br/>
+[+] - New feature<br/>
+[B] - Bug fix<br/>
+
+## 2.0.0
+[!] Removed attributes from contracts. Standard C# interfaces can be used now.<br/>
+[!] Changed client API. No need to create a disposable connection anymore.<br/>
+[+] Implemented ability to transfer objects by references (DTO objects are still supported).<br/>
+
+## 1.0.4
+[+] Added test for default parameters in interface<br/>
+[+] Cleaned the Calculator example to demonstrate the HostingModel layer.<br/>
 
 ## 1.0.3
-[+] Added robustness integration tests
-[B] Fixed exception on a client when server is lost
-[B] Fixed exception on a client when server stopped hosting object
-[B] Fixed exception on a client when server does not host any objects for requested ID
+[+] Added robustness integration tests<br/>
+[B] Fixed exception on a client when server is lost<br/>
+[B] Fixed exception on a client when server stopped hosting object<br/>
+[B] Fixed exception on a client when server does not host any objects for requested ID<br/>
 
 ## 1.0.2
-[!] Renamed EloquentInterfaceAttribute to EloquentContractAttribute
-[+] Added named pipes transport protocol support
-[+] Added integration tests
-[+] Added support for EventHandler and EventHandler<T> event types
+[!] Renamed EloquentInterfaceAttribute to EloquentContractAttribute<br/>
+[+] Added named pipes transport protocol support<br/>
+[+] Added integration tests<br/>
+[+] Added support for EventHandler and EventHandler<T> event types<br/>
 
 ## 1.0.1
-[!] Channged scheme in URI address to contain "xxx://" prefix (tcp is used for TCP transport protocol, pipe is used for named pipes)
+[!] Channged scheme in URI address to contain "xxx://" prefix (tcp is used for TCP transport protocol, pipe is used for named pipes)<br/>
 
 ## 1.0.0
-[+] Initial release.
+[+] Initial release.<br/>
 
 # TODO
-
 ## Features TODO
 1. Security
 2. Polling mode
 3. Client event that connection is lost. Restore connection.
 
 ## Improvements TODO
-0. Timeouts?
-1. Default parameters for interfaces
-2. Proto nuget
-3. Benchmark: gRPC
-4. Benchmark: .NET Remoting
-5. Send only subscribed events
-6. Raise exception if contract has method, property or event without attribute.
-7. Rename IEndpointHub => IObjectsHub and "endpoint" to "object" everywhere
-
+1. Timeouts?
+2. Benchmark: gRPC
+3. Benchmark: .NET Remoting
+4. Named pipes between different PCs
+5. Support out parameters
