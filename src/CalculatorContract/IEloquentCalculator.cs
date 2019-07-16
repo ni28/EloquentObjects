@@ -8,6 +8,7 @@ namespace CalculatorContract
 
         int Add(int a, int b);
         
+        [OneWay]
         void Sqrt(int a);
 
         IEloquentOperationsHistory OperationsHistory { get; }

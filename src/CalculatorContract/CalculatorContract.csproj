@@ -43,6 +43,7 @@
   <ItemGroup>
     <Compile Include="IEloquentCalculator.cs" />
     <Compile Include="IEloquentOperationsHistory.cs" />
+    <Compile Include="OneWayAttribute.cs" />
     <Compile Include="OperationResult.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

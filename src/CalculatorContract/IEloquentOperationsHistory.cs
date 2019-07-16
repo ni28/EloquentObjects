@@ -2,7 +2,7 @@ namespace CalculatorContract
 {
     public interface IEloquentOperationsHistory
     {
-        string[] OperationsHistory { get; }
+        string[] Entries { get; }
 
         void Clear();
     }

@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <RootNamespace>EloquentObjects</RootNamespace>
-        <PackageVersion>2.0.0</PackageVersion>
+        <PackageVersion>2.0.0-alpha</PackageVersion>
         <FileVersion>2.0.0.0</FileVersion>
         <Title>EloquentObjects</Title>
         <Authors>ni28</Authors>

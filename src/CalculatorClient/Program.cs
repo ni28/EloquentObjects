@@ -16,21 +16,25 @@ namespace Client
 
                 //Property get
                 Console.WriteLine($"Calculator name: {calculator.Name}");
+                Console.WriteLine();
 
                 //Property set
                 calculator.Name = "MyCalculator";
                 Console.WriteLine($"New calculator name: {calculator.Name}");
+                Console.WriteLine();
 
                 //Method call
                 Console.WriteLine($"1 + 2 = {calculator.Add(1, 2)}");
+                Console.WriteLine();
 
                 //Subscribe to event
                 calculator.ResultReady += CalculatorOnResultReady;                
                 Console.WriteLine($"Call one-way long running operation: ");
+                Console.WriteLine();
                 calculator.Sqrt(4);
                 
-                
                 Console.WriteLine("Press Enter to exit");
+                Console.WriteLine();
                 Console.ReadLine();
             }
         }
@@ -38,6 +42,7 @@ namespace Client
         private static void CalculatorOnResultReady(object sender, OperationResult result)
         {
             Console.WriteLine($"Long running operation result: {result.Value}");
+            Console.WriteLine();
 
             //Accessing to sender
             var senderAsClient = (IEloquentCalculator) sender;
@@ -46,7 +51,7 @@ namespace Client
             var history = senderAsClient.OperationsHistory;
 
             Console.WriteLine("Last operations:");
-            foreach (var entry in history.OperationsHistory)
+            foreach (var entry in history.Entries)
             {
                 Console.WriteLine($"\t{entry}");
             }
@@ -56,12 +61,13 @@ namespace Client
             history.Clear();
 
             Console.WriteLine("Last operations after clear:");
-            foreach (var entry in history.OperationsHistory)
+            foreach (var entry in history.Entries)
             {
                 Console.WriteLine($"\t{entry}");
             }
 
             Console.WriteLine($"Sender name = {senderAsClient.Name}");
+            Console.WriteLine();
         }
     }
 

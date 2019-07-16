@@ -3,7 +3,7 @@
     <PropertyGroup>
         <RootNamespace>EloquentObjects.Proto</RootNamespace>
         <TargetFrameworks>net45;netstandard2.0</TargetFrameworks>
-        <PackageVersion>1.0.1</PackageVersion>
+        <PackageVersion>1.0.1-alpha</PackageVersion>
         <FileVersion>1.0.1.0</FileVersion>
         <Title>EloquentObjects.Proto</Title>
         <Authors>ni28</Authors>

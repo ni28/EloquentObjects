@@ -60,7 +60,11 @@ namespace EloquentObjects.RPC.Server.Implementation
         {
             lock (_subscriptions)
             {
-                var subscription = _subscriptions.Keys.First(s => s.Handler == handler);
+                var subscription = _subscriptions.Keys.FirstOrDefault(s => s.Handler == handler);
+                if (subscription == null)
+                {
+                    return;
+                }
 
                 var numOfSubscriptions = _subscriptions[subscription];
                 if (numOfSubscriptions == 1)

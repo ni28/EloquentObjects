@@ -19,7 +19,7 @@ namespace ConsoleApplication1.HostingModel
 
         #region Implementation of IEloquentOperationsHistory
 
-        public string[] OperationsHistory => _operationsHistory.LastOperations.ToArray();
+        public string[] Entries => _operationsHistory.LastOperations.ToArray();
 
         public void Clear()
         {
